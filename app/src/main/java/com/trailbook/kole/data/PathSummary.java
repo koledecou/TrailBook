@@ -1,6 +1,7 @@
 package com.trailbook.kole.data;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.annotations.Expose;
 
 import java.util.Date;
 import java.util.Hashtable;

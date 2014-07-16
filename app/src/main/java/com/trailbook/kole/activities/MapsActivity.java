@@ -17,13 +17,16 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
 
+import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.fragments.MyMapFragment;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.PathManager;
+import com.trailbook.kole.worker_fragments.WorkerFragment;
 
 import java.util.HashMap;
 
@@ -34,12 +37,14 @@ public class MapsActivity extends Activity
 
     private CharSequence mTitle; // Used to store the last screen title. For use in {@link #restoreActionBar()}.
     private MapFragment mMapFragment;
+    private WorkerFragment mWorkFragment;
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private Bus bus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
         mMapFragment=MyMapFragment.newInstance();
 
@@ -58,6 +63,7 @@ public class MapsActivity extends Activity
     @Override
     protected void onResume() {
         super.onResume();
+        setUpWorkFragmentIfNeeded();
     }
 
     @Override
@@ -85,6 +91,21 @@ public class MapsActivity extends Activity
         return super.onOptionsItemSelected(item);
     }
 
+    private void setUpWorkFragmentIfNeeded() {
+        FragmentManager fm = getFragmentManager();
+        // Check to see if we have retained the worker fragment.
+        mWorkFragment = (WorkerFragment)fm.findFragmentByTag("work");
+        if (mWorkFragment == null) {
+            mWorkFragment = new WorkerFragment();
+            getFragmentManager().beginTransaction().add(mWorkFragment, "work").commit();
+        }
+    }
+
+    public WorkerFragment getWorkerFragment() {
+        setUpWorkFragmentIfNeeded();
+        return mWorkFragment;
+    }
+
     public void restoreActionBar() {
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
@@ -97,7 +118,7 @@ public class MapsActivity extends Activity
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getFragmentManager();
         fragmentManager.beginTransaction()
-                .replace(R.id.container, mMapFragment)
+                .replace(R.id.map_container, mMapFragment)
                 .commit();
     }
 
@@ -115,9 +136,7 @@ public class MapsActivity extends Activity
         }
     }
 
-    public MapsActivity() {
-
-    }
+    public MapsActivity() {}
 
     //Location listener callbacks
     @Override

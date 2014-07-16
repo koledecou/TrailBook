@@ -22,38 +22,46 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.annotations.Expose;
 
 
 public class Path {
-    public static final int MIN_DISTANCE_BETWEEN_POINTS=3; //distance in meters
+    private static final int MIN_DISTANCE_BETWEEN_POINTS=3; //distance in meters
+    private static final int MAX_DISTANCE_BETWEEN_POINTS = 1000;
+    private transient boolean isDownloaded = false;
+
     ArrayList<LatLng> points;
-    HashMap<String, PointAttachedObject> notes;
+    HashMap<String, PointAttachedObject<Note>> pointNotes;
     HashMap<String, Note> pathNotes;
     PathSummary summary;
 
     public Path(String id) {
         summary = new PathSummary(id);
         points = new ArrayList<LatLng>();
-        notes = new HashMap<String, PointAttachedObject>();
+        pointNotes = new HashMap<String, PointAttachedObject<Note>>();
         pathNotes = new HashMap<String, Note>();
     }
 
     public void addPoint(LatLng newPoint) {
         //only add it if it's far enough away from the last one.
+        // If it's too far away it's a bad point.
         if (points.size() < 1){
             points.add(newPoint);
         }else{
             LatLng last = points.get(points.size() - 1);
-            float[] results = null;
+            float[] results = new float[5];
             Location.distanceBetween(last.latitude, last.longitude, newPoint.latitude, newPoint.longitude, results);
-            if (results[0]>MIN_DISTANCE_BETWEEN_POINTS)
+            if (results[0] > 200) {
+                Log.d("trailbook", "pathid: " + getSummary().getId() + " dist: " +  String.valueOf(results[0]) + " index: " + points.size());
+            }
+            if (results[0]>MIN_DISTANCE_BETWEEN_POINTS && results[0] < MAX_DISTANCE_BETWEEN_POINTS)
                 points.add(newPoint);
         }
     }
 
     public void addNote (LatLng p, Note note, String noteId) {
-        PointAttachedObject paoNote = new PointAttachedObject(p, note);
-        notes.put(noteId, paoNote);
+        PointAttachedObject<Note> paoNote = new PointAttachedObject(p, note);
+        pointNotes.put(noteId, paoNote);
     }
 
     public void addPathNote (Note note, String noteId) {
@@ -61,7 +69,7 @@ public class Path {
     }
 
     public Note getNoteFromId(String noteId) {
-        PointAttachedObject paoNote = notes.get(noteId);
+        PointAttachedObject<Note> paoNote = pointNotes.get(noteId);
         if (paoNote != null) {
             return (Note)paoNote.getAttachment();
         }
@@ -80,5 +88,37 @@ public class Path {
 
         LatLng start = points.get(0);
         return start;
+    }
+
+    public void addPoints(ArrayList<LatLng> newPoints) {
+        points.addAll(newPoints);
+    }
+
+    public PathSummary getSummary() {
+        return summary;
+    }
+
+    public ArrayList<LatLng> getPoints() {
+        return points;
+    }
+
+    public void setSummary(PathSummary summary) {
+        this.summary = summary;
+    }
+
+    public void addPointNote(PointAttachedObject<Note> paoNote) {
+        this.pointNotes.put(paoNote.getAttachment().getNoteID(), paoNote);
+    }
+
+    public HashMap<String,PointAttachedObject<Note>> getPointNotes() {
+        return pointNotes;
+    }
+
+    public void setDownloaded(boolean isDownloaded) {
+        this.isDownloaded = isDownloaded;
+    }
+
+    public boolean isDownloaded() {
+        return isDownloaded;
     }
 }

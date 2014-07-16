@@ -3,21 +3,22 @@ package com.trailbook.kole.data;
 import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.annotations.Expose;
 
-public class PointAttachedObject implements Comparable{
+public class PointAttachedObject<T> {
     public LatLng point;
-    public Object attachment;
+    public T attachment;
 
-    public PointAttachedObject (LatLng c, Object attachment) {
+    public PointAttachedObject (LatLng c, T attachment) {
         this.point = c;
         this.attachment = attachment;
     }
 
-    public void setAttachment(Object a) {
+    public void setAttachment(T a) {
         this.attachment=a;
     }
 
-    public Object getAttachment() {
+    public T getAttachment() {
         return attachment;
     }
 
@@ -29,19 +30,7 @@ public class PointAttachedObject implements Comparable{
         return results;
     }
 
-    @Override
-    public int compareTo(Object pao2) {
-        Object attachment2 = ((PointAttachedObject)pao2).attachment;
-        if (attachment instanceof Note && attachment2 instanceof Note) {
-            Note note2 = (Note)((PointAttachedObject)pao2).attachment;
-            long id1 = ((Note)attachment).id;
-            long id2 = ((Note)attachment2).id;
-            long compare=id1-id2;
-            if (compare>0) return 1;
-            else if (compare <0) return -1;
-            else return 0;
-        }
-
-        return 0;
+    public LatLng getLocation() {
+        return point;
     }
 }

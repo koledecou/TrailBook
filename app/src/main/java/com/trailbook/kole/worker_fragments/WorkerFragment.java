@@ -6,13 +6,24 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
-import com.squareup.otto.Produce;
+import com.squareup.otto.Subscribe;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PathSummary;
+import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.events.NoteAddedEvent;
+import com.trailbook.kole.events.NotesReceivedEvent;
+import com.trailbook.kole.events.PathPointsReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
-import com.trailbook.kole.services.PathService;
+import com.trailbook.kole.events.PathSummaryAddedEvent;
+import com.trailbook.kole.services.TrailbookPathServices;
 import com.trailbook.kole.tools.BusProvider;
+import com.trailbook.kole.tools.BitmapFileTarget;
+import com.trailbook.kole.tools.TrailbookFileUtilities;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +39,16 @@ import retrofit.client.Response;
  */
 public class WorkerFragment extends Fragment {
     private Bus bus;
+    private RestAdapter mRestAdapter;
+    private TrailbookPathServices mService;
+
+    public WorkerFragment () {
+        super();
+
+        bus=BusProvider.getInstance();
+        bus.register(this);
+        initializeRestAdaptor();
+    }
 
     /**
      * Fragment initialization.  We way we want to be retained and
@@ -37,9 +58,15 @@ public class WorkerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        bus=BusProvider.getInstance();
-        bus.register(this);
     }
+
+    private void initializeRestAdaptor() {
+        mRestAdapter = new RestAdapter.Builder()
+                .setEndpoint(Constants.BASE_URL)
+                .build();
+        mService = mRestAdapter.create(TrailbookPathServices.class);
+    }
+
     /**
      * This is called when the Fragment's Activity is ready to go, after
      * its content view has been installed; it is called both after
@@ -84,9 +111,6 @@ public class WorkerFragment extends Fragment {
         options.put("lon", center==null?"0":String.valueOf(center.longitude));
         options.put("radius", String.valueOf(radius));
 
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(Constants.BASE_URL)
-                .build();
         Callback<ArrayList<PathSummary>> callback = new Callback<ArrayList<PathSummary>>(){
             @Override
             public void failure(RetrofitError error) {
@@ -99,7 +123,70 @@ public class WorkerFragment extends Fragment {
             }
         };
 
-        PathService service = restAdapter.create(PathService.class);
-        service.getPaths(options, callback);
+        mService.getPathSummaries(options, callback);
+    }
+
+    public void startGetPathPoints(String pathId, Integer maxPoints) {
+        if (maxPoints == null)
+            maxPoints = -1; // get all points
+
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("pathid",pathId);
+        options.put("maxPoints", String.valueOf(maxPoints));
+
+        Callback<PathPointsReceivedEvent.PathIDWithPoints> callback = new Callback<PathPointsReceivedEvent.PathIDWithPoints>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e("Trailbook", "Failed to get path points", error);
+            }
+
+            @Override
+            public void success(PathPointsReceivedEvent.PathIDWithPoints pathIDWithPoints, Response response) {
+                bus.post(new PathPointsReceivedEvent(pathIDWithPoints));
+            }
+        };
+
+        mService.getPathPoints(options, callback);
+    }
+
+    @Subscribe
+    public void onPathSummaryAddedEvent(PathSummaryAddedEvent event){
+        PathSummary summary = event.getPathSummary();
+
+        startGetPathPoints(summary.getId(), new Integer(Constants.MEDIUM_DETAIL));
+    }
+
+    @Subscribe
+    public void onNoteAddedEvent(NoteAddedEvent event) {
+        PointAttachedObject<Note> paoNote = event.getPaoNote();
+        String imageFileName = paoNote.getAttachment().imageFileName;
+        if (imageFileName != null && imageFileName.length()>0)
+            startGetImage(paoNote.getAttachment());
+    }
+
+    private void startGetImage(Note note) {
+        String imageFileName = note.getImageFileName();
+        String pathId = note.getParentPathId();
+        File imageFile = TrailbookFileUtilities.getInternalImageFile(getActivity(), pathId, imageFileName);
+        Picasso.with(getActivity()).load(Constants.webServerImageDir + "/" + imageFileName).into(new BitmapFileTarget(imageFile));
+    }
+
+    public void startGetNotes(String pathId) {
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("pathid",pathId);
+
+        Callback<NotesReceivedEvent.PathIDWithNotes> callback = new Callback<NotesReceivedEvent.PathIDWithNotes>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e("Trailbook", "Failed to get notes", error);
+            }
+
+            @Override
+            public void success(NotesReceivedEvent.PathIDWithNotes pathIDWithNotes, Response response) {
+                bus.post(new NotesReceivedEvent(pathIDWithNotes));
+            }
+        };
+
+        mService.getNotes(options, callback);
     }
 }

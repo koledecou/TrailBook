@@ -30,4 +30,12 @@ dependencies {
     compile 'com.google.code.gson:gson:2.2.4'
     compile 'com.squareup.picasso:picasso:1.1.1'
     compile 'com.squareup.retrofit:retrofit:1.5.1'
+    compile 'commons-io:commons-io:2.4'
+}
+
+dependencies {
+    repositories {
+        mavenCentral()
+    }
+    compile 'com.sothree.slidinguppanel:library:+'
 }
