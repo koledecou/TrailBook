@@ -18,7 +18,8 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/summary_details_layout">
+        android:id="@+id/summary_details_layout"
+        android:layout_weight="1">
 
         <ImageView
             android:layout_width="wrap_content"
@@ -37,10 +38,11 @@
 
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/summary_button_layout"
-        android:gravity="bottom">
+        android:gravity="bottom"
+        android:layout_gravity="bottom|center_horizontal">
 
         <Button
             style="?android:attr/buttonStyleSmall"
@@ -49,6 +51,13 @@
             android:text="Download"
             android:id="@+id/b_download"
             android:onClick="download" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Follow"
+            android:id="@+id/b_follow" />
     </LinearLayout>
 
 </LinearLayout>
