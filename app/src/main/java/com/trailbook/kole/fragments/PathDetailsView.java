@@ -19,9 +19,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.trailbook.kole.activities.R;
+import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.tools.PathManager;
+import com.trailbook.kole.worker_fragments.LocationServicesFragment;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
 
 
@@ -38,7 +40,9 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
     private TextView mDescriptionView;
     private ImageView mImageView;
     private Button mDownloadButton;
+    private Button mFollowButton;
     private WorkerFragment mWorkFragment;
+    private LocationServicesFragment mLocationServicesFragment;
 
     public PathDetailsView(Context context) {
         super(context);
@@ -66,10 +70,16 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
             mNameView.setText(mName);
         if (mDescription != null)
             mDescriptionView.setText(mDescription);
+
+        buildButtonBar(mPathManager.getButtonActions(pathId));
     }
     
     public void setDownloaderFragment(WorkerFragment f) {
         this.mWorkFragment = f;
+    }
+
+    public void setLocationServiceFragment(LocationServicesFragment f) {
+        this.mLocationServicesFragment = f;
     }
 
     private void loadViews(){
@@ -82,6 +92,31 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         
         mDownloadButton = (Button)findViewById(R.id.b_download);
         mDownloadButton.setOnClickListener(this);
+
+        mFollowButton = (Button)findViewById(R.id.b_follow);
+        mFollowButton.setOnClickListener(this);
+    }
+
+    private void buildButtonBar(ButtonActions actions) {
+        if (actions.mCanDownloadPath)
+            enableButton(mDownloadButton);
+        else
+            disableButton(mDownloadButton);
+
+        if (actions.mCanFollowPath)
+            enableButton(mFollowButton);
+        else
+            disableButton(mFollowButton);
+    }
+
+    private void disableButton(Button b) {
+        b.setClickable(false);
+        b.setActivated(false);
+    }
+
+    private void enableButton(Button b) {
+        b.setClickable(true);
+        b.setActivated(true);
     }
 
     @Override
@@ -89,6 +124,9 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         if (v.getId() == R.id.b_download) {
             Toast.makeText(getContext(), "downloading " + mName, Toast.LENGTH_LONG).show();
             mWorkFragment.startGetNotes(mPathId);
+        } else if (v.getId() == R.id.b_follow) {
+            Toast.makeText(getContext(), "following " + mName, Toast.LENGTH_LONG).show();
+            mLocationServicesFragment.startUpdates();
         }
     }
 }

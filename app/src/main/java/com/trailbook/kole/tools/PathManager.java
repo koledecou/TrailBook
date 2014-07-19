@@ -1,5 +1,6 @@
 package com.trailbook.kole.tools;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
@@ -8,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
@@ -20,6 +22,7 @@ import com.trailbook.kole.events.PathPointsReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
+import com.trailbook.kole.fragments.PathDetailsView;
 
 import org.apache.commons.io.FileUtils;
 
@@ -100,7 +103,6 @@ public class PathManager {
 
     public PathSummary getPathSummary(String pathId) {
         return mPaths.get(pathId)==null?null:mPaths.get(pathId).getSummary();
-
     }
 
     public void savePath(String pathId, Context c) {
@@ -111,6 +113,7 @@ public class PathManager {
         try {
             FileUtils.write(pathFile, pathString);
             path.setDownloaded(true);
+            bus.post(new PathUpdatedEvent(path));
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Error saving path", e);
         }
@@ -119,5 +122,42 @@ public class PathManager {
     private String getPathString(Path path) {
         Gson gson = new GsonBuilder().excludeFieldsWithModifiers().create();
         return gson.toJson(path);
+    }
+
+    public void loadPathsFromDevice(Activity activity) {
+        PathDirectoryWalker walker = new PathDirectoryWalker();
+        String pathRootDir = TrailbookFileUtilities.getInternalPathDirectory(activity);
+        ArrayList<String> pathFileContents = walker.getPathFileContentsFromDevice(pathRootDir);
+        for (String thisContent:pathFileContents) {
+            loadFile(thisContent);
+        }
+    }
+
+    private void loadFile(String content) {
+        Gson gson = new Gson();
+        Path p = gson.fromJson(content, Path.class);
+        p.setDownloaded(true);
+        addPath(p);
+    }
+
+    public void addPath(Path p) {
+        String id = p.getSummary().getId();
+        if (mPaths.get(id)==null)
+            mPaths.put(id, p);
+        bus.post(new PathUpdatedEvent(p));
+    }
+
+    public ButtonActions getButtonActions(String pathId) {
+        ButtonActions actions = new ButtonActions();
+        actions.mCanDownloadPath = true;
+
+        Path p = getPath(pathId);
+        if (!p.isDownloaded()) {
+            actions.mCanFollowPath = false;
+        } else {
+            actions.mCanFollowPath = true;
+        }
+
+        return actions;
     }
 }

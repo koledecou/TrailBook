@@ -26,6 +26,7 @@ import com.trailbook.kole.fragments.MyMapFragment;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.PathManager;
+import com.trailbook.kole.worker_fragments.LocationServicesFragment;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
 
 import java.util.HashMap;
@@ -39,6 +40,7 @@ public class MapsActivity extends Activity
     private MapFragment mMapFragment;
     private WorkerFragment mWorkFragment;
     private NavigationDrawerFragment mNavigationDrawerFragment;
+    private LocationServicesFragment mLocationServicesFragment;
     private Bus bus;
 
     @Override
@@ -49,12 +51,15 @@ public class MapsActivity extends Activity
         mMapFragment=MyMapFragment.newInstance();
 
         setContentView(R.layout.activity_maps);
+        setUpNavDrawerFragment();
+        setUpLocationServicesFragmentIfNeeded();
+    }
 
+    private void setUpNavDrawerFragment() {
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
-        // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
@@ -93,17 +98,32 @@ public class MapsActivity extends Activity
 
     private void setUpWorkFragmentIfNeeded() {
         FragmentManager fm = getFragmentManager();
-        // Check to see if we have retained the worker fragment.
         mWorkFragment = (WorkerFragment)fm.findFragmentByTag("work");
         if (mWorkFragment == null) {
-            mWorkFragment = new WorkerFragment();
-            getFragmentManager().beginTransaction().add(mWorkFragment, "work").commit();
+            createWorkerFragment();
         }
     }
 
     public WorkerFragment getWorkerFragment() {
         setUpWorkFragmentIfNeeded();
         return mWorkFragment;
+    }
+
+    private void setUpLocationServicesFragmentIfNeeded() {
+        FragmentManager fm = getFragmentManager();
+        mWorkFragment = (WorkerFragment)fm.findFragmentByTag("locationServices");
+        if (mWorkFragment == null)
+            createLocationServicesFragment();
+    }
+
+    private void createLocationServicesFragment() {
+        mLocationServicesFragment = new LocationServicesFragment();
+        getFragmentManager().beginTransaction().add(mLocationServicesFragment, "locationServices").commit();
+    }
+
+    private void createWorkerFragment() {
+        mWorkFragment = new WorkerFragment();
+        getFragmentManager().beginTransaction().add(mWorkFragment, "work").commit();
     }
 
     public void restoreActionBar() {
@@ -152,5 +172,9 @@ public class MapsActivity extends Activity
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
+    }
+
+    public LocationServicesFragment getLocationServicesFragment() {
+        return mLocationServicesFragment;
     }
 }

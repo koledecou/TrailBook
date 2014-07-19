@@ -51,8 +51,7 @@ public class WorkerFragment extends Fragment {
     }
 
     /**
-     * Fragment initialization.  We way we want to be retained and
-     * start the async call.
+     * Fragment initialization. We want to be retained.
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,7 +85,7 @@ public class WorkerFragment extends Fragment {
     @Override
     public void onDestroy() {
         bus.unregister(this);
-        // Kill any running service
+        //TODO: Kill any running service
 
         super.onDestroy();
     }

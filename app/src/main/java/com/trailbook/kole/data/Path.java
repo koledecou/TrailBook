@@ -35,6 +35,8 @@ public class Path {
     HashMap<String, Note> pathNotes;
     PathSummary summary;
 
+    private class NoPathIdException extends RuntimeException {}
+
     public Path(String id) {
         summary = new PathSummary(id);
         points = new ArrayList<LatLng>();
@@ -120,5 +122,11 @@ public class Path {
 
     public boolean isDownloaded() {
         return isDownloaded;
+    }
+
+    public String getId() {
+        if (summary != null)
+            return summary.getId();
+        throw new NoPathIdException();
     }
 }
