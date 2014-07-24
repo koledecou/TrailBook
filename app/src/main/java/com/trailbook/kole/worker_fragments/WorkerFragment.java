@@ -3,12 +3,14 @@ package com.trailbook.kole.worker_fragments;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
+import android.widget.ImageView;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PathSummary;
@@ -21,9 +23,12 @@ import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.services.TrailbookPathServices;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.BitmapFileTarget;
+import com.trailbook.kole.tools.DownloadImageTask;
 import com.trailbook.kole.tools.TrailbookFileUtilities;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -167,7 +172,14 @@ public class WorkerFragment extends Fragment {
         String imageFileName = note.getImageFileName();
         String pathId = note.getParentPathId();
         File imageFile = TrailbookFileUtilities.getInternalImageFile(getActivity(), pathId, imageFileName);
-        Picasso.with(getActivity()).load(Constants.webServerImageDir + "/" + imageFileName).into(new BitmapFileTarget(imageFile));
+
+        Log.d(Constants.TRAILBOOK_TAG, "image file name: " + imageFile);
+        String webServerImageFileName=Constants.webServerImageDir + "/" + imageFileName;
+
+        Log.d(Constants.TRAILBOOK_TAG, "webserver image file name: " + webServerImageFileName);
+        new DownloadImageTask(imageFile).execute(webServerImageFileName);
+
+//        Picasso.with(getActivity()).load(webServerImageFileName).into(new BitmapFileTarget(imageFile));
     }
 
     public void startGetNotes(String pathId) {

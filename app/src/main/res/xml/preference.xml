@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="@string/general_settings" android:key="general_settings_cat">
+        <EditTextPreference android:title="@string/upload_user_name" android:key="user_name"/>
+        <ListPreference android:key="unit_of_measure_pref" android:summary="@string/uom_summary" android:title="@string/uom" android:entries="@array/uom_items" android:entryValues="@array/uom_vals" android:defaultValue="US"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:key="proximity_close_cat" android:title="@string/proximity_close_cat">
+        <CheckBoxPreference android:key="enable_prox_2" android:summary="@string/enable_prox_alert_summary_2" android:title="@string/enable_prox_alert_2"/>
+        <EditTextPreference android:defaultValue="60"
+            android:key="triggerRadiusClose"
+            android:title="@string/alertDistance"
+            android:numeric="integer"/>
+        <RingtonePreference android:ringtoneType="all"
+            android:showDefault="true"
+            android:title="@string/ringtone_title_2"
+            android:showSilent="true"
+            android:key="ringtoneClose"
+            android:defaultValue="content://settings/system/notification_sound" android:dependency="enable_prox_2" android:summary="@string/ringtone_2"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:key="auto_play_cat" android:title="@string/auto_play_cat">
+        <CheckBoxPreference android:key="auto_play" android:summary="@string/auto_play_summary" android:title="@string/auto_play" android:defaultValue="true"/>
+        <EditTextPreference android:title="@string/auto_play_radius" android:key="auto_play_radius" android:dependency="auto_play" android:summary="@string/auto_play_radius_summary" android:numeric="integer" android:defaultValue="25"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:key="off_route_cat" android:title="@string/off_route_cat">
+        <CheckBoxPreference android:key="enable_offroute_alert" android:defaultValue="true" android:title="@string/enable_offroute_alert"/>
+        <EditTextPreference android:title="@string/off_route_distance" android:key="off_route_distance_pref" android:summary="@string/off_route_distance_summary" android:numeric="integer" android:defaultValue="75" android:dependency="enable_offroute_alert"/>
+        <RingtonePreference android:showSilent="true" android:summary="@string/off_route_ringtone_summary" android:key="off_route_alert" android:ringtoneType="all" android:showDefault="true" android:title="@string/off_route_alert"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

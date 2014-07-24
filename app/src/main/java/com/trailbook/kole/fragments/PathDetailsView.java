@@ -28,6 +28,11 @@ import com.trailbook.kole.worker_fragments.WorkerFragment;
 
 
 public class PathDetailsView extends LinearLayout implements View.OnClickListener {
+
+    public void setActionListener(PathDetailsActionListener actionListener) {
+        this.actionListener = actionListener;
+    }
+
     // the fragment initialization parameters
     private static final String ARG_PARAM1 = "path_id";
     private PathManager mPathManager;
@@ -41,8 +46,9 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
     private ImageView mImageView;
     private Button mDownloadButton;
     private Button mFollowButton;
-    private WorkerFragment mWorkFragment;
-    private LocationServicesFragment mLocationServicesFragment;
+    private Button mZoomButton;
+    private Button mResumeButton;
+    private PathDetailsActionListener actionListener;
 
     public PathDetailsView(Context context) {
         super(context);
@@ -72,14 +78,7 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
             mDescriptionView.setText(mDescription);
 
         buildButtonBar(mPathManager.getButtonActions(pathId));
-    }
-    
-    public void setDownloaderFragment(WorkerFragment f) {
-        this.mWorkFragment = f;
-    }
-
-    public void setLocationServiceFragment(LocationServicesFragment f) {
-        this.mLocationServicesFragment = f;
+        invalidate();
     }
 
     private void loadViews(){
@@ -90,11 +89,17 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         mDescriptionView=(TextView)findViewById(R.id.summary_description);
         mImageView=(ImageView)findViewById(R.id.summary_image);
         
-        mDownloadButton = (Button)findViewById(R.id.b_download);
+        mDownloadButton = (Button)findViewById(R.id.pdv_download);
         mDownloadButton.setOnClickListener(this);
 
-        mFollowButton = (Button)findViewById(R.id.b_follow);
+        mFollowButton = (Button)findViewById(R.id.pdv_follow);
         mFollowButton.setOnClickListener(this);
+
+        mZoomButton = (Button)findViewById(R.id.pdv_zoom);
+        mZoomButton.setOnClickListener(this);
+
+        mResumeButton = (Button)findViewById(R.id.pdv_resume);
+        mResumeButton.setOnClickListener(this);
     }
 
     private void buildButtonBar(ButtonActions actions) {
@@ -110,23 +115,27 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
     }
 
     private void disableButton(Button b) {
-        b.setClickable(false);
-        b.setActivated(false);
+        b.setVisibility(View.INVISIBLE);
     }
 
     private void enableButton(Button b) {
-        b.setClickable(true);
-        b.setActivated(true);
+        b.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.b_download) {
+        if (v.getId() == R.id.pdv_download) {
             Toast.makeText(getContext(), "downloading " + mName, Toast.LENGTH_LONG).show();
-            mWorkFragment.startGetNotes(mPathId);
-        } else if (v.getId() == R.id.b_follow) {
+            actionListener.onDownloadRequested(mPathId);
+        } else if (v.getId() == R.id.pdv_follow) {
             Toast.makeText(getContext(), "following " + mName, Toast.LENGTH_LONG).show();
-            mLocationServicesFragment.startUpdates();
+            actionListener.onFollowRequested(mPathId);
+        } else if (v.getId() == R.id.pdv_zoom) {
+            Toast.makeText(getContext(), "zooming " + mName, Toast.LENGTH_LONG).show();
+            actionListener.onZoomRequested(mPathId);
+        } else if (v.getId() == R.id.pdv_resume) {
+            Toast.makeText(getContext(), "resuming leading " + mName, Toast.LENGTH_LONG).show();
+            actionListener.onResumeLeadingRequested(mPathId);
         }
     }
 }

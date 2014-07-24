@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="fill|top"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:measureWithLargestChild="false"
+        android:gravity="top"
+        android:textAlignment="viewStart">
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:id="@+id/cn_b_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cn_cancel"
+            android:gravity="center"
+            android:layout_weight="1" />
+
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:id="@+id/cn_b_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cn_ok"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/cn_note_content"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:imeOptions="actionDone"
+        android:hint="@string/trailNotesHint"
+        android:layout_gravity="top|left">
+
+        <requestFocus />
+    </EditText>
+
+    <ImageView
+        android:id="@+id/cn_image"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:src="@android:drawable/screen_background_dark" />
+
+</LinearLayout>

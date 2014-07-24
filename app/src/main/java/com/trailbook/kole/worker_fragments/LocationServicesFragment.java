@@ -10,6 +10,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,7 +30,14 @@ public class LocationServicesFragment extends Fragment implements
         GooglePlayServicesClient.OnConnectionFailedListener,
         LocationListener {
 
+    private Location mCurrentLocation;
+
+    public interface LocationProcessor {
+        public void process(Location newLocation);
+    }
+
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 1;
+    private static final String WAIT_LOCK_ID = "TRAILBOOK_WAITLOCK";
     private Bus mBus = BusProvider.getInstance();
 
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -43,6 +51,9 @@ public class LocationServicesFragment extends Fragment implements
     private Activity mParent;
     private SharedPreferences.Editor mEditor;
     private boolean mUpdatesRequested;
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
+    private LocationProcessor mLocationProcessor;
 
     public LocationServicesFragment() {
         super();
@@ -58,10 +69,11 @@ public class LocationServicesFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
         setRetainInstance(true);
+        mPowerManager = (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
         mParent = getActivity();
         initializeSharedPreferences();
         
-        if (userHasDisabledGPSLocationServices())
+        if (!userHasDisabledGPSLocationServices())
             promptToEnableLocationServices();
 
         initializeLocationClient();
@@ -103,7 +115,7 @@ public class LocationServicesFragment extends Fragment implements
         if (mPrefs.contains("UPDATES_ON")) {
             setUpdatesToSavedValue();
         } else {
-            stopLocationUpdates();
+            stopUpdates();
         }
     }
 
@@ -119,10 +131,7 @@ public class LocationServicesFragment extends Fragment implements
     @Override
     public void onDestroy() {
         mBus.unregister(this);
-        if (mLocationClient.isConnected()) {
-            mLocationClient.removeLocationUpdates(this);
-        }
-        mLocationClient.disconnect();
+        stopUpdates();
 
         super.onDestroy();
     }
@@ -133,8 +142,7 @@ public class LocationServicesFragment extends Fragment implements
      */
     @Override
     public void onDetach() {
-        mEditor.putBoolean("UPDATES_ON", mUpdatesRequested);
-        mEditor.commit();
+        saveUpdateState(mUpdatesRequested);
         super.onDetach();
     }
 
@@ -152,6 +160,10 @@ public class LocationServicesFragment extends Fragment implements
     @Override
     public void onLocationChanged(Location l) {
         Log.d(Constants.TRAILBOOK_TAG, "location changed: " + l.toString());
+        mCurrentLocation = l;
+        if (mLocationProcessor != null)
+            mLocationProcessor.process(l);
+
         mBus.post(new LocationChangedEvent(l));
     }
 
@@ -186,17 +198,38 @@ public class LocationServicesFragment extends Fragment implements
         }
     }
 
-    public void startUpdates() {
-        mEditor.putBoolean("UPDATES_ON", false);
-        mEditor.commit();
+    public void startUpdates(LocationProcessor locationProcessor) {
+        mLocationProcessor = locationProcessor;
+        saveUpdateState(true);
         mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        keepListeningWhileAsleep();
     }
 
-
-    private void stopLocationUpdates() {
-        mEditor.putBoolean("UPDATES_OFF", false);
+    private void saveUpdateState(boolean flag) {
+        mEditor.putBoolean("UPDATES_ON", flag);
         mEditor.commit();
+    }
+
+    private void keepListeningWhileAsleep() {
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAIT_LOCK_ID);
+        Log.d(Constants.TRAILBOOK_TAG, "Aquiring lock");
+    }
+
+    public void stopUpdates() {
+        Log.d(Constants.TRAILBOOK_TAG, "stopping location updates");
+        mUpdatesRequested = false;
+        saveUpdateState(false);
         if (mLocationClient != null && mLocationClient.isConnected())
             mLocationClient.removeLocationUpdates(this);
+
+        dontListeningWhileAsleep();
+    }
+
+    private void dontListeningWhileAsleep() {
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            Toast.makeText(getActivity(), "releasing waitlock", Toast.LENGTH_SHORT).show();
+            mWakeLock.release();
+            Log.d(Constants.TRAILBOOK_TAG, "Releasing lock");
+        }
     }
 }

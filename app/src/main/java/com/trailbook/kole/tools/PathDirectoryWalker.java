@@ -38,6 +38,7 @@ public class PathDirectoryWalker extends DirectoryWalker {
     }
 
     private boolean isPathFile(File file) {
+        Log.d(Constants.TRAILBOOK_TAG, "file = " + file);
         if (file.getName().endsWith(".tb"))
             return true;
         else

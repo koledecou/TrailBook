@@ -49,15 +49,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Download"
-            android:id="@+id/b_download"
+            android:id="@+id/pdv_download"
             android:onClick="download" />
-
+        <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Follow"
+        android:id="@+id/pdv_follow" />
         <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Follow"
-            android:id="@+id/b_follow" />
+            android:text="Zoom"
+            android:id="@+id/pdv_zoom" />
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resume"
+            android:id="@+id/pdv_resume" />
     </LinearLayout>
 
 </LinearLayout>

@@ -24,6 +24,7 @@ public class BitmapFileTarget implements Target {
     @Override
     public void onSuccess(Bitmap bitmap) {
         try {
+            Log.d(Constants.TRAILBOOK_TAG, "writing image :" + mFile);
             FileUtils.writeByteArrayToFile(mFile, TrailbookFileUtilities.getBytes(bitmap));
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Error saving image file", e);

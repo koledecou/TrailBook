@@ -23,6 +23,7 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.annotations.Expose;
+import com.trailbook.kole.tools.TrailbookPathUtilities;
 
 
 public class Path {
@@ -51,12 +52,11 @@ public class Path {
             points.add(newPoint);
         }else{
             LatLng last = points.get(points.size() - 1);
-            float[] results = new float[5];
-            Location.distanceBetween(last.latitude, last.longitude, newPoint.latitude, newPoint.longitude, results);
-            if (results[0] > 200) {
-                Log.d("trailbook", "pathid: " + getSummary().getId() + " dist: " +  String.valueOf(results[0]) + " index: " + points.size());
+            float delta = TrailbookPathUtilities.getDistanceInMeters(last, newPoint);
+            if (delta > 200) {
+                Log.d("trailbook", "pathid: " + getSummary().getId() + " dist: " +  String.valueOf(delta) + " index: " + points.size());
             }
-            if (results[0]>MIN_DISTANCE_BETWEEN_POINTS && results[0] < MAX_DISTANCE_BETWEEN_POINTS)
+            if (delta>MIN_DISTANCE_BETWEEN_POINTS && delta < MAX_DISTANCE_BETWEEN_POINTS)
                 points.add(newPoint);
         }
     }
@@ -90,6 +90,19 @@ public class Path {
 
         LatLng start = points.get(0);
         return start;
+    }
+
+    public LatLng getEndCoords() {
+        if (points.size()<1)
+            return null;
+
+        LatLng end = points.get(points.size()-1);
+        return end;
+    }
+
+    public void setStartAndEnd() {
+        summary.setStart(getStartCoords());
+        summary.setEnd(getEndCoords());
     }
 
     public void addPoints(ArrayList<LatLng> newPoints) {

@@ -10,15 +10,81 @@
     <string name="action_example">Example action</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_maps">Map</string>
+    <string name="ringtones_cat">Ringtone Settings</string>
 
     <string-array name="nav_items">
+        <item>Find Path</item>
         <item>Follow Path</item>
-        <item>Search Cloud</item>
         <item>Create Path</item>
         <item>Upload Path</item>
         <item>Settings</item>
     </string-array>
 
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="warn_path_unfinished">This action will terminate the current path and start a new one.  Are you sure you want to start a new path?</string>
+    <string name="confirm_new_path_title">Confirm New Path</string>
+    <string name="cancel_new_path">Cancel</string>
+    <string name="ok_new_path">New Path</string>
+    <string name="new_path_dialog_title">New Path</string>
+    <string name="cpd_new_path">New Path</string>
+    <string name="cpd_cancel">Cancel</string>
+    <string name="cpd_title">New Path</string>
+    <string name="trailNotesHint">Write notes here.</string>
+    <string name="cn_ok">Save</string>
+    <string name="cn_cancel">Cancel</string>
+    <string name="create_note">Add Note</string>
+    <string name="take_picture">Take Picture</string>
+
+    <string name="general_settings">General Settings</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="upload_user_name">User Name</string>
+    <string name="upload_user_name_summary">User name to default for path upload.</string>
+    <string name="uom">Unit Of Measure</string>
+    <string name="uom_summary">Unit of measure for display.</string>
+    <string-array name="uom_items">
+        <item>US (feet/miles)</item>
+        <item>Metric (m/km)</item>
+    </string-array>
+    <string-array name="uom_vals">
+        <item>US</item>
+        <item>Metric</item>
+    </string-array>
+    <string name="enable_prox_alert_1">Play Alert 1</string>
+    <string name="enable_prox_alert_summary_1">Sound an alert when in the general vicinity of a note.</string>
+    <string name="ringtone_1">Ringtone to sound when in the general vicinity of a note.</string>
+    <string name="ringtone_title_1">Select Ringtone Vicinity</string>
+    <string name="enable_prox_alert_2">Play Alert 2</string>
+    <string name="enable_prox_alert_summary_2">Sound an alert when getting close to a note</string>
+    <string name="ringtone_2">Ringtone to sound when close to a note.</string>
+    <string name="ringtone_title_2">Select Ringtone Close</string>
+    <string name="auto_play">Auto Play</string>
+    <string name="auto_play_summary">Auto play audio notes when approaching.</string>
+    <string name="auto_play_radius">Auto Play Radius</string>
+    <string name="auto_play_radius_summary">Distance at which to auto play audio notes (ft/meters).</string>
+    <string name="enable_offroute_alert">Enable Off Route Alert</string>
+    <string name="off_route_alert">Select Ringtone</string>
+    <string name="off_route_ringtone_summary">Ringtone to sound when off route.</string>
+    <string name="off_route_distance">Off Route Distance</string>
+    <string name="off_route_distance_summary">Distance off route at which to sound an alert (ft/meters).</string>
+    <string name="battery_settings">Battery Settings</string>
+    <string name="polling_frequency_high">Polling Frequencey High</string>
+    <string name="polling_frequency_high_summary">Interval (seconds) to poll location data in high accuracy mode.</string>
+    <string name="polling_frequency_medium">Polling Frequencey Medium</string>
+    <string name="polling_frequency_medium_summary">Interval (seconds) to poll location data in medium accuracy mode.</string>
+    <string name="polling_frequency_low">Polling Frequencey Low</string>
+    <string name="polling_frequency_low_summary">Interval (seconds) at which to poll location data in battery saving mode.</string>
+    <string name="idle">Enable idling</string>
+    <string name="idle_summary">Idle when movment is not dectedted within the specified time.</string>
+    <string name="idle_time">Idle Time (minutes)</string>
+    <string name="idle_time_summary">Idle when movement is not dected within this number of minutes.</string>
+    <string name="idle_distance">Idle Distance (ft/m)</string>
+    <string name="idle_distance_summary">If you haven\'t traveled at least this distance (feet/meters) within the idle time location polling will stop until manually resumed.</string>
+    <string name="follower_options">Follower Options</string>
+    <string name="proximity_far_cat">General Proximity Radius Alert Settings</string>
+    <string name="proximity_close_cat">Close Proximity Radius Alert Settings</string>
+    <string name="off_route_cat">Off Route Alert Settings</string>
+    <string name="auto_play_cat">Auto Play Audio Note Settings</string>
+    <string name="alertDistance">Alert when nearing note</string>
+
 
 </resources>

@@ -1,11 +1,13 @@
 package com.trailbook.kole.fragments;
 
-import android.graphics.Point;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -14,6 +16,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tagmanager.Container;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
@@ -29,12 +32,17 @@ import com.trailbook.kole.events.NoteAddedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.PathManager;
-import com.trailbook.kole.worker_fragments.LocationServicesFragment;
+import com.trailbook.kole.tools.TrailbookPathUtilities;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
+
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by Fistik on 6/30/2014.
@@ -43,17 +51,20 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     private static final String LOG_TAG = "MyMapFragment";
     private static final float THICK = 10;
     private static final float MEDIUM = 6;
+    private String mActivePathId;
+
+    public enum MarkerType {START,END,NOTE,UNKNOWN}
 
     private Bus bus;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
     private int mMode = Constants.SEARCH_MODE;
     private PathManager mPathManager;
-    private HashMap<Marker, String> mMarkers;
-    private HashMap<Polyline, String> mPathPolylines;
+    private BidiMap<String, Marker> mStartMarkers;
+    private BidiMap<String, Marker> mEndMarkers;
+    private BidiMap<String, Polyline> mPathPolylines;
     private SlidingUpPanelLayout mMainPanel;
-    private PathDetailsView mDetailsView;
-    private HashMap<Marker,String> mNoteMarkers;
+    private BidiMap<String,Marker> mNoteMarkers;
 
     /**
      * Listener interface to tell when the map is ready
@@ -73,9 +84,10 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         bus.register(this);
         mPathManager = PathManager.getInstance();
 
-        mMarkers = new HashMap<Marker, String>();
-        mNoteMarkers = new HashMap<Marker, String>();
-        mPathPolylines = new HashMap<Polyline, String>();
+        mStartMarkers = new DualHashBidiMap<String, Marker>();
+        mEndMarkers = new DualHashBidiMap<String, Marker>();
+        mNoteMarkers = new DualHashBidiMap<String, Marker>();
+        mPathPolylines = new DualHashBidiMap<String, Polyline>();
         mMainPanel = (SlidingUpPanelLayout) getActivity().findViewById(R.id.main_panel);
     }
 
@@ -94,17 +106,29 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         mMap.setOnMapClickListener(this);
         setUpMapIfNeeded();
         if (mMode==Constants.SEARCH_MODE) {
-            //get paths within the bounds of the current map.
-            //testing: always search for paths for now
+            //todo: get paths within the bounds of the current map.
+            //todo: testing: always search for paths for now
 
-            getPathsFromDevice();
+            mPathManager.loadPathsFromDevice(getActivity());
             startPathSummarySearch();
         }
         return v;
     }
 
-    private void getPathsFromDevice() {
-        mPathManager.loadPathsFromDevice(getActivity());
+    public void showNotesOnlyForPath(String pathId) {
+        hideAllNoteMarkers();
+        HashMap<String, PointAttachedObject<Note>> pointNotes = mPathManager.getPath(pathId).getPointNotes();
+        showPointNotes(pointNotes);
+    }
+
+    private void hideAllNoteMarkers() {
+        Set<Marker> noteMarkers = mNoteMarkers.values();
+        ArrayList<String> removedNoteIds = new ArrayList<String>();
+        for (Marker m:noteMarkers) {
+            String noteId = mNoteMarkers.getKey(m);
+            removedNoteIds.add(noteId);
+            m.setVisible(false);
+        }
     }
 
     @Override
@@ -117,24 +141,88 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        String pathId = mMarkers.get(marker);
-        Path path = mPathManager.getPath(pathId);
-        PathSummary summary = null;
-        if (path != null) {
-            summary = path.getSummary();
-            mDetailsView = (PathDetailsView)getActivity().findViewById(R.id.details_panel);
-            //mDetailsView = new PathDetailsView(getActivity());
-            mDetailsView.setPathId(pathId);
-
-            WorkerFragment workFragment = ((MapsActivity)getActivity()).getWorkerFragment();
-            LocationServicesFragment locationServicesFragment = ((MapsActivity)getActivity()).getLocationServicesFragment();
-            mDetailsView.setDownloaderFragment(workFragment);
-            mDetailsView.setLocationServiceFragment(locationServicesFragment);
-
-            if (mMainPanel != null && !mMainPanel.isPanelExpanded())
-                mMainPanel.expandPanel();
+        MarkerType markerType = getMarkerType(marker);
+        if (markerType == MarkerType.START) {
+            String pathId = mStartMarkers.getKey(marker);
+            return showPathSummary(pathId);
+        } else if (markerType == MarkerType.END) {
+            String pathId = mEndMarkers.getKey(marker);
+            return showPathSummary(pathId);
+        }  else if (markerType == MarkerType.NOTE) {
+            String noteId = mNoteMarkers.getKey(marker);
+            return showNote(noteId);
         }
         return false;
+    }
+
+    private boolean showNote(String noteId) {
+        if (noteId == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "Null Path ID");
+            return true;
+        }
+        noteId = noteId.substring(0,noteId.length());
+
+        NoteView nv = getNoteView(noteId);
+        addViewToSlidingUpPanel(nv);
+
+        if (mMainPanel != null && !mMainPanel.isPanelExpanded())
+            mMainPanel.expandPanel();
+
+        return false;
+    }
+
+    private NoteView getNoteView(String noteId) {
+//        NoteView nv = (NoteView) getActivity().getLayoutInflater().inflate(R.layout.view_note, null);
+        NoteView nv = new NoteView(getActivity());
+        nv.setNoteId(noteId);
+        return nv;
+    }
+
+    private boolean showPathSummary(String pathId) {
+        if (pathId == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "Null Path ID");
+            return true;
+        }
+        PathDetailsView pdv = getPathDetailsView(pathId);
+        addViewToSlidingUpPanel(pdv);
+
+        if (mMainPanel != null && !mMainPanel.isPanelExpanded())
+            mMainPanel.expandPanel();
+
+        return false;
+    }
+
+    private void addViewToSlidingUpPanel(View v) {
+        LinearLayout panelContainer = (LinearLayout)getActivity().findViewById(R.id.details_panel_container);
+        panelContainer.removeAllViews();
+        panelContainer.addView(v);
+    }
+
+    private PathDetailsView getPathDetailsView(String pathId) {
+//        PathDetailsView pv = (PathDetailsView) getActivity().getLayoutInflater().inflate(R.layout.path_details, null);
+        PathDetailsView pv = new PathDetailsView(getActivity());
+        pv.setPathId(pathId);
+        pv.setActionListener((PathDetailsActionListener) getActivity());
+        return pv;
+    }
+
+
+    private MarkerType getMarkerType(Marker marker) {
+        //TODO: refactor me
+        String id = mStartMarkers.getKey(marker);
+        if (id != null) {
+            return MarkerType.START;
+        }
+        id = mEndMarkers.getKey(marker);
+        if (id != null) {
+            return MarkerType.END;
+        }
+        id = mNoteMarkers.getKey(marker);
+        if (id != null) {
+            return MarkerType.NOTE;
+        }
+
+        return MarkerType.UNKNOWN;
     }
 
     /**
@@ -210,13 +298,21 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     }
 
     private void addPathToMap(Path path) {
-        PolylineOptions lineOptions = getPolylineOptions(path);
         PathSummary summary = path.getSummary();
         addPathSummary(summary);
-        if (path.getPointNotes() != null)
+        if (path.getPointNotes() != null && isDisplayNotes(path.getId()))
             addPointNotes(path.getPointNotes());
 
-        addPoints(path, lineOptions);
+        addPoints(path, getPolylineOptions(path));
+    }
+
+    private boolean isDisplayNotes(String pathId) {
+        if (!pathId.equals(mActivePathId))
+            return false;
+        if (((MapsActivity)getActivity()).getMode() == MapsActivity.Mode.SEARCH)
+            return false;
+
+        return true;
     }
 
     private void addPointNotes(HashMap<String, PointAttachedObject<Note>> pointNotes) {
@@ -226,10 +322,26 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         }
     }
 
+    private void showPointNotes(HashMap<String, PointAttachedObject<Note>> pointNotes) {
+        Collection<PointAttachedObject<Note>> notes = pointNotes.values();
+        for (PointAttachedObject<Note> paoNote:notes) {
+            showPointNote(paoNote);
+        }
+    }
+
+    private void showPointNote(PointAttachedObject<Note> paoNote) {
+        String noteId = paoNote.getAttachment().getNoteID();
+        Marker m = mNoteMarkers.get(noteId);
+        if (m != null)
+            m.setVisible(true);
+        else
+            addPointNote(paoNote);
+    }
+
     private PolylineOptions getPolylineOptions(Path path) {
         PolylineOptions o = new PolylineOptions();
         if (path.isDownloaded()) {
-            o.color(R.color.DodgerBlue);
+            o.color(R.color.Gold);
             o.width(THICK);
         } else {
             o.color(R.color.PowderBlue);
@@ -242,7 +354,7 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     private void addPointNote(PointAttachedObject<Note> paoNote) {
         Note note = paoNote.getAttachment();
         String noteId = note.getNoteID();
-        if (!mNoteMarkers.containsValue(noteId)){
+        if (mNoteMarkers.get(noteId) == null){
             String content = "note";
             //TODO: image
             if (note.getNoteContent() != null && note.getNoteContent().length()>0)
@@ -251,21 +363,16 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
             //TODO: put the real note icon in
             Marker noteMarker = mMap.addMarker(options.position(paoNote.getLocation()).title(content));
 
-            mMarkers.put(noteMarker, noteId);
+            mNoteMarkers.put(noteId, noteMarker);
         }
     }
 
     private void addPoints(Path p, PolylineOptions o) {
         String id = p.getId();
+        Polyline line = mPathPolylines.get(p.getId());
         ArrayList<LatLng> points = p.getPoints();
-        if (points == null || points.size() < 2)
-            return;
+        putPolylineOnMap(o, points, id);
 
-        //TODO: check if the points have changed.
-        if (!mPathPolylines.containsValue(id)) {
-            addPointsToPolylineOptions(o, points);
-            putPolylineOnMap(o, id);
-        }
     }
 
     private void addPointsToPolylineOptions(PolylineOptions o, ArrayList<LatLng> points) {
@@ -273,18 +380,37 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
             o.add(point);
     }
 
-    private void putPolylineOnMap(PolylineOptions o, String id) {
+    private void putPolylineOnMap(PolylineOptions o, ArrayList<LatLng> points, String id) {
+        if (points == null || points.size() < 2)
+            return;
+
+        Polyline oldLine = mPathPolylines.get(id);
+        if (oldLine != null)
+            oldLine.setPoints(points);
+        else {
+            putNewPolylineOnMap(o, points, id);
+        }
+    }
+
+    private void putNewPolylineOnMap(PolylineOptions o, ArrayList<LatLng> points, String id) {
+        addPointsToPolylineOptions(o, points);
         Polyline polyline = mMap.addPolyline(o);
-        mPathPolylines.put(polyline, id);
+        mPathPolylines.put(id, polyline);
     }
 
     private void addPathSummary(PathSummary summary) {
         //TODO: check if start or end has changed.
-        if (!mMarkers.containsValue((summary.getId()))) {
+        if (mStartMarkers.get(summary.getId()) == null && summary != null && summary.getStart() != null && summary.getEnd() != null) {
             Marker startMarker = mMap.addMarker(new MarkerOptions().position(summary.getStart()).title(summary.getName()));
-            mMarkers.put(startMarker, summary.getId());
+            mStartMarkers.put(summary.getId(), startMarker);
             Marker endMarker = mMap.addMarker(new MarkerOptions().position(summary.getEnd()).title("end " + summary.getName()));
-            mMarkers.put(endMarker, summary.getId());
+            mEndMarkers.put(summary.getId(), endMarker);
         }
+    }
+
+    public void zoom(String pathId) {
+        Path p = mPathManager.getPath(pathId);
+        LatLng start = p.getSummary().getStart();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(start, mMap.getMaxZoomLevel()));
     }
 }

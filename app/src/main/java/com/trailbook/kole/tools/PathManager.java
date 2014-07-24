@@ -2,6 +2,7 @@ package com.trailbook.kole.tools;
 
 import android.app.Activity;
 import android.content.Context;
+import android.location.Location;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -29,6 +30,9 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
@@ -90,11 +94,16 @@ public class PathManager {
         Path thisPath = mPaths.get(pathId);
         if (thisPath != null) {
             for (PointAttachedObject<Note> paoNote:pointNotes) {
-                thisPath.addPointNote(paoNote);
-                bus.post(new NoteAddedEvent(paoNote));
+                addNoteToPath(thisPath, paoNote);
             }
         }
         bus.post(new AllNotesAddedEvent(pointNotes, pathId));
+    }
+
+    public void addNoteToPath(Path p, PointAttachedObject<Note> paoNote) {
+        Log.d(Constants.TRAILBOOK_TAG, "adding note: " + paoNote.getLocation() + "   " + paoNote.attachment.getNoteContent());
+        p.addPointNote(paoNote);
+        bus.post(new NoteAddedEvent(paoNote));
     }
 
     public Path getPath(String pathId) {
@@ -149,15 +158,48 @@ public class PathManager {
 
     public ButtonActions getButtonActions(String pathId) {
         ButtonActions actions = new ButtonActions();
-        actions.mCanDownloadPath = true;
 
         Path p = getPath(pathId);
         if (!p.isDownloaded()) {
             actions.mCanFollowPath = false;
+            actions.mCanDownloadPath = true;
         } else {
             actions.mCanFollowPath = true;
+            actions.mCanDownloadPath = false;
         }
 
         return actions;
+    }
+
+    public String makeNewPath(String pathName) {
+        String pathId = TrailbookPathUtilities.getNewPathId();
+        Path p = new Path(pathId);
+        PathSummary summary = p.getSummary();
+        summary.setName(pathName);
+        summary.setDescription("");
+
+        addPath(p);
+        return pathId;
+    }
+
+    public void addPointToPath(String mPathId, Location newLocation) {
+        Path p = getPath(mPathId);
+        PathSummary summary = p.getSummary();
+
+        LatLng point = new LatLng(newLocation.getLatitude(), newLocation.getLongitude());
+        p.addPoint(point);
+        p.setStartAndEnd();
+        bus.post(new PathUpdatedEvent(p));
+    }
+
+    public PointAttachedObject<Note> getNote(String noteId) {
+        Collection<Path> pathColl = mPaths.values();
+        for (Path p: pathColl) {
+            HashMap<String,PointAttachedObject<Note>> notes = p.getPointNotes();
+            PointAttachedObject<Note> paoNote = notes.get(noteId);
+            if (paoNote != null)
+                return paoNote;
+        }
+        return null;
     }
 }
