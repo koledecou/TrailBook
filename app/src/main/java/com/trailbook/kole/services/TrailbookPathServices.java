@@ -2,6 +2,7 @@ package com.trailbook.kole.services;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.events.NotesReceivedEvent;
 import com.trailbook.kole.events.PathPointsReceivedEvent;
@@ -11,10 +12,17 @@ import java.util.List;
 import java.util.Map;
 
 import retrofit.Callback;
+import retrofit.client.Response;
+import retrofit.http.Body;
+import retrofit.http.Field;
+import retrofit.http.FormUrlEncoded;
 import retrofit.http.GET;
-import retrofit.http.Path;
+import retrofit.http.Multipart;
+import retrofit.http.POST;
+import retrofit.http.Part;
 import retrofit.http.Query;
 import retrofit.http.QueryMap;
+import retrofit.mime.TypedFile;
 
 /**
  * Created by Fistik on 7/2/2014.
@@ -28,4 +36,16 @@ public  interface TrailbookPathServices {
 
     @GET(Constants.getNotesScript)
     void getNotes(@QueryMap Map<String, String> options, Callback<NotesReceivedEvent.PathIDWithNotes> cb);
+
+    @FormUrlEncoded
+    @POST(Constants.uploadPathJson)
+    void postPath(@Field("path") String path, @Field("id") String pathId, Callback<String> cb);
+
+    @Multipart
+    @POST(Constants.uploadImage)
+    void uploadImage(
+            @Part("pathid") String pathId,
+            @Part("file_name") String fileName,
+            @Part("file") TypedFile imageFile,
+            Callback<String> cb);
 }

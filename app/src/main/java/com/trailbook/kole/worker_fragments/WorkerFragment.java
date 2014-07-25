@@ -1,18 +1,18 @@
 package com.trailbook.kole.worker_fragments;
 
+import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
-import android.widget.ImageView;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
-import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
+import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.NoteAddedEvent;
@@ -22,14 +22,13 @@ import com.trailbook.kole.events.PathSummariesReceivedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.services.TrailbookPathServices;
 import com.trailbook.kole.tools.BusProvider;
-import com.trailbook.kole.tools.BitmapFileTarget;
 import com.trailbook.kole.tools.DownloadImageTask;
 import com.trailbook.kole.tools.TrailbookFileUtilities;
+import com.trailbook.kole.tools.TrailbookPathUtilities;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -199,5 +198,46 @@ public class WorkerFragment extends Fragment {
         };
 
         mService.getNotes(options, callback);
+    }
+
+    public void startPathUpload(Path p) {
+        Callback<String> pathUploadedCallback = new Callback<String>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path", error);
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
+            }
+
+            @Override
+            public void success(String sResponse, Response response) {
+                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
+            }
+        };
+
+        Callback<String> imageUploadedCallback = new Callback<String>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path", error);
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
+            }
+
+            @Override
+            public void success(String sResponse, Response response) {
+                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
+            }
+        };
+
+        String jsonString = TrailbookPathUtilities.getPathJSONString(p);
+        Log.d(Constants.TRAILBOOK_TAG, jsonString);
+        mService.postPath(jsonString, p.getId(), pathUploadedCallback);
+        ArrayList<Note> notes = p.getNotes();
+        for (Note n:notes) {
+            if (n.getImageFileName() != null && n.getImageFileName().length()>0) {
+                //todo: fix this
+      //          TrailbookFileUtilities.uploadImageFileFromNote(getActivity(), n);
+            }
+        }
     }
 }

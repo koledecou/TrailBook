@@ -7,7 +7,6 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.ButtonActions;
@@ -23,7 +22,6 @@ import com.trailbook.kole.events.PathPointsReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
-import com.trailbook.kole.fragments.PathDetailsView;
 
 import org.apache.commons.io.FileUtils;
 
@@ -31,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 
@@ -117,7 +114,7 @@ public class PathManager {
     public void savePath(String pathId, Context c) {
         Log.d(Constants.TRAILBOOK_TAG, "Saving " + pathId);
         Path path = getPath(pathId);
-        String pathString = getPathString(path);
+        String pathString = TrailbookPathUtilities.getPathJSONString(path);
         File pathFile = TrailbookFileUtilities.getInternalPathFile(c, pathId);
         try {
             FileUtils.write(pathFile, pathString);
@@ -126,11 +123,6 @@ public class PathManager {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Error saving path", e);
         }
-    }
-
-    private String getPathString(Path path) {
-        Gson gson = new GsonBuilder().excludeFieldsWithModifiers().create();
-        return gson.toJson(path);
     }
 
     public void loadPathsFromDevice(Activity activity) {
@@ -146,6 +138,7 @@ public class PathManager {
         Gson gson = new Gson();
         Path p = gson.fromJson(content, Path.class);
         p.setDownloaded(true);
+        Log.d(Constants.TRAILBOOK_TAG, p.getSummary().getName() + ", " + p.getId());
         addPath(p);
     }
 
@@ -201,5 +194,14 @@ public class PathManager {
                 return paoNote;
         }
         return null;
+    }
+
+    public ArrayList<PathSummary> getDownloadedPathSummaries() {
+        ArrayList<PathSummary> downloadedPathSummaries = new ArrayList<PathSummary>();
+        for (Path p:mPaths.values()) {
+            if (p.isDownloaded())
+                downloadedPathSummaries.add(p.getSummary());
+        }
+        return downloadedPathSummaries;
     }
 }

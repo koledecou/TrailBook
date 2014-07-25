@@ -3,6 +3,8 @@ package com.trailbook.kole.tools;
 import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.trailbook.kole.data.Path;
 
 import java.util.Date;
@@ -43,6 +45,11 @@ public class TrailbookPathUtilities {
     public static String getNewPathId() {
         Date date = new Date();
         return String.valueOf(date.getTime());
+    }
+
+    public static String getPathJSONString(Path path) {
+        Gson gson = new GsonBuilder().excludeFieldsWithModifiers().create();
+        return gson.toJson(path);
     }
 
 }

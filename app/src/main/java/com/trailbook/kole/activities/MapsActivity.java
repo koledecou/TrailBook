@@ -23,6 +23,7 @@ import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
+import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.fragments.AlertDialogFragment;
@@ -31,6 +32,8 @@ import com.trailbook.kole.fragments.CreatePathDialogFragment;
 import com.trailbook.kole.fragments.MyMapFragment;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.fragments.PathDetailsActionListener;
+import com.trailbook.kole.fragments.PathSelectorFragment;
+import com.trailbook.kole.fragments.PathsToUploadSelectorFragment;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.PathFollowerLocationProcessor;
@@ -40,17 +43,21 @@ import com.trailbook.kole.tools.TrailbookPathUtilities;
 import com.trailbook.kole.worker_fragments.LocationServicesFragment;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
 
+import java.util.ArrayList;
+
 public class MapsActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
         PathDetailsActionListener,
         AlertDialogFragment.AlertDialogListener,
         CreatePathDialogFragment.CreatePathDialogListener,
-        CreateNoteFragment.CreateNoteFragmentListener{
+        CreateNoteFragment.CreateNoteFragmentListener,
+        PathSelectorFragment.OnFragmentInteractionListener {
 
     private static final int CONFIRM_CREATE_DIALOG_ID = 1;
-    private static final String MAPS_ACTIVITY_TAG = "MAPS_ACTIVITY_TAG";
-    private static final String ADD_NOTE_FRAG_TAG = "ADD_NOTE_FRAG_TAG";
-    private static final String PREF_FRAG_TAG = "PREF_FRAG_TAG";
+    private static final String MAPS_ACTIVITY_TAG = "MAPS_ACTIVITY";
+    private static final String ADD_NOTE_FRAG_TAG = "ADD_NOTE_FRAG";
+    private static final String PREF_FRAG_TAG = "PREF_FRAG";
+    private static final String PATH_SELECT_UPLOAD_TAG = "PATH_SELECT_UPLOAD";
 
     private CharSequence mTitle; // Used to store the last screen title. For use in {@link #restoreActionBar()}.
     private MyMapFragment mMapFragment;
@@ -65,6 +72,7 @@ public class MapsActivity extends Activity
     private SlidingUpPanelLayout mSlidingUpPanel;
     private Location mCurrentLocation;
     private String mCurrentPathId;
+    private Fragment mPathSelectorFragment;
 
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event){
@@ -79,6 +87,7 @@ public class MapsActivity extends Activity
         PointAttachedObject<Note> note = new PointAttachedObject<Note>(point,newNote);
         if (mCurrentPathId != null) {
             mPathManager.addNoteToPath(mPathManager.getPath(mCurrentPathId), note);
+            mPathManager.savePath(mCurrentPathId, this);
         }
     }
 
@@ -86,6 +95,19 @@ public class MapsActivity extends Activity
     public void onNoteCreateCanceled() {
         getFragmentManager().popBackStackImmediate();
         invalidateOptionsMenu();
+    }
+
+    @Override
+    public void onFragmentInteraction(String action, String pathId) {
+        if (PathSelectorFragment.UPLOAD == action) {
+            Path p = mPathManager.getPath(pathId);
+            if (p != null) {
+                //TODO: update path details and confirm
+                Toast.makeText(this, "Uploading " + p.getSummary().getName(), Toast.LENGTH_SHORT).show();
+                mWorkFragment.startPathUpload(mPathManager.getPath(pathId));
+            } else
+                Log.e(Constants.TRAILBOOK_TAG, "null path ID in path upload selected");
+        }
     }
 
     public enum Mode {SEARCH,LEAD,FOLLOW}
@@ -106,14 +128,10 @@ public class MapsActivity extends Activity
         setUpNavDrawerFragment();
         setUpPreferencesFragment();
         setUpLocationServicesFragmentIfNeeded();
+    }
 
-        getFragmentManager().addOnBackStackChangedListener(
-                new FragmentManager.OnBackStackChangedListener() {
-                    public void onBackStackChanged() {
-                        Log.d(Constants.TRAILBOOK_TAG, "backstack changed");
-                        Toast.makeText(getApplicationContext(), "Backstack changed", Toast.LENGTH_SHORT).show();
-                    }
-                });
+    private PathsToUploadSelectorFragment getPathSelectorFragmentForDownloadedPaths() {
+        return PathsToUploadSelectorFragment.newInstance();
     }
 
     private void setUpPreferencesFragment() {
@@ -247,7 +265,7 @@ public class MapsActivity extends Activity
             //TODO:  warnIfStoppingUnfinishedPath();
             openNewPathDialog();
         } else if (position == 3) {
-            //todo: upload
+            switchFragmentAndAddToBackstack(getPathSelectorFragmentForDownloadedPaths(), PATH_SELECT_UPLOAD_TAG);
         } else if (position == 4) { // prefs
             switchFragmentAndAddToBackstack(mPreferencesFragment, PREF_FRAG_TAG);
         } else {

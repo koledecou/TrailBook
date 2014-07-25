@@ -68,7 +68,6 @@ public class NoteView extends LinearLayout {
         }
 
         mTextViewLocationInfo.setText("This note is 354 feet SW of you");
-
     }
 
     private void loadViews(){

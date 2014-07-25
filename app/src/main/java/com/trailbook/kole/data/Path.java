@@ -3,6 +3,7 @@ package com.trailbook.kole.data;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -83,6 +84,16 @@ public class Path {
 
         return null;
     }
+
+    public ArrayList<Note> getNotes() {
+        ArrayList<Note> notes = new ArrayList<Note>();
+        Collection<PointAttachedObject<Note>> paoNotes = getPointNotes().values();
+        for (PointAttachedObject<Note> paoNote : paoNotes) {
+            notes.add(paoNote.getAttachment());
+        }
+        return notes;
+    }
+
 
     public LatLng getStartCoords() {
         if (points.size()<1)

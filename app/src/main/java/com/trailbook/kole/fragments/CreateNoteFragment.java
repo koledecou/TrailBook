@@ -27,6 +27,8 @@ import com.trailbook.kole.data.Note;
 import com.trailbook.kole.tools.TrailbookFileUtilities;
 import com.trailbook.kole.tools.TrailbookPathUtilities;
 
+import org.apache.commons.io.FileUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
