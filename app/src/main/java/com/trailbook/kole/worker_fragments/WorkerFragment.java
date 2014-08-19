@@ -26,6 +26,8 @@ import com.trailbook.kole.tools.DownloadImageTask;
 import com.trailbook.kole.tools.TrailbookFileUtilities;
 import com.trailbook.kole.tools.TrailbookPathUtilities;
 
+import org.apache.http.entity.mime.MultipartEntity;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -201,10 +203,36 @@ public class WorkerFragment extends Fragment {
     }
 
     public void startPathUpload(Path p) {
-        Callback<String> pathUploadedCallback = new Callback<String>(){
+        Callback<String> pathSummaryUploadedCallback = new Callback<String>(){
             @Override
             public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path", error);
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path summary", error);
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
+            }
+
+            @Override
+            public void success(String sResponse, Response response) {
+                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
+            }
+        };
+        Callback<String> pathPointsUploadedCallback = new Callback<String>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload points", error);
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
+            }
+
+            @Override
+            public void success(String sResponse, Response response) {
+                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
+            }
+        };
+        Callback<String> pathPointNotesUploadedCallback = new Callback<String>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload point notes", error);
                 Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
                 Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
             }
@@ -218,7 +246,7 @@ public class WorkerFragment extends Fragment {
         Callback<String> imageUploadedCallback = new Callback<String>(){
             @Override
             public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path", error);
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload images", error);
                 Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
                 Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
             }
@@ -229,15 +257,54 @@ public class WorkerFragment extends Fragment {
             }
         };
 
-        String jsonString = TrailbookPathUtilities.getPathJSONString(p);
-        Log.d(Constants.TRAILBOOK_TAG, jsonString);
-        mService.postPath(jsonString, p.getId(), pathUploadedCallback);
+        PostPathSummary(p, pathSummaryUploadedCallback);
+        PostPathPoints(p, pathPointsUploadedCallback);
+        PostPathPointNotes(p, pathPointNotesUploadedCallback);
+        PostImages(p);
+    }
+
+    private void PostImages(Path p) {
         ArrayList<Note> notes = p.getNotes();
+        ArrayList<MultipartEntity> entities = new ArrayList<MultipartEntity>();
         for (Note n:notes) {
             if (n.getImageFileName() != null && n.getImageFileName().length()>0) {
-                //todo: fix this
-      //          TrailbookFileUtilities.uploadImageFileFromNote(getActivity(), n);
+                MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForNoteImage(getActivity(), n);
+                if (entity != null)
+                    entities.add(entity);
             }
         }
+
+        startImageUpload(entities);
+    }
+
+    private void PostPathSummary(Path p, Callback<String> cb) {
+        String pathSummaryFileContents = TrailbookPathUtilities.getPathSummaryJSONString(p);
+        Log.d(Constants.TRAILBOOK_TAG, pathSummaryFileContents);
+        String fileName = p.getId() + "_summary.tb";
+        String dir = p.getId();
+        mService.postStringFileContents(pathSummaryFileContents, dir, fileName, cb);
+    }
+
+    private void PostPathPoints(Path p, Callback<String> cb) {
+        String pathPointsFileContents = TrailbookPathUtilities.getPathPointsJSONString(p);
+        Log.d(Constants.TRAILBOOK_TAG, pathPointsFileContents);
+        String fileName = p.getId() + "_points.tb";
+        String dir = p.getId();
+        mService.postStringFileContents(pathPointsFileContents, dir, fileName, cb);
+    }
+
+    private void PostPathPointNotes(Path p, Callback<String> cb) {
+        String pathPointNotesContents = TrailbookPathUtilities.getPathPointNotesJSONString(p);
+        Log.d(Constants.TRAILBOOK_TAG, pathPointNotesContents);
+        String fileName = p.getId() + "_notes.tb";
+        String dir = p.getId();
+        mService.postStringFileContents(pathPointNotesContents, dir, fileName, cb);
+    }
+
+    private void startImageUpload(ArrayList<MultipartEntity> entities) {
+        AsyncUploadMultipartEntities uploadImageTask = new AsyncUploadMultipartEntities(TrailbookFileUtilities.getImageUploadUrl());
+        MultipartEntity[] entitiesArray = new MultipartEntity[entities.size()];
+        entities.toArray(entitiesArray);
+        uploadImageTask.execute(entitiesArray);
     }
 }

@@ -38,8 +38,8 @@ public  interface TrailbookPathServices {
     void getNotes(@QueryMap Map<String, String> options, Callback<NotesReceivedEvent.PathIDWithNotes> cb);
 
     @FormUrlEncoded
-    @POST(Constants.uploadPathJson)
-    void postPath(@Field("path") String path, @Field("id") String pathId, Callback<String> cb);
+    @POST(Constants.uploadJson)
+    void postStringFileContents(@Field("contents") String fileContents, @Field("dir") String dir, @Field("fileName") String fileName, Callback<String> cb);
 
     @Multipart
     @POST(Constants.uploadImage)

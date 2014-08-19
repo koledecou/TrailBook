@@ -47,9 +47,23 @@ public class TrailbookPathUtilities {
         return String.valueOf(date.getTime());
     }
 
-    public static String getPathJSONString(Path path) {
-        Gson gson = new GsonBuilder().excludeFieldsWithModifiers().create();
-        return gson.toJson(path);
+    public static String getPathSummaryJSONString(Path path) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(path.getSummary());
     }
 
+    public static String getPathPointNotesJSONString(Path path) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(path.getPointNotes());
+    }
+
+    public static String getPathPointsJSONString(Path path) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(path.getPoints());
+    }
+
+    public static String getPathJSONString(Path path) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(path);
+    }
 }

@@ -16,15 +16,25 @@ import com.trailbook.kole.data.Path;
 import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.net.http.AndroidHttpClient;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -194,36 +204,21 @@ public class TrailbookFileUtilities {
 
         return uploadPicturesURL;
     }
-/*
-    public static void uploadImageFileFromNote(Context c, Note n) {
 
-        AndroidHttpClient httpclient = new AndroidHttpClient();
-        HttpPost httppost = new HttpPost(getImageUploadUrl());
-
-        File imageFile = getInternalImageFile(c, n.getParentPathId(), n.getImageFileName());
-
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-        FileBody fileBody = new FileBody(imageFile); //image should be a String
-        builder.addPart("imageFile", fileBody);
-        builder.addTextBody("pathId", n.getParentPathId());
-        builder.addTextBody("noteId", n.getNoteID());
-
-        HttpEntity entity = builder.build();
-        httppost.setEntity(entity);
+    public static MultipartEntity getMultipartEntityForNoteImage(Context c, Note n) {
         try {
-            HttpResponse response = httpclient.execute(httppost);
-            Log.d(Constants.TRAILBOOK_TAG, "response:" + getResponse(response));
+            File imageFile = getInternalImageFile(c, n.getParentPathId(), n.getImageFileName());
+            MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+
+            entity.addPart("pathId", new StringBody(n.getParentPathId()));
+            entity.addPart("noteId", new StringBody(n.getNoteID()));
+            entity.addPart("imageFile",  new FileBody(imageFile)); //image should be a String
+
+            return entity;
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "error uploadig image", e);
+            Log.e(Constants.TRAILBOOK_TAG, "error getting multipart entity", e);
+            return null;
         }
-
-        try {
-            OutputStream os = connectForMultipart(getImageUploadUrl());
-        }catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "error in uploading file", e);
-        }
-
     }
 
     public static String getBoundry() {
@@ -263,5 +258,5 @@ public class TrailbookFileUtilities {
 
         return os;
     }
-    */
+
 }

@@ -14,7 +14,7 @@ public class Constants {
     public static final String pathSummaryScript = "/getPathSummaries.py";
     public static final String getPathPointsScript = "/getPathPoints.py";
     public static final String getNotesScript = "/getNotes.py";
-    public static final String uploadPathJson = "/uploadPathJson.py";
+    public static final String uploadJson = "/uploadJson.py";
     public static final String uploadImage = "/uploadImage.py";
     public static final String webServerImageDir = "http://www.thetrailbook.com/trailbook/images";
     public static final String deviceExternalDir = Environment.getExternalStorageDirectory().getPath();

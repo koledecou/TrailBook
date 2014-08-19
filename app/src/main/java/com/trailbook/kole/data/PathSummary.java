@@ -20,6 +20,9 @@ public class PathSummary {
     String destDescription;
     String groupId;
 
+    long lastUpdatedTimeStamp;
+    String ownerID;
+
     //TODO: add objects for associated climbs, books, summary images, etc...
 
     String id = "-1";
