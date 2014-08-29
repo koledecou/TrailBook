@@ -26,7 +26,7 @@ import java.util.Date;
 public class PathFollowerLocationProcessor implements LocationServicesFragment.LocationProcessor {
     private static final int OFF_ROUTE_NOTIFICATION_ID = 1;
     private static final long ONE_MINUTE = 60000;
-    private final Notification.Builder mNotifyBuilder;
+    private final NotificationCompat.Builder mNotifyBuilder;
     NotificationManager mNotificationManager;
     Location mCurrentLocation;
 
@@ -38,11 +38,26 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
     public PathFollowerLocationProcessor(String pathId, Context context) {
         mPath=PathManager.getInstance().getPath(pathId);
         mContext=context;
-        mNotifyBuilder = new Notification.Builder(mContext)
+
+        mNotifyBuilder = new NotificationCompat.Builder(mContext)
+                .setSmallIcon(R.drawable.trail_book_logo)
                 .setContentTitle("Off Route Notification")
-                .setContentText("You are off route.");
+                .setContentText("You are off route.")
+                .setSound(getSoundURI());
         mNotificationManager = (NotificationManager)
                 mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+    }
+
+    private Uri getSoundURI() {
+        Uri alertUri;
+        try {
+            String ringTone = PreferenceManager.getDefaultSharedPreferences(mContext).getString("off_route_alert", null);
+            alertUri = Uri.parse(ringTone);
+        } catch (Exception e) {
+            Log.d("RingToneException", "Exception getting ring tone!", e);
+            alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        }
+        return alertUri;
     }
 
     @Override
@@ -80,7 +95,7 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
     }
 
     private void sendOffRouteNotification() {
-        mNotifyBuilder.setContentText("distance to path: x meters.");
+        mNotifyBuilder.setContentText("distance to path: " + String.format("%.0f", mCurrentDistanceFromPath) + " meters.");
 
         mNotificationManager.notify(
                 OFF_ROUTE_NOTIFICATION_ID,

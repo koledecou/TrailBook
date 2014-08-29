@@ -1,7 +1,5 @@
 package com.trailbook.kole.worker_fragments;
 
-import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
@@ -9,20 +7,21 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.squareup.picasso.Picasso;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.NoteAddedEvent;
 import com.trailbook.kole.events.NotesReceivedEvent;
-import com.trailbook.kole.events.PathPointsReceivedEvent;
+import com.trailbook.kole.events.PathSegmentMapRecievedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
-import com.trailbook.kole.events.PathSummaryAddedEvent;
+import com.trailbook.kole.events.SegmentPointsReceivedEvent;
 import com.trailbook.kole.services.TrailbookPathServices;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.DownloadImageTask;
+import com.trailbook.kole.tools.PathManager;
 import com.trailbook.kole.tools.TrailbookFileUtilities;
 import com.trailbook.kole.tools.TrailbookPathUtilities;
 
@@ -30,7 +29,6 @@ import org.apache.http.entity.mime.MultipartEntity;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +45,7 @@ public class WorkerFragment extends Fragment {
     private Bus bus;
     private RestAdapter mRestAdapter;
     private TrailbookPathServices mService;
+    private PathManager pathManager = PathManager.getInstance();
 
     public WorkerFragment () {
         super();
@@ -67,7 +66,7 @@ public class WorkerFragment extends Fragment {
 
     private void initializeRestAdaptor() {
         mRestAdapter = new RestAdapter.Builder()
-                .setEndpoint(Constants.BASE_URL)
+                .setEndpoint(Constants.BASE_CGIBIN_URL)
                 .build();
         mService = mRestAdapter.create(TrailbookPathServices.class);
     }
@@ -107,9 +106,7 @@ public class WorkerFragment extends Fragment {
 
         super.onDetach();
     }
-    /**
-     * Kick off the path load.
-     */
+
     public void startGetPathSummaries(LatLng center, long radius) {
         Map<String, String> options = new HashMap<String, String>();
         options.put("lat", center==null?"0":String.valueOf(center.latitude));
@@ -124,6 +121,7 @@ public class WorkerFragment extends Fragment {
 
             @Override
             public void success(ArrayList<PathSummary> pathSummaries, Response response) {
+                Log.d(Constants.TRAILBOOK_TAG, "Loaded path summary count, " + pathSummaries.size());
                 bus.post(new PathSummariesReceivedEvent(pathSummaries));
             }
         };
@@ -132,74 +130,44 @@ public class WorkerFragment extends Fragment {
     }
 
     public void startGetPathPoints(String pathId, Integer maxPoints) {
-        if (maxPoints == null)
-            maxPoints = -1; // get all points
-
         Map<String, String> options = new HashMap<String, String>();
-        options.put("pathid",pathId);
-        options.put("maxPoints", String.valueOf(maxPoints));
+        options.put("segmentid",pathId);
 
-        Callback<PathPointsReceivedEvent.PathIDWithPoints> callback = new Callback<PathPointsReceivedEvent.PathIDWithPoints>(){
+        Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints> callback = new Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints>(){
             @Override
             public void failure(RetrofitError error) {
                 Log.e("Trailbook", "Failed to get path points", error);
             }
 
             @Override
-            public void success(PathPointsReceivedEvent.PathIDWithPoints pathIDWithPoints, Response response) {
-                bus.post(new PathPointsReceivedEvent(pathIDWithPoints));
+            public void success(SegmentPointsReceivedEvent.SegmentIDWithPoints segmentIDWithPoints, Response response) {
+                bus.post(new SegmentPointsReceivedEvent(segmentIDWithPoints));
             }
         };
 
-        mService.getPathPoints(options, callback);
+        mService.getPoints(options, callback);
     }
-
+/*
     @Subscribe
     public void onPathSummaryAddedEvent(PathSummaryAddedEvent event){
         PathSummary summary = event.getPathSummary();
-
         startGetPathPoints(summary.getId(), new Integer(Constants.MEDIUM_DETAIL));
     }
-
-    @Subscribe
-    public void onNoteAddedEvent(NoteAddedEvent event) {
-        PointAttachedObject<Note> paoNote = event.getPaoNote();
-        String imageFileName = paoNote.getAttachment().imageFileName;
-        if (imageFileName != null && imageFileName.length()>0)
-            startGetImage(paoNote.getAttachment());
-    }
-
+*/
     private void startGetImage(Note note) {
         String imageFileName = note.getImageFileName();
-        String pathId = note.getParentPathId();
-        File imageFile = TrailbookFileUtilities.getInternalImageFile(getActivity(), pathId, imageFileName);
+        String segmentId = note.getParentSegmentId();
+        File imageFile = TrailbookFileUtilities.getInternalImageFile(getActivity(), segmentId, imageFileName);
 
         Log.d(Constants.TRAILBOOK_TAG, "image file name: " + imageFile);
-        String webServerImageFileName=Constants.webServerImageDir + "/" + imageFileName;
+        String webServerImageDir=TrailbookFileUtilities.getWebServerImageDir(segmentId);
+        String webServerImageFileName = webServerImageDir + "/" + imageFileName;
 
         Log.d(Constants.TRAILBOOK_TAG, "webserver image file name: " + webServerImageFileName);
         new DownloadImageTask(imageFile).execute(webServerImageFileName);
 
+        //TODO: use picasso to get the image?
 //        Picasso.with(getActivity()).load(webServerImageFileName).into(new BitmapFileTarget(imageFile));
-    }
-
-    public void startGetNotes(String pathId) {
-        Map<String, String> options = new HashMap<String, String>();
-        options.put("pathid",pathId);
-
-        Callback<NotesReceivedEvent.PathIDWithNotes> callback = new Callback<NotesReceivedEvent.PathIDWithNotes>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e("Trailbook", "Failed to get notes", error);
-            }
-
-            @Override
-            public void success(NotesReceivedEvent.PathIDWithNotes pathIDWithNotes, Response response) {
-                bus.post(new NotesReceivedEvent(pathIDWithNotes));
-            }
-        };
-
-        mService.getNotes(options, callback);
     }
 
     public void startPathUpload(Path p) {
@@ -214,6 +182,19 @@ public class WorkerFragment extends Fragment {
             @Override
             public void success(String sResponse, Response response) {
                 Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
+            }
+        };
+        Callback<String> pathSegmentMapUploadedCallback = new Callback<String>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path segment map", error);
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
+                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
+            }
+
+            @Override
+            public void success(String sResponse, Response response) {
+                Log.d(Constants.TRAILBOOK_TAG, "Response from path segment map upload: " + sResponse);
             }
         };
         Callback<String> pathPointsUploadedCallback = new Callback<String>(){
@@ -258,13 +239,21 @@ public class WorkerFragment extends Fragment {
         };
 
         PostPathSummary(p, pathSummaryUploadedCallback);
+        PostPathSegmentMap(p, pathSegmentMapUploadedCallback);
         PostPathPoints(p, pathPointsUploadedCallback);
         PostPathPointNotes(p, pathPointNotesUploadedCallback);
         PostImages(p);
     }
 
     private void PostImages(Path p) {
-        ArrayList<Note> notes = p.getNotes();
+        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p);
+        for (PathSegment s:segments) {
+            PostImages(s);
+        }
+    }
+
+    private void PostImages(PathSegment s) {
+        ArrayList<Note> notes = s.getNotes();
         ArrayList<MultipartEntity> entities = new ArrayList<MultipartEntity>();
         for (Note n:notes) {
             if (n.getImageFileName() != null && n.getImageFileName().length()>0) {
@@ -273,7 +262,6 @@ public class WorkerFragment extends Fragment {
                     entities.add(entity);
             }
         }
-
         startImageUpload(entities);
     }
 
@@ -281,24 +269,46 @@ public class WorkerFragment extends Fragment {
         String pathSummaryFileContents = TrailbookPathUtilities.getPathSummaryJSONString(p);
         Log.d(Constants.TRAILBOOK_TAG, pathSummaryFileContents);
         String fileName = p.getId() + "_summary.tb";
-        String dir = p.getId();
+        String dir = Constants.pathsDir + "/" + p.getId();
         mService.postStringFileContents(pathSummaryFileContents, dir, fileName, cb);
     }
 
+    private void PostPathSegmentMap(Path p, Callback<String> cb) {
+        String pathSementMapFileContents = TrailbookPathUtilities.getPathSegmentMapJSONString(p);
+        Log.d(Constants.TRAILBOOK_TAG, pathSementMapFileContents);
+        String fileName = p.getId() + "_segments.tb";
+        String dir = Constants.pathsDir + "/" + p.getId();
+        mService.postStringFileContents(pathSementMapFileContents, dir, fileName, cb);
+    }
+
     private void PostPathPoints(Path p, Callback<String> cb) {
-        String pathPointsFileContents = TrailbookPathUtilities.getPathPointsJSONString(p);
-        Log.d(Constants.TRAILBOOK_TAG, pathPointsFileContents);
-        String fileName = p.getId() + "_points.tb";
-        String dir = p.getId();
-        mService.postStringFileContents(pathPointsFileContents, dir, fileName, cb);
+        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p);
+        for (PathSegment s:segments) {
+            PostSegmentPoints(s, cb);
+        }
+    }
+
+    private void PostSegmentPoints(PathSegment s, Callback<String> cb) {
+        String pointsFileContents = TrailbookPathUtilities.getSegmentPointsJSONString(s);
+        Log.d(Constants.TRAILBOOK_TAG, pointsFileContents);
+        String fileName = s.getId() + "_points.tb";
+        String dir = Constants.segmentsDir + "/" + s.getId();
+        mService.postStringFileContents(pointsFileContents, dir, fileName, cb);
     }
 
     private void PostPathPointNotes(Path p, Callback<String> cb) {
-        String pathPointNotesContents = TrailbookPathUtilities.getPathPointNotesJSONString(p);
-        Log.d(Constants.TRAILBOOK_TAG, pathPointNotesContents);
-        String fileName = p.getId() + "_notes.tb";
-        String dir = p.getId();
-        mService.postStringFileContents(pathPointNotesContents, dir, fileName, cb);
+        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p);
+        for (PathSegment s:segments) {
+            PostSegmentPointNotes(s, cb);
+        }
+    }
+
+    private void PostSegmentPointNotes(PathSegment s, Callback<String> cb) {
+        String notesContents = TrailbookPathUtilities.getSegmentNotesJSONString(s);
+        Log.d(Constants.TRAILBOOK_TAG, notesContents);
+        String fileName = s.getId() + "_notes.tb";
+        String dir = Constants.segmentsDir + "/" + s.getId();
+        mService.postStringFileContents(notesContents, dir, fileName, cb);
     }
 
     private void startImageUpload(ArrayList<MultipartEntity> entities) {
@@ -306,5 +316,87 @@ public class WorkerFragment extends Fragment {
         MultipartEntity[] entitiesArray = new MultipartEntity[entities.size()];
         entities.toArray(entitiesArray);
         uploadImageTask.execute(entitiesArray);
+    }
+
+    public void startDownloadPath(String pathId) {
+        pathManager.savePathSummary(pathId, getActivity());
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("pathid",pathId);
+        Log.d(Constants.TRAILBOOK_TAG, "downloading path id " + pathId);
+        Callback<PathSegmentMapRecievedEvent.SegmentListWithPathID> callback = new Callback<PathSegmentMapRecievedEvent.SegmentListWithPathID>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e("Trailbook", "Failed to get segment list", error);
+            }
+
+            @Override
+            public void success(PathSegmentMapRecievedEvent.SegmentListWithPathID segmentListWithPathID, Response response) {
+                String pathId = segmentListWithPathID.getPathId();
+                ArrayList<String> segmentIds = segmentListWithPathID.getSegmentIds();
+
+                pathManager.setSegmentIdsForPath(pathId, segmentIds);
+                for (String segmentId:segmentIds) {
+                    startDownloadSegment(segmentId);
+                }
+                pathManager.savePathSegmentMap(pathId, getActivity());
+            }
+        };
+
+        mService.getPathSegmentMap(options,callback);
+    }
+
+    private void startDownloadSegment(String segmentId) {
+        startDownloadPoints(segmentId);
+        startDownloadNotes(segmentId);
+    }
+
+    private void startDownloadPoints(String segmentId) {
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("segmentid",segmentId);
+        Log.d(Constants.TRAILBOOK_TAG, "downloading points for segment id " + segmentId);
+        Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints> callback = new Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e("Trailbook", "Failed to get segment points", error);
+            }
+
+            @Override
+            public void success(SegmentPointsReceivedEvent.SegmentIDWithPoints segmentIDWithPoints, Response response) {
+                String segmentId = segmentIDWithPoints.getSegmentId();
+                ArrayList<LatLng> points = segmentIDWithPoints.getPoints();
+
+                pathManager.setSegmentPoints(segmentId, points);
+                pathManager.saveSegmentPoints(segmentId, getActivity());
+            }
+        };
+
+        mService.getPoints(options, callback);
+    }
+
+    private void startDownloadNotes(String segmentId) {
+        Map<String, String> options = new HashMap<String, String>();
+        options.put("segmentid",segmentId);
+        Log.d(Constants.TRAILBOOK_TAG, "downloading notes for segment id " + segmentId);
+        Callback<NotesReceivedEvent.SegmentIDWithNotes> callback = new Callback<NotesReceivedEvent.SegmentIDWithNotes>(){
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e("Trailbook", "Failed to get segment notes", error);
+            }
+
+            @Override
+            public void success(NotesReceivedEvent.SegmentIDWithNotes segmentIDWithNotes, Response response) {
+                String segmentId = segmentIDWithNotes.getSegmentId();
+                HashMap<String,PointAttachedObject<Note>> notes = segmentIDWithNotes.getPointNotes();
+                pathManager.setSegmentNotes(segmentId, notes);
+                for (PointAttachedObject<Note> paoNote:notes.values()) {
+                    String imageFileName = paoNote.getAttachment().getImageFileName();
+                    if (imageFileName != null && imageFileName.length()>0)
+                        startGetImage(paoNote.getAttachment());
+                }
+                pathManager.saveSegmentNotes(segmentId, getActivity());
+            }
+        };
+
+        mService.getNotes(options, callback);
     }
 }

@@ -8,60 +8,42 @@ import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by Fistik on 7/5/2014.
  */
 public class NotesReceivedEvent {
-    public class PathIDWithNotes {
-        int nImages = 0;
-        String pathId;
-        ArrayList<PointAttachedObject<Note>> pointNotes;
-        ArrayList<Note> pathNotes;
+    public class SegmentIDWithNotes {
+        String segmentId;
+        HashMap<String,PointAttachedObject<Note>> pointNotes;
 
-        public PathIDWithNotes (String pathId, ArrayList<PointAttachedObject<Note>> pointNotes) {
-            this.pathId = pathId;
+        public SegmentIDWithNotes (String segmentId, HashMap<String,PointAttachedObject<Note>> pointNotes) {
+            this.segmentId = segmentId;
             this.pointNotes = pointNotes;
         }
 
-        public PathIDWithNotes (String pathId, PointAttachedObject<Note> pointNote) {
-            this.pathId = pathId;
-            ArrayList<PointAttachedObject<Note>> noteArray = new ArrayList<PointAttachedObject<Note>>();
-            noteArray.add(pointNote);
-            this.pointNotes = noteArray;
-        }
-
-        public ArrayList<PointAttachedObject<Note>> getPointNotes() {
+        public HashMap<String,PointAttachedObject<Note>> getPointNotes() {
             return pointNotes;
         }
-        public ArrayList<Note> getPathNotes() {
-            return pathNotes;
-        }
-
-        public String getPathId() {
-            return pathId;
+        public String getSegmentId() {
+            return segmentId;
         }
     }
 
-    PathIDWithNotes result;
+    SegmentIDWithNotes result;
 
-    public NotesReceivedEvent(PathIDWithNotes pathIdWithNotes) {
-        result = pathIdWithNotes;
+    public NotesReceivedEvent(SegmentIDWithNotes segmentIDWithNotes) {
+        result = segmentIDWithNotes;
     }
-    public NotesReceivedEvent(String pathId, ArrayList<PointAttachedObject<Note>> notes) {
-        result = new PathIDWithNotes(pathId, notes);
-    }
-    public NotesReceivedEvent(String pathId, PointAttachedObject<Note> note) {
-        result = new PathIDWithNotes(pathId, note);
+    public NotesReceivedEvent(String segmentId, HashMap<String,PointAttachedObject<Note>> notes) {
+        result = new SegmentIDWithNotes(segmentId, notes);
     }
 
-    public ArrayList<PointAttachedObject<Note>> getPointNotes() {
+    public HashMap<String,PointAttachedObject<Note>> getPointNotes() {
         return result.getPointNotes();
     }
-    public ArrayList<Note> getPathNotes() {
-        return result.getPathNotes();
-    }
-    public String getPathId() {
-        return result.getPathId();
+    public String getSegmentId() {
+        return result.getSegmentId();
     }
 }

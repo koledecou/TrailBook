@@ -14,19 +14,21 @@ import com.trailbook.kole.worker_fragments.LocationServicesFragment;
  */
 public class PathLeaderLocationProcessor implements LocationServicesFragment.LocationProcessor {
     Context mContext;
-    PathManager pathManager;
+    PathManager mPathManager;
+    String mSegmentId;
     String mPathId;
 
-    public PathLeaderLocationProcessor(Context context, String pathId) {
+    public PathLeaderLocationProcessor(Context context, String segmentId, String pathId) {
         mContext = context;
-        mPathId = pathId;
-        pathManager = PathManager.getInstance();
+        this.mSegmentId = segmentId;
+        this.mPathId = pathId;
+        mPathManager = PathManager.getInstance();
     }
 
     @Override
     public void process(Location newLocation) {
-        Log.d(Constants.TRAILBOOK_TAG, "adding point to path " + mPathId + " "  + newLocation.toString() );
-        pathManager.addPointToPath(mPathId, newLocation);
-        pathManager.savePath(mPathId, mContext);
+        Log.d(Constants.TRAILBOOK_TAG, "adding point to segment " + mSegmentId + " "  + newLocation.toString() );
+        mPathManager.addPointToSegment(mSegmentId, mPathId, newLocation);
+        mPathManager.savePath(mSegmentId, mContext);
     }
 }

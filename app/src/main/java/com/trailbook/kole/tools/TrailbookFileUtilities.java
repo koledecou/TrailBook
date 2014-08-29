@@ -11,49 +11,20 @@ import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.Path;
 
-import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.DefaultHttpClient;
 
-import android.net.http.AndroidHttpClient;
-
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.jar.Attributes;
 
 /**
  * Created by Fistik on 7/14/2014.
@@ -65,19 +36,42 @@ public class TrailbookFileUtilities {
         return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.pathsDir;
     }
 
-    public static File getInternalPathFile(Context c, String pathId) {
+    public static String getInternalSegmentDirectory(Context c) {
+        return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.segmentsDir;
+    }
+
+    public static File getInternalPathSummaryFile(Context c, String pathId) {
         String fullDirectory = getInternalPathDirectory(c) + File.separator + pathId;
-        String fileName = pathId + ".tb";
+        String fileName = pathId + "_summary.tb";
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalImageFile(Context c, String pathId, String imageFileName) {
-        File fullDirectory = getInternalImageDirForPath(c, pathId);
+    public static File getInternalSegmentPointsFile(Context c, String segmentId) {
+        String fullDirectory = getInternalSegmentDirectory(c) + File.separator + segmentId;
+        String fileName = segmentId + "_points.tb";
+        return new File(fullDirectory, fileName);
+    }
+
+    public static File getInternalSegmentNotesFile(Context c, String segmentId) {
+        String fullDirectory = getInternalSegmentDirectory(c) + File.separator + segmentId;
+        String fileName = segmentId + "_notes.tb";
+        return new File(fullDirectory, fileName);
+    }
+
+    public static File getInternalPathSegmentListFile(Context c, String pathId) {
+        String fullDirectory = getInternalPathDirectory(c) + File.separator + pathId;
+        String fileName = pathId + "_segments.tb";
+        return new File(fullDirectory, fileName);
+    }
+
+
+    public static File getInternalImageFile(Context c, String segmentId, String imageFileName) {
+        File fullDirectory = getInternalImageDirForSegment(c, segmentId);
         return new File(fullDirectory, imageFileName);
     }
 
-    public static File getInternalImageDirForPath(Context c, String pathId) {
-        String fullDirectory = getInternalPathDirectory(c) + File.separator + pathId + File.separator + Constants.imageDir;
+    public static File getInternalImageDirForSegment(Context c, String segmentId) {
+        String fullDirectory = getInternalSegmentDirectory(c) + File.separator + segmentId + File.separator + Constants.imageDir;
         return new File(fullDirectory);
     }
 
@@ -168,8 +162,8 @@ public class TrailbookFileUtilities {
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
 
-    public static void saveImageForPath(Context c, Bitmap bitmap, String pathId, String fileName) {
-        File dir = TrailbookFileUtilities.getInternalImageDirForPath(c, pathId);
+    public static void saveImageForPathSegment(Context c, Bitmap bitmap, String segmentId, String fileName) {
+        File dir = TrailbookFileUtilities.getInternalImageDirForSegment(c, segmentId);
         File imageFile = new File(dir, fileName);
         try {
             FileUtils.writeByteArrayToFile(imageFile, TrailbookFileUtilities.getBytes(bitmap));
@@ -181,9 +175,9 @@ public class TrailbookFileUtilities {
 
     public static Bitmap loadImageFromFileForNote(Context c, Note note) {
         String imageFileName = note.getImageFileName();
-        String pathId = note.getParentPathId();
+        String segmentId = note.getParentSegmentId();
 
-        File fullDirectory = TrailbookFileUtilities.getInternalImageDirForPath(c, pathId);
+        File fullDirectory = TrailbookFileUtilities.getInternalImageDirForSegment(c, segmentId);
         String fileNameWithPath = fullDirectory.toString() + "/" + imageFileName;
         return loadBitmapFromFile(fileNameWithPath);
     }
@@ -195,7 +189,7 @@ public class TrailbookFileUtilities {
 
     public static String getImageUploadUrl() {
         URI uploadPicturesURI = null;
-        String uploadPicturesURL = Constants.BASE_URL + Constants.uploadImage;
+        String uploadPicturesURL = Constants.BASE_CGIBIN_URL + Constants.uploadImage;
         try {
             uploadPicturesURI = new URI(uploadPicturesURL);
         } catch (URISyntaxException e) {
@@ -207,10 +201,10 @@ public class TrailbookFileUtilities {
 
     public static MultipartEntity getMultipartEntityForNoteImage(Context c, Note n) {
         try {
-            File imageFile = getInternalImageFile(c, n.getParentPathId(), n.getImageFileName());
+            File imageFile = getInternalImageFile(c, n.getParentSegmentId(), n.getImageFileName());
             MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 
-            entity.addPart("pathId", new StringBody(n.getParentPathId()));
+            entity.addPart("segmentId", new StringBody(n.getParentSegmentId()));
             entity.addPart("noteId", new StringBody(n.getNoteID()));
             entity.addPart("imageFile",  new FileBody(imageFile)); //image should be a String
 
@@ -259,4 +253,7 @@ public class TrailbookFileUtilities {
         return os;
     }
 
+    public static String getWebServerImageDir(String segmentId) {
+        return Constants.BASE_WEBSERVER_SEGMENT_URL + "/" + segmentId;
+    }
 }

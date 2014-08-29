@@ -6,7 +6,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -17,10 +20,13 @@ public class TrailbookPathUtilities {
 
     public static double getNearestDistanceFromPointToPath(LatLng currentLocation, Path path) {
         double minDist = Double.MAX_VALUE;
-        for (LatLng thisPathPoint:path.getPoints()) {
-            float thisDist = getDistanceInMeters(currentLocation, thisPathPoint);
-            if ( thisDist < minDist)
-                minDist = thisDist;
+        ArrayList<PathSegment> segments = PathManager.getInstance().getSegmentsForPath(path);
+        for (PathSegment s: segments) {
+            for (LatLng thisPathPoint : s.getPoints()) {
+                float thisDist = getDistanceInMeters(currentLocation, thisPathPoint);
+                if (thisDist < minDist)
+                    minDist = thisDist;
+            }
         }
 
         return minDist;
@@ -47,23 +53,43 @@ public class TrailbookPathUtilities {
         return String.valueOf(date.getTime());
     }
 
+    public static String getNewSegmentId() {
+        Date date = new Date();
+        return String.valueOf(date.getTime());
+    }
+
     public static String getPathSummaryJSONString(Path path) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
         return gson.toJson(path.getSummary());
     }
 
-    public static String getPathPointNotesJSONString(Path path) {
+    public static String getSegmentListJSONString(Path path) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        return gson.toJson(path.getPointNotes());
+        return gson.toJson(path.getSegmentIdList());
     }
 
-    public static String getPathPointsJSONString(Path path) {
+    public static String getSegmentNotesJSONString(PathSegment segment) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        return gson.toJson(path.getPoints());
+        return gson.toJson(segment.getPointNotes());
+    }
+
+    public static String getSegmentPointsJSONString(PathSegment segment) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(segment.getPoints());
     }
 
     public static String getPathJSONString(Path path) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
         return gson.toJson(path);
+    }
+
+    public static String getSegmentJSONString(PathSegment s) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(s);
+    }
+
+    public static String getPathSegmentMapJSONString(Path p) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        return gson.toJson(p.getSegmentIdList());
     }
 }

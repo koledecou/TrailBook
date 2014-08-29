@@ -46,15 +46,15 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     private ImageView mImageView;
     private Button mOkButton;
     private Button mCancelButton;
-    private String mParentPathId;
+    private String mParentSegmentId;
     private String mImageFileName;
     private String lastPictureUri;
 
-    public static CreateNoteFragment newInstance(String noteId, String parentPathId) {
+    public static CreateNoteFragment newInstance(String noteId, String parentSegmentId) {
         CreateNoteFragment fragment = new CreateNoteFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, noteId);
-        args.putString(ARG_PARAM2, parentPathId);
+        args.putString(ARG_PARAM2, parentSegmentId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -68,7 +68,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         setHasOptionsMenu(true);
         if (getArguments() != null) {
             mNoteId = getArguments().getString(ARG_PARAM1);
-            mParentPathId = getArguments().getString(ARG_PARAM2);
+            mParentSegmentId = getArguments().getString(ARG_PARAM2);
         }
     }
 
@@ -163,7 +163,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                 }
 
                 mImageFileName = getImageFileName();
-                TrailbookFileUtilities.saveImageForPath(getActivity(), bitmap, mParentPathId, mImageFileName);
+                TrailbookFileUtilities.saveImageForPathSegment(getActivity(), bitmap, mParentSegmentId, mImageFileName);
                 mImageView.setImageBitmap(bitmap);
             } else if (resultCode == getActivity().RESULT_CANCELED) {
                 // User cancelled the image capture
@@ -180,7 +180,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                             chosenImageUri);
                     bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, 480);
                     mImageFileName = getImageFileName();
-                    TrailbookFileUtilities.saveImageForPath(getActivity(), bitmap, mParentPathId, mImageFileName);
+                    TrailbookFileUtilities.saveImageForPathSegment(getActivity(), bitmap, mParentSegmentId, mImageFileName);
                     mImageView.setImageBitmap(bitmap);
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
@@ -199,7 +199,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     public void onClick(View view) {
         hideSoftKeyboard();
         if (view.getId() == R.id.cn_b_ok) {
-            Note newNote = new Note(TrailbookPathUtilities.getNewNoteId(), mParentPathId);
+            Note newNote = new Note(TrailbookPathUtilities.getNewNoteId(), mParentSegmentId);
             newNote.setImageFileName(mImageFileName);
             newNote.setNoteContent(mEditTextContent.getText().toString());
             mListener.onNoteCreated(newNote);

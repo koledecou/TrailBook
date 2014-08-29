@@ -22,24 +22,26 @@ import java.util.List;
  */
 public class PathDirectoryWalker extends DirectoryWalker {
     //TODO: should use filefilter.  bug in apache commons?
-    private static FileFilter tbFilter = FileFilterUtils.suffixFileFilter(".tb");
+//    private static FileFilter tbFilter = FileFilterUtils.suffixFileFilter(".tb");
 //    private static IOFileFilter tbFilter = FileFilterUtils.and(FileFilterUtils.fileFileFilter(), FileFilterUtils.suffixFileFilter("tb"));
-    public PathDirectoryWalker() {
+    String suffix;
+    public PathDirectoryWalker(String suffix) {
         super();
+        this.suffix = suffix;
         //super(tbFilter, -1);
     }
 
     @Override
     protected void handleFile(File file, int depth, Collection results) throws IOException {
         if (isPathFile(file)) {
-            String pathContents = FileUtils.readFileToString(file);
-            results.add(pathContents);
+            String fileContents = FileUtils.readFileToString(file);
+            results.add(fileContents);
         }
     }
 
     private boolean isPathFile(File file) {
         Log.d(Constants.TRAILBOOK_TAG, "file = " + file);
-        if (file.getName().endsWith(".tb"))
+        if (file.getName().endsWith(suffix))
             return true;
         else
             return false;

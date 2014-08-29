@@ -6,16 +6,16 @@ public class Note {
     public String noteId;
     public String content;
     public String imageFileName;
-    public String parentPathId;
+    public String parentSegmentId;
 
     public Note() {}
-    public Note(String noteId, String parentPathId) {
+    public Note(String noteId, String parentSegmentId) {
         this.noteId=noteId;
-        this.parentPathId = parentPathId;
+        this.parentSegmentId = parentSegmentId;
     }
 
-    public void setParentPathId(String parentPathId) {
-        this.parentPathId = parentPathId;
+    public void setParentPathId(String parentSegmentId) {
+        this.parentSegmentId = parentSegmentId;
     }
 
     public void setNoteContent(String content) {
@@ -38,7 +38,7 @@ public class Note {
         return imageFileName;
     }
 
-    public String getParentPathId() {
-        return parentPathId;
+    public String getParentSegmentId() {
+        return parentSegmentId;
     }
 }

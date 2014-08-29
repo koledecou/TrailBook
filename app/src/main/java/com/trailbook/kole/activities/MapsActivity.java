@@ -72,6 +72,7 @@ public class MapsActivity extends Activity
     private SlidingUpPanelLayout mSlidingUpPanel;
     private Location mCurrentLocation;
     private String mCurrentPathId;
+    private String mCurrentSegmentId;
     private Fragment mPathSelectorFragment;
 
     @Subscribe
@@ -85,8 +86,8 @@ public class MapsActivity extends Activity
         invalidateOptionsMenu();
         LatLng point = TrailbookPathUtilities.locationToLatLon(mCurrentLocation);
         PointAttachedObject<Note> note = new PointAttachedObject<Note>(point,newNote);
-        if (mCurrentPathId != null) {
-            mPathManager.addNoteToPath(mPathManager.getPath(mCurrentPathId), note);
+        if (mCurrentSegmentId != null && mCurrentPathId != null) {
+            mPathManager.addNoteToSegment(mPathManager.getSegment(mCurrentSegmentId), note);
             mPathManager.savePath(mCurrentPathId, this);
         }
     }
@@ -202,7 +203,7 @@ public class MapsActivity extends Activity
             return true;
         } else if (id == R.id.action_bar_create_note) {
             collapseSlidingPanel();
-            switchFragmentAndAddToBackstack(CreateNoteFragment.newInstance(TrailbookPathUtilities.getNewNoteId(), mCurrentPathId), ADD_NOTE_FRAG_TAG);
+            switchFragmentAndAddToBackstack(CreateNoteFragment.newInstance(TrailbookPathUtilities.getNewNoteId(), mCurrentSegmentId), ADD_NOTE_FRAG_TAG);
             invalidateOptionsMenu();
         }
         return super.onOptionsItemSelected(item);
@@ -293,7 +294,8 @@ public class MapsActivity extends Activity
 
     @Override
     public void processNewPathClick(String pathName) {
-        mCurrentPathId = mPathManager.makeNewPath(pathName);
+        mCurrentSegmentId = mPathManager.makeNewSegment();
+        mCurrentPathId = mPathManager.makeNewPath(pathName, mCurrentSegmentId);
         startLeading();
     }
 
@@ -333,7 +335,7 @@ public class MapsActivity extends Activity
 
     @Override
     public void onDownloadRequested(String pathId) {
-        mWorkFragment.startGetNotes(pathId);
+        mWorkFragment.startDownloadPath(pathId);
         collapseSlidingPanel();
     }
 
@@ -356,13 +358,15 @@ public class MapsActivity extends Activity
     public void onResumeLeadingRequested(String pathId) {
         collapseSlidingPanel();
         mCurrentPathId = pathId;
+        //resume the last segment
+        mCurrentSegmentId = mPathManager.getPath(pathId).getLastSegment();
         startLeading();
     }
 
     private void startLeading() {
         mMode = Mode.LEAD;
         invalidateOptionsMenu();
-        mLocationServicesFragment.startUpdates(new PathLeaderLocationProcessor(this, mCurrentPathId));
+        mLocationServicesFragment.startUpdates(new PathLeaderLocationProcessor(this, mCurrentSegmentId, mCurrentPathId));
     }
 
     private void collapseSlidingPanel() {

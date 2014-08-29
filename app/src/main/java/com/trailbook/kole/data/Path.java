@@ -28,73 +28,56 @@ import com.trailbook.kole.tools.TrailbookPathUtilities;
 
 
 public class Path {
-    private static final int MIN_DISTANCE_BETWEEN_POINTS=3; //distance in meters
-    private static final int MAX_DISTANCE_BETWEEN_POINTS = 1000;
     private transient boolean isDownloaded = false;
 
-    ArrayList<LatLng> points;
-    HashMap<String, PointAttachedObject<Note>> pointNotes;
     HashMap<String, Note> pathNotes;
+    ArrayList<String> segmentIds;
     PathSummary summary;
 
     private class NoPathIdException extends RuntimeException {}
 
-    public Path(String id) {
+    public Path(String id, String firstSegmentId) {
         summary = new PathSummary(id);
-        points = new ArrayList<LatLng>();
-        pointNotes = new HashMap<String, PointAttachedObject<Note>>();
+        segmentIds = new ArrayList<String>();
+        segmentIds.add(firstSegmentId);
         pathNotes = new HashMap<String, Note>();
     }
 
-    public void addPoint(LatLng newPoint) {
-        //only add it if it's far enough away from the last one.
-        // If it's too far away it's a bad point.
-        if (points.size() < 1){
-            points.add(newPoint);
-        }else{
-            LatLng last = points.get(points.size() - 1);
-            float delta = TrailbookPathUtilities.getDistanceInMeters(last, newPoint);
-            if (delta > 200) {
-                Log.d("trailbook", "pathid: " + getSummary().getId() + " dist: " +  String.valueOf(delta) + " index: " + points.size());
-            }
-            if (delta>MIN_DISTANCE_BETWEEN_POINTS && delta < MAX_DISTANCE_BETWEEN_POINTS)
-                points.add(newPoint);
-        }
+    public Path(String id) {
+        summary = new PathSummary(id);
+        segmentIds = new ArrayList<String>();
+        pathNotes = new HashMap<String, Note>();
     }
 
-    public void addNote (LatLng p, Note note, String noteId) {
-        PointAttachedObject<Note> paoNote = new PointAttachedObject(p, note);
-        pointNotes.put(noteId, paoNote);
+    public void addSegment(String segmentId) {
+        segmentIds.add(segmentId);
     }
 
     public void addPathNote (Note note, String noteId) {
         pathNotes.put(noteId, note);
     }
 
-    public Note getNoteFromId(String noteId) {
-        PointAttachedObject<Note> paoNote = pointNotes.get(noteId);
-        if (paoNote != null) {
-            return (Note)paoNote.getAttachment();
+    public Note getPathNoteFromId(String noteId) {
+        Note note = pathNotes.get(noteId);
+        if (note != null) {
+            return note;
+        } else {
+            return null;
         }
-
-        Note pathNote = pathNotes.get(noteId);
-        if (pathNote != null) {
-            return pathNote;
-        }
-
-        return null;
     }
 
-    public ArrayList<Note> getNotes() {
-        ArrayList<Note> notes = new ArrayList<Note>();
-        Collection<PointAttachedObject<Note>> paoNotes = getPointNotes().values();
-        for (PointAttachedObject<Note> paoNote : paoNotes) {
-            notes.add(paoNote.getAttachment());
-        }
-        return notes;
+    public void setSegmentIdList(ArrayList<String> segmentIds) {
+        this.segmentIds = segmentIds;
     }
 
+    public String getLastSegment() {
+        if (segmentIds.size() >= 1)
+            return segmentIds.get(segmentIds.size()-1);
+        else
+            return null;
+    }
 
+    /*
     public LatLng getStartCoords() {
         if (points.size()<1)
             return null;
@@ -115,29 +98,17 @@ public class Path {
         summary.setStart(getStartCoords());
         summary.setEnd(getEndCoords());
     }
-
-    public void addPoints(ArrayList<LatLng> newPoints) {
-        points.addAll(newPoints);
+*/
+    public ArrayList<String> getSegmentIdList() {
+        return segmentIds;
     }
 
     public PathSummary getSummary() {
         return summary;
     }
 
-    public ArrayList<LatLng> getPoints() {
-        return points;
-    }
-
     public void setSummary(PathSummary summary) {
         this.summary = summary;
-    }
-
-    public void addPointNote(PointAttachedObject<Note> paoNote) {
-        this.pointNotes.put(paoNote.getAttachment().getNoteID(), paoNote);
-    }
-
-    public HashMap<String,PointAttachedObject<Note>> getPointNotes() {
-        return pointNotes;
     }
 
     public void setDownloaded(boolean isDownloaded) {
@@ -151,6 +122,7 @@ public class Path {
     public String getId() {
         if (summary != null)
             return summary.getId();
-        throw new NoPathIdException();
+        else
+            throw new NoPathIdException();
     }
 }

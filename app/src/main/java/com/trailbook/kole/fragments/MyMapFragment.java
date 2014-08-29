@@ -25,11 +25,14 @@ import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.AllNotesAddedEvent;
 import com.trailbook.kole.events.NoteAddedEvent;
+import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
+import com.trailbook.kole.events.SegmentUpdatedEvent;
 import com.trailbook.kole.tools.BusProvider;
 import com.trailbook.kole.tools.PathManager;
 import com.trailbook.kole.tools.TrailbookPathUtilities;
@@ -117,7 +120,7 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
 
     public void showNotesOnlyForPath(String pathId) {
         hideAllNoteMarkers();
-        HashMap<String, PointAttachedObject<Note>> pointNotes = mPathManager.getPath(pathId).getPointNotes();
+        HashMap<String, PointAttachedObject<Note>> pointNotes = mPathManager.getPointNotesForPath(pathId);
         showPointNotes(pointNotes);
     }
 
@@ -292,18 +295,23 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     }
 
     @Subscribe
-    public void onPathUpdatedEvent(PathUpdatedEvent event){
-        Path path = event.getPath();
-        addPathToMap(path);
+    public void onPathSummaryAddedEvent(PathSummaryAddedEvent event){
+        PathSummary summary = event.getPathSummary();
+        addPathSummaryToMap(summary);
     }
 
-    private void addPathToMap(Path path) {
-        PathSummary summary = path.getSummary();
-        addPathSummary(summary);
-        if (path.getPointNotes() != null && isDisplayNotes(path.getId()))
-            addPointNotes(path.getPointNotes());
+    @Subscribe
+    public void onSegmentUpdatedEvent(SegmentUpdatedEvent event){
+        PathSegment seg = event.getSegment();
+        addSegmentToMap(seg);
+    }
 
-        addPoints(path, getPolylineOptions(path));
+    private void addSegmentToMap(PathSegment segment) {
+        if (segment.getPointNotes() != null)
+            addPointNotes(segment.getPointNotes());
+
+        if (segment.getPoints() != null)
+            addPoints(segment, getPolylineOptions(segment));
     }
 
     private boolean isDisplayNotes(String pathId) {
@@ -338,16 +346,11 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
             addPointNote(paoNote);
     }
 
-    private PolylineOptions getPolylineOptions(Path path) {
+    private PolylineOptions getPolylineOptions(PathSegment segment) {
         PolylineOptions o = new PolylineOptions();
-        if (path.isDownloaded()) {
-            o.color(R.color.Gold);
-            o.width(THICK);
-        } else {
-            o.color(R.color.PowderBlue);
-            o.width(MEDIUM);
-        }
-        
+        o.color(R.color.Cornsilk);
+        o.width(THICK);
+
         return o;
     }
 
@@ -367,12 +370,10 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         }
     }
 
-    private void addPoints(Path p, PolylineOptions o) {
-        String id = p.getId();
-        Polyline line = mPathPolylines.get(p.getId());
-        ArrayList<LatLng> points = p.getPoints();
+    private void addPoints(PathSegment s, PolylineOptions o) {
+        String id = s.getId();
+        ArrayList<LatLng> points = s.getPoints();
         putPolylineOnMap(o, points, id);
-
     }
 
     private void addPointsToPolylineOptions(PolylineOptions o, ArrayList<LatLng> points) {
@@ -398,11 +399,11 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         mPathPolylines.put(id, polyline);
     }
 
-    private void addPathSummary(PathSummary summary) {
-        //TODO: check if start or end has changed.
-        if (mStartMarkers.get(summary.getId()) == null && summary != null && summary.getStart() != null && summary.getEnd() != null) {
-            Marker startMarker = mMap.addMarker(new MarkerOptions().position(summary.getStart()).title(summary.getName()));
-            mStartMarkers.put(summary.getId(), startMarker);
+    private void addPathSummaryToMap(PathSummary summary) {
+        //TODO: check if start has changed.
+        if (mEndMarkers.get(summary.getId()) == null && summary != null && summary.getStart() != null && summary.getEnd() != null) {
+//            Marker startMarker = mMap.addMarker(new MarkerOptions().position(summary.getStart()).title(summary.getName()));
+//            mStartMarkers.put(summary.getId(), startMarker);
             Marker endMarker = mMap.addMarker(new MarkerOptions().position(summary.getEnd()).title("end " + summary.getName()));
             mEndMarkers.put(summary.getId(), endMarker);
         }

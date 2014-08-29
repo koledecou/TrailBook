@@ -5,7 +5,8 @@ import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.events.NotesReceivedEvent;
-import com.trailbook.kole.events.PathPointsReceivedEvent;
+import com.trailbook.kole.events.PathSegmentMapRecievedEvent;
+import com.trailbook.kole.events.SegmentPointsReceivedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,11 +32,14 @@ public  interface TrailbookPathServices {
     @GET(Constants.pathSummaryScript)
     void getPathSummaries(@QueryMap Map<String, String> options, Callback<ArrayList<PathSummary>> cb);
 
-    @GET(Constants.getPathPointsScript)
-    void getPathPoints(@QueryMap Map<String, String> options, Callback<PathPointsReceivedEvent.PathIDWithPoints> cb);
+    @GET(Constants.getSegmentsScript)
+    void getPathSegmentMap(@QueryMap Map<String, String> options, Callback<PathSegmentMapRecievedEvent.SegmentListWithPathID> cb);
+
+    @GET(Constants.getPointsScript)
+    void getPoints(@QueryMap Map<String, String> options, Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints> cb);
 
     @GET(Constants.getNotesScript)
-    void getNotes(@QueryMap Map<String, String> options, Callback<NotesReceivedEvent.PathIDWithNotes> cb);
+    void getNotes(@QueryMap Map<String, String> options, Callback<NotesReceivedEvent.SegmentIDWithNotes> cb);
 
     @FormUrlEncoded
     @POST(Constants.uploadJson)

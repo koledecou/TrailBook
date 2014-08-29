@@ -62,12 +62,12 @@ public class NoteView extends LinearLayout {
 
         mImageFileName = note.getImageFileName();
         if (mImageFileName != null && mImageFileName.length()>0) {
-            String pathId = note.getParentPathId();
+            String segmentId = note.getParentSegmentId();
             Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileName);
-            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(getContext(), pathId, mImageFileName)).into(mImageView);
+            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(getContext(), segmentId, mImageFileName)).into(mImageView);
         }
 
-        mTextViewLocationInfo.setText("This note is 354 feet SW of you");
+        mTextViewLocationInfo.setText("This note is {distance} {units} {direction} of you");
     }
 
     private void loadViews(){

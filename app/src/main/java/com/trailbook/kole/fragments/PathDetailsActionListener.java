@@ -6,6 +6,6 @@ package com.trailbook.kole.fragments;
 public interface PathDetailsActionListener {
     void onDownloadRequested(String pathId);
     void onFollowRequested(String pathId);
-    void onZoomRequested(String mPathId);
-    void onResumeLeadingRequested(String mPathId);
+    void onZoomRequested(String pathId);
+    void onResumeLeadingRequested(String pathId);
 }

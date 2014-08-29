@@ -19,15 +19,14 @@ public class PathSummary {
     String startDescription;
     String destDescription;
     String groupId;
-
     long lastUpdatedTimeStamp;
     String ownerID;
 
     //TODO: add objects for associated climbs, books, summary images, etc...
 
     String id = "-1";
-    LatLng start;
-    LatLng end;
+    LatLng start = new LatLng(0,0);
+    LatLng end = new LatLng(0,0);
 
     public PathSummary(String id) {
         this.id=id;
