@@ -20,6 +20,7 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.squareup.otto.Bus;
+import com.squareup.otto.Produce;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.LocationServiceDisconnectedEvent;
@@ -201,7 +202,10 @@ public class LocationServicesFragment extends Fragment implements
     public void startUpdates(LocationProcessor locationProcessor) {
         mLocationProcessor = locationProcessor;
         saveUpdateState(true);
-        mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        if (!mLocationClient.isConnected())
+            mLocationClient.connect();
+        else
+            mLocationClient.requestLocationUpdates(mLocationRequest, this);
         keepListeningWhileAsleep();
     }
 

@@ -18,6 +18,7 @@ import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.AllNotesAddedEvent;
+import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.NoteAddedEvent;
 import com.trailbook.kole.events.NotesReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
@@ -48,6 +49,7 @@ public class PathManager {
     private static Bus bus;
 
     private Gson gson = new Gson();
+    private Location mCurrentLocation;
 
     private PathManager() {
         mPaths = new Hashtable<String, Path>();
@@ -121,10 +123,14 @@ public class PathManager {
     }
 
     public void savePath(String pathId, Context c) {
-        savePathSummary(pathId,c);
-        savePathSegmentMap(pathId, c);
-        saveSegments(pathId, c);
-        bus.post(new PathUpdatedEvent(getPath(pathId)));
+        try {
+            savePathSummary(pathId, c);
+            savePathSegmentMap(pathId, c);
+            saveSegments(pathId, c);
+            bus.post(new PathUpdatedEvent(getPath(pathId)));
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + pathId, e);
+        }
     }
 
     public void savePathSegmentMap(String pathId, Context c) {
@@ -195,6 +201,7 @@ public class PathManager {
         for (String thisContent:pathSummaryFileContents) {
             PathSummary summary = gson.fromJson(thisContent, PathSummary.class);
             Log.d(Constants.TRAILBOOK_TAG, "loaded summary " + summary.getName() + ", " + summary.getId());
+            bus.post(new PathSummaryAddedEvent(summary));
 
             Path p = new Path(summary.getId());
             p.setSummary(summary);
@@ -387,5 +394,22 @@ public class PathManager {
             s = new PathSegment(segmentId);
             mSegments.put(segmentId,s);
         }
+    }
+
+    public LatLng getStartCoordsForPath(String pathId) {
+        PathSummary summary = getPathSummary(pathId);
+        if (summary == null)
+            return null;
+
+        return summary.getStart();
+    }
+
+    @Subscribe
+    public void onLocationChangedEvent(LocationChangedEvent event){
+        mCurrentLocation = event.getLocation();
+    }
+
+    public Location getCurrentLocation() {
+        return mCurrentLocation;
     }
 }

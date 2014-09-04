@@ -53,10 +53,10 @@
     <string name="enable_prox_alert_summary_1">Sound an alert when in the general vicinity of a note.</string>
     <string name="ringtone_1">Ringtone to sound when in the general vicinity of a note.</string>
     <string name="ringtone_title_1">Select Ringtone Vicinity</string>
-    <string name="enable_prox_alert_2">Play Alert 2</string>
+    <string name="enable_prox_alert_2">Approaching Note Notification</string>
     <string name="enable_prox_alert_summary_2">Sound an alert when getting close to a note</string>
     <string name="ringtone_2">Ringtone to sound when close to a note.</string>
-    <string name="ringtone_title_2">Select Ringtone Close</string>
+    <string name="ringtone_title_2">Alert Sound</string>
     <string name="auto_play">Auto Play</string>
     <string name="auto_play_summary">Auto play audio notes when approaching.</string>
     <string name="auto_play_radius">Auto Play Radius</string>
@@ -64,7 +64,7 @@
     <string name="enable_offroute_alert">Enable Off Route Alert</string>
     <string name="off_route_alert">Select Ringtone</string>
     <string name="off_route_ringtone_summary">Ringtone to sound when off route.</string>
-    <string name="off_route_distance">Off Route Distance</string>
+    <string name="off_route_distance">Off Route Trigger Distance</string>
     <string name="off_route_distance_summary">Distance off route at which to sound an alert (ft/meters).</string>
     <string name="battery_settings">Battery Settings</string>
     <string name="polling_frequency_high">Polling Frequencey High</string>
@@ -82,9 +82,12 @@
     <string name="follower_options">Follower Options</string>
     <string name="proximity_far_cat">General Proximity Radius Alert Settings</string>
     <string name="proximity_close_cat">Close Proximity Radius Alert Settings</string>
-    <string name="off_route_cat">Off Route Alert Settings</string>
-    <string name="auto_play_cat">Auto Play Audio Note Settings</string>
-    <string name="alertDistance">Alert when nearing note</string>
-
+    <string name="off_route_cat">Off Route Notification Settings</string>
+    <string name="alertDistance">Notification Trigger Distance</string>
+    <string name="note_alert_cat">Approaching Note Notification Settings</string>
+    <string name="feet">feet</string>
+    <string name="miles">miles</string>
+    <string name="meters">meters</string>
+    <string name="kilometers">kilometers</string>
 
 </resources>

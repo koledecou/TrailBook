@@ -2,11 +2,13 @@ package com.trailbook.kole.fragments;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -50,10 +52,11 @@ import java.util.Set;
 /**
  * Created by Fistik on 6/30/2014.
  */
-public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
+public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener, View.OnClickListener {
     private static final String LOG_TAG = "MyMapFragment";
     private static final float THICK = 10;
     private static final float MEDIUM = 6;
+
     private String mActivePathId;
 
     public enum MarkerType {START,END,NOTE,UNKNOWN}
@@ -92,6 +95,7 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         mNoteMarkers = new DualHashBidiMap<String, Marker>();
         mPathPolylines = new DualHashBidiMap<String, Polyline>();
         mMainPanel = (SlidingUpPanelLayout) getActivity().findViewById(R.id.main_panel);
+//        mMainPanel.setSlidingEnabled(true);
     }
 
     @Override
@@ -101,8 +105,8 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     }
 
     @Override
-    public View onCreateView(LayoutInflater arg0, ViewGroup arg1, Bundle arg2) {
-        View v = super.onCreateView(arg0, arg1, arg2);
+    public View onCreateView(LayoutInflater arg0, ViewGroup arg1, Bundle savedInstanceState) {
+        View v = super.onCreateView(arg0, arg1, savedInstanceState);
 
         mMap = this.getMap();
         mMap.setOnMarkerClickListener(this);
@@ -110,12 +114,21 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         setUpMapIfNeeded();
         if (mMode==Constants.SEARCH_MODE) {
             //todo: get paths within the bounds of the current map.
-            //todo: testing: always search for paths for now
-
             mPathManager.loadPathsFromDevice(getActivity());
+
+            //todo: for now always refresh paths from cloud. These should be stored locally
             startPathSummarySearch();
         }
+
+        Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment instance state");
         return v;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        Log.d(Constants.TRAILBOOK_TAG, "saving map fragment instance state");
     }
 
     public void showNotesOnlyForPath(String pathId) {
@@ -136,26 +149,42 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
 
     @Override
     public void onMapClick(LatLng latLng) {
-        if (mMainPanel != null && mMainPanel.isPanelExpanded())
-            mMainPanel.collapsePanel();
+        Log.d(Constants.TRAILBOOK_TAG, "Clicked map, " + latLng.latitude + "," + latLng.longitude);
+        collapseSlidingPanelIfExpanded();
 
         //TODO: try to find the clicked path and treat as if clicked on the marker
+    }
+
+    private void collapseSlidingPanelIfExpanded() {
+        if (mMainPanel != null && mMainPanel.isPanelExpanded())
+            mMainPanel.collapsePanel();
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
         MarkerType markerType = getMarkerType(marker);
         if (markerType == MarkerType.START) {
+//            collapseSlidingPanelIfExpanded();
             String pathId = mStartMarkers.getKey(marker);
             return showPathSummary(pathId);
         } else if (markerType == MarkerType.END) {
+//            collapseSlidingPanelIfExpanded();
             String pathId = mEndMarkers.getKey(marker);
             return showPathSummary(pathId);
         }  else if (markerType == MarkerType.NOTE) {
+//            collapseSlidingPanelIfExpanded();
             String noteId = mNoteMarkers.getKey(marker);
             return showNote(noteId);
         }
         return false;
+    }
+
+    @Override
+    public void onClick(View view) {
+        Log.d(Constants.TRAILBOOK_TAG, "View clicked:" + view.getId() + ", " + view.getTag());
+        if (view.getId() == R.id.vn_parent_layout) {
+            Log.d(Constants.TRAILBOOK_TAG, "Note clicked");
+        }
     }
 
     private boolean showNote(String noteId) {
@@ -165,17 +194,34 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
         }
         noteId = noteId.substring(0,noteId.length());
 
-        NoteView nv = getNoteView(noteId);
-        addViewToSlidingUpPanel(nv);
-
-        if (mMainPanel != null && !mMainPanel.isPanelExpanded())
-            mMainPanel.expandPanel();
-
+        if (mMainPanel != null) {
+/*
+            int height = getFullWindowHeight();
+            mMainPanel.setPanelHeight(height/2);
+            mMainPanel.requestLayout();
+*/
+            expandSlidingPanelIfCollapsed();
+            NoteView nv = getNoteView(noteId);
+            nv.setOnClickListener(this);
+            nv.setId(R.id.vn_parent_layout);
+            addViewToSlidingUpPanel(nv);
+        }
         return false;
     }
 
+    private void expandSlidingPanelIfCollapsed() {
+        if (!mMainPanel.isPanelExpanded()) {
+            mMainPanel.expandPanel();
+        }
+    }
+
+    private int getFullWindowHeight() {
+        DisplayMetrics dm = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        return dm.heightPixels;
+    }
+
     private NoteView getNoteView(String noteId) {
-//        NoteView nv = (NoteView) getActivity().getLayoutInflater().inflate(R.layout.view_note, null);
         NoteView nv = new NoteView(getActivity());
         nv.setNoteId(noteId);
         return nv;
@@ -186,11 +232,16 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
             Log.d(Constants.TRAILBOOK_TAG, "Null Path ID");
             return true;
         }
-        PathDetailsView pdv = getPathDetailsView(pathId);
-        addViewToSlidingUpPanel(pdv);
 
-        if (mMainPanel != null && !mMainPanel.isPanelExpanded())
-            mMainPanel.expandPanel();
+        if (mMainPanel != null) {
+/*            int height = getFullWindowHeight();
+            mMainPanel.setPanelHeight(height/4);
+            mMainPanel.requestLayout();*/
+
+            PathDetailsView pdv = getPathDetailsView(pathId);
+            addViewToSlidingUpPanel(pdv);
+            expandSlidingPanelIfCollapsed();
+        }
 
         return false;
     }
@@ -307,8 +358,12 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     }
 
     private void addSegmentToMap(PathSegment segment) {
+/* don't think i want to add notes until following the path
+   gets a little cluttered.
+
         if (segment.getPointNotes() != null)
             addPointNotes(segment.getPointNotes());
+*/
 
         if (segment.getPoints() != null)
             addPoints(segment, getPolylineOptions(segment));
@@ -317,7 +372,7 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     private boolean isDisplayNotes(String pathId) {
         if (!pathId.equals(mActivePathId))
             return false;
-        if (((MapsActivity)getActivity()).getMode() == MapsActivity.Mode.SEARCH)
+        if (((MapsActivity)getActivity()).getMode() == MapsActivity.MODE_SEARCH)
             return false;
 
         return true;
@@ -412,6 +467,11 @@ public class MyMapFragment extends MapFragment implements GoogleMap.OnMarkerClic
     public void zoom(String pathId) {
         Path p = mPathManager.getPath(pathId);
         LatLng start = p.getSummary().getStart();
+        if (start == null) {
+            Toast.makeText(getActivity(), "Cannot find start location for path.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(start, mMap.getMaxZoomLevel()));
     }
 }

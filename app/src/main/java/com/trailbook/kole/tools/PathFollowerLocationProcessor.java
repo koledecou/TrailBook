@@ -64,8 +64,7 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
     public void process(Location newLocation) {
         Log.d(Constants.TRAILBOOK_TAG, "following " + mPath.getId() + " "  + newLocation.toString() );
         mCurrentDistanceFromPath = TrailbookPathUtilities.getNearestDistanceFromPointToPath(TrailbookPathUtilities.locationToLatLon(newLocation), mPath);
-        //TODO: move to shared preferences
-        if (mCurrentDistanceFromPath > 50 ) {
+        if (mCurrentDistanceFromPath > PreferenceUtilities.getStrayFromPathTriggerDistanceInMeters(mContext) ) {
             alertStrayedFromPath();
         }
     }

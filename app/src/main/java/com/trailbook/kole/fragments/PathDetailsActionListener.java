@@ -8,4 +8,5 @@ public interface PathDetailsActionListener {
     void onFollowRequested(String pathId);
     void onZoomRequested(String pathId);
     void onResumeLeadingRequested(String pathId);
+    void onNavigateToStart(String mPathId);
 }

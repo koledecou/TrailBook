@@ -2,7 +2,7 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="@dimen/details_panel_height"
+    android:layout_height="@dimen/details_panel_height_path_details"
     android:id="@+id/summary_layout">
 
     <TextView
@@ -43,6 +43,13 @@
         android:id="@+id/summary_button_layout"
         android:gravity="bottom"
         android:layout_gravity="bottom|center_horizontal">
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Go to Start"
+            android:id="@+id/pdv_nav_to_start" />
 
         <Button
             style="?android:attr/buttonStyleSmall"

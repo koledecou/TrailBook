@@ -30,7 +30,7 @@
                 android:id="@+id/details_panel_container"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/details_panel_height"
+                android:layout_height="@dimen/details_panel_height_path_details"
                 android:gravity="center|top"
                 tools:layout="@layout/path_details" />
          </com.sothree.slidinguppanel.SlidingUpPanelLayout>

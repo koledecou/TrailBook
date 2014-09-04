@@ -18,10 +18,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
+import com.trailbook.kole.tools.MapUtilities;
 import com.trailbook.kole.tools.PathManager;
 import com.trailbook.kole.worker_fragments.LocationServicesFragment;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
@@ -44,6 +46,7 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
     private TextView mNameView;
     private TextView mDescriptionView;
     private ImageView mImageView;
+    private Button mNavToStartButton;
     private Button mDownloadButton;
     private Button mFollowButton;
     private Button mZoomButton;
@@ -100,6 +103,9 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
 
         mResumeButton = (Button)findViewById(R.id.pdv_resume);
         mResumeButton.setOnClickListener(this);
+
+        mNavToStartButton = (Button)findViewById(R.id.pdv_nav_to_start);
+        mNavToStartButton.setOnClickListener(this);
     }
 
     private void buildButtonBar(ButtonActions actions) {
@@ -108,10 +114,14 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         else
             disableButton(mDownloadButton);
 
-        if (actions.mCanFollowPath)
+        if (actions.mCanFollowPath) {
             enableButton(mFollowButton);
-        else
+            enableButton(mNavToStartButton);
+        }
+        else {
             disableButton(mFollowButton);
+            disableButton(mFollowButton);
+        }
     }
 
     private void disableButton(Button b) {
@@ -136,6 +146,8 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         } else if (v.getId() == R.id.pdv_resume) {
             Toast.makeText(getContext(), "resuming leading " + mName, Toast.LENGTH_LONG).show();
             actionListener.onResumeLeadingRequested(mPathId);
+        } else if (v.getId() == R.id.pdv_nav_to_start) {
+            actionListener.onNavigateToStart(mPathId);
         }
     }
 }

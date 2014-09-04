@@ -25,8 +25,8 @@ public class PathSummary {
     //TODO: add objects for associated climbs, books, summary images, etc...
 
     String id = "-1";
-    LatLng start = new LatLng(0,0);
-    LatLng end = new LatLng(0,0);
+    LatLng start = null;
+    LatLng end = null;
 
     public PathSummary(String id) {
         this.id=id;

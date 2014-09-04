@@ -36,6 +36,7 @@ import com.trailbook.kole.fragments.PathSelectorFragment;
 import com.trailbook.kole.fragments.PathsToUploadSelectorFragment;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
 import com.trailbook.kole.tools.BusProvider;
+import com.trailbook.kole.tools.MapUtilities;
 import com.trailbook.kole.tools.PathFollowerLocationProcessor;
 import com.trailbook.kole.tools.PathLeaderLocationProcessor;
 import com.trailbook.kole.tools.PathManager;
@@ -58,6 +59,12 @@ public class MapsActivity extends Activity
     private static final String ADD_NOTE_FRAG_TAG = "ADD_NOTE_FRAG";
     private static final String PREF_FRAG_TAG = "PREF_FRAG";
     private static final String PATH_SELECT_UPLOAD_TAG = "PATH_SELECT_UPLOAD";
+    private static final String SAVED_CURRENT_PATH_ID = "CURRENT_PATH_ID" ;
+    private static final String SAVED_CURRENT_SEGMENT_ID = "CURRENT_SEGMENT_ID";
+    public static final String MODE_SEARCH = "SEARCH";
+    public static final String MODE_LEAD = "LEAD";
+    public static final String MODE_FOLLOW = "FOLLOW";
+    public static final String SAVED_MODE = "MODE";
 
     private CharSequence mTitle; // Used to store the last screen title. For use in {@link #restoreActionBar()}.
     private MyMapFragment mMapFragment;
@@ -67,24 +74,19 @@ public class MapsActivity extends Activity
     private LocationServicesFragment mLocationServicesFragment;
     private TBPreferenceFragment mPreferencesFragment;
     private Bus bus;
-    private Mode mMode;
+    private String mMode;
     private Resources mResources;
     private SlidingUpPanelLayout mSlidingUpPanel;
-    private Location mCurrentLocation;
     private String mCurrentPathId;
     private String mCurrentSegmentId;
     private Fragment mPathSelectorFragment;
-
-    @Subscribe
-    public void onLocationChangedEvent(LocationChangedEvent event){
-        mCurrentLocation = event.getLocation();
-    }
+    private Fragment mContent;
 
     @Override
     public void onNoteCreated(Note newNote) {
         getFragmentManager().popBackStackImmediate();
         invalidateOptionsMenu();
-        LatLng point = TrailbookPathUtilities.locationToLatLon(mCurrentLocation);
+        LatLng point = TrailbookPathUtilities.locationToLatLon(mPathManager.getCurrentLocation());
         PointAttachedObject<Note> note = new PointAttachedObject<Note>(point,newNote);
         if (mCurrentSegmentId != null && mCurrentPathId != null) {
             mPathManager.addNoteToSegment(mPathManager.getSegment(mCurrentSegmentId), note);
@@ -111,24 +113,46 @@ public class MapsActivity extends Activity
         }
     }
 
-    public enum Mode {SEARCH,LEAD,FOLLOW}
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mMode = MODE_SEARCH;
+
+        //Restore the fragment's instance
+        if (savedInstanceState != null) {
+            Log.d(Constants.TRAILBOOK_TAG, "getting fragment state");
+            mCurrentPathId = savedInstanceState.getString(SAVED_CURRENT_PATH_ID);
+            mCurrentSegmentId = savedInstanceState.getString(SAVED_CURRENT_SEGMENT_ID);
+            mMode = savedInstanceState.getString(SAVED_MODE);
+        }
 
         mResources = this.getResources();
 
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
         bus.register(this);
         mMapFragment=MyMapFragment.newInstance();
+        Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment");
         mPathManager = PathManager.getInstance();
 
-        mMode = Mode.SEARCH;
         setContentView(R.layout.activity_maps);
         setUpNavDrawerFragment();
         setUpPreferencesFragment();
         setUpLocationServicesFragmentIfNeeded();
+        if (mMode.equals(MODE_LEAD))
+            startLeading();
+        else if (mMode.equals(MODE_FOLLOW))
+            startFollowing(mCurrentPathId);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(SAVED_CURRENT_PATH_ID, mCurrentPathId);
+        outState.putString(SAVED_CURRENT_SEGMENT_ID, mCurrentSegmentId);
+        outState.putString(SAVED_MODE, mMode);
+        Log.d(Constants.TRAILBOOK_TAG, "putting fragment state");
+//        getFragmentManager().putFragment(outState, "mContent", mContent);
     }
 
     private PathsToUploadSelectorFragment getPathSelectorFragmentForDownloadedPaths() {
@@ -173,7 +197,7 @@ public class MapsActivity extends Activity
     public boolean onPrepareOptionsMenu(Menu menu) {
         menu.clear();
         MenuInflater inflater = getMenuInflater();
-        if (mMode == Mode.LEAD) {
+        if (mMode == MODE_LEAD) {
             if (!isCreateNoteDialogShowing())
                 inflater.inflate(R.menu.leader_menu, menu);
             else
@@ -233,7 +257,7 @@ public class MapsActivity extends Activity
     private void setUpLocationServicesFragmentIfNeeded() {
         FragmentManager fm = getFragmentManager();
         mLocationServicesFragment = (LocationServicesFragment)fm.findFragmentByTag("locationServices");
-        if (mWorkFragment == null)
+        if (mLocationServicesFragment == null)
             createLocationServicesFragment();
     }
 
@@ -260,7 +284,7 @@ public class MapsActivity extends Activity
         FragmentManager fragmentManager = getFragmentManager();
         Fragment newFrag;
         if (position == 1) { // find paths
-            mMode = Mode.SEARCH;
+            mMode = MODE_SEARCH;
             invalidateOptionsMenu();
         } else if (position == 2) { // new path
             //TODO:  warnIfStoppingUnfinishedPath();
@@ -296,15 +320,22 @@ public class MapsActivity extends Activity
     public void processNewPathClick(String pathName) {
         mCurrentSegmentId = mPathManager.makeNewSegment();
         mCurrentPathId = mPathManager.makeNewPath(pathName, mCurrentSegmentId);
+        Fragment f = getFragmentManager().findFragmentByTag("new_path_dialog");
+        if (f != null) {
+            Log.d(Constants.TRAILBOOK_TAG, "removing dialog");
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.remove(f);
+            ft.commit();
+        }
         startLeading();
     }
 
-    public Mode getMode() {
+    public String getMode() {
         return mMode;
     }
 
     private void warnIfStoppingUnfinishedPath() {
-        if (mMode == Mode.LEAD) {
+        if (mMode == MODE_LEAD) {
             DialogFragment f = AlertDialogFragment.newInstance(mResources.getString(R.string.confirm_new_path_title),
                     mResources.getString(R.string.warn_path_unfinished),
                     mResources.getString(R.string.cancel_new_path),
@@ -342,9 +373,13 @@ public class MapsActivity extends Activity
     @Override
     public void onFollowRequested(String pathId) {
         collapseSlidingPanel();
-        mMode = Mode.FOLLOW;
+        mMode = MODE_FOLLOW;
         mMapFragment.showNotesOnlyForPath(pathId);
         invalidateOptionsMenu();
+        startFollowing(pathId);
+    }
+
+    private void startFollowing(String pathId) {
         mLocationServicesFragment.startUpdates(new PathFollowerLocationProcessor(pathId, this));
     }
 
@@ -352,6 +387,14 @@ public class MapsActivity extends Activity
     public void onZoomRequested(String pathId) {
         collapseSlidingPanel();
         mMapFragment.zoom(pathId);
+    }
+
+    @Override
+    public void onNavigateToStart(String pathId) {
+        collapseSlidingPanel();
+        LatLng startCoords = mPathManager.getStartCoordsForPath(pathId);
+        if (startCoords != null)
+            MapUtilities.navigateTo(this, String.valueOf(startCoords.latitude) + "," + String.valueOf(startCoords.longitude));
     }
 
     @Override
@@ -364,7 +407,7 @@ public class MapsActivity extends Activity
     }
 
     private void startLeading() {
-        mMode = Mode.LEAD;
+        mMode = MODE_LEAD;
         invalidateOptionsMenu();
         mLocationServicesFragment.startUpdates(new PathLeaderLocationProcessor(this, mCurrentSegmentId, mCurrentPathId));
     }

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
@@ -11,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,13 +24,17 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.ExceptionParser;
 import com.trailbook.kole.activities.R;
+import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.tools.TrailbookFileUtilities;
 import com.trailbook.kole.tools.TrailbookPathUtilities;
 
 import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -39,6 +45,10 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     
     private static final int CAMERA_PIC_REQUEST = 1;
     private static final int GALLERY_PIC_REQUEST = 2;
+    private static final String NOTE_ID = "NOTE_ID";
+    private static final String PARENT_SEGMENT_ID = "PARENT_SEGMENT_ID";
+    private static final String TEXT =  "TEXT";
+    private static final String TEMP_IMAGE_FILE_URI = "TEMP_IMAGE_URI";
 
     private String mNoteId;
     private EditText mEditTextContent;
@@ -48,7 +58,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     private Button mCancelButton;
     private String mParentSegmentId;
     private String mImageFileName;
-    private String lastPictureUri;
+    private Uri mLastPictureUri;
 
     public static CreateNoteFragment newInstance(String noteId, String parentSegmentId) {
         CreateNoteFragment fragment = new CreateNoteFragment();
@@ -65,11 +75,25 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setHasOptionsMenu(true);
         if (getArguments() != null) {
             mNoteId = getArguments().getString(ARG_PARAM1);
             mParentSegmentId = getArguments().getString(ARG_PARAM2);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString(NOTE_ID, mNoteId);
+        outState.putString(PARENT_SEGMENT_ID, mParentSegmentId);
+        if (mEditTextContent.getText() != null)
+            outState.putString(TEXT, mEditTextContent.getText().toString());
+        if (mLastPictureUri != null)
+            outState.putString(TEMP_IMAGE_FILE_URI, mLastPictureUri.toString());
+        Log.d(Constants.TRAILBOOK_TAG, "saving uri:" + mLastPictureUri.toString());
     }
 
     @Override
@@ -83,8 +107,24 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         mCancelButton = (Button)view.findViewById(R.id.cn_b_cancel);
         mCancelButton.setOnClickListener(this);
 
+        restoreInstance(savedInstanceState);
         showSoftKeyboard();
         return view;
+    }
+
+    private void restoreInstance(Bundle savedInstanceState) {
+        Log.d(Constants.TRAILBOOK_TAG, "restoring note state");
+        if (savedInstanceState != null) {
+            mNoteId = savedInstanceState.getString(NOTE_ID);
+            mParentSegmentId = savedInstanceState.getString(PARENT_SEGMENT_ID);
+            String text = savedInstanceState.getString(TEXT);
+            mEditTextContent.setText(text);
+            String tempImageFileUri = savedInstanceState.getString(TEMP_IMAGE_FILE_URI);
+            if (tempImageFileUri != null) {
+                Log.d(Constants.TRAILBOOK_TAG, "getting saved Uri:" + tempImageFileUri);
+                mLastPictureUri = Uri.parse(tempImageFileUri);
+            }
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -127,9 +167,9 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         String fileName = "image_" + timeStamp + ".jpg";
-        Uri fileUri = TrailbookFileUtilities.getOutputMediaFileUri(fileName); // create a file to save the image
-        lastPictureUri = fileUri.toString();
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri); // set the image file name
+        mLastPictureUri = TrailbookFileUtilities.getOutputMediaFileUri(fileName); // create a file to save the image
+        Log.d(Constants.TRAILBOOK_TAG, "picture uri: " + mLastPictureUri);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, mLastPictureUri); // set the image file name
         startActivityForResult(cameraIntent, CAMERA_PIC_REQUEST);
     }
 
@@ -137,13 +177,15 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         Uri imageUri = null;
         if (requestCode == CAMERA_PIC_REQUEST) {
             if (resultCode == getActivity().RESULT_OK) {
-                if (data == null) {
-                    String uri = lastPictureUri;
-                    imageUri = Uri.parse(uri);
-                } else {
-                    imageUri = data.getData();
-                }
-                if (imageUri == null) {
+                try {
+                    Log.d(Constants.TRAILBOOK_TAG, "picture uri after capture:" + mLastPictureUri);
+                    if (data == null && mLastPictureUri != null) {
+                        imageUri = mLastPictureUri;
+                    } else {
+                        imageUri = data.getData();
+                    }
+                } catch (Exception e) {
+                    Log.e(Constants.TRAILBOOK_TAG, "Image capture failed.", e);
                     Toast.makeText(getActivity(), "Image Capture Failed", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -157,7 +199,10 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                     bitmap = BitmapFactory.decodeFile(fileNameFullBitmap);
                     bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, 480);
                     bitmap = TrailbookFileUtilities.getRotatedBitmap(bitmap, exif.getAttribute(ExifInterface.TAG_ORIENTATION));
+                    File tempFile = new File(imageUri.getPath());
+                    FileUtils.forceDelete(tempFile);
                 } catch (Exception e) {
+                    Log.e(Constants.TRAILBOOK_TAG, "Image capture failed.", e);
                     Toast.makeText(getActivity(), "Image Capture Failed - can't create bitmap", Toast.LENGTH_LONG).show();
                     return;
                 }
