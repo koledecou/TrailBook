@@ -1,4 +1,4 @@
-package com.trailbook.kole.tools;
+package com.trailbook.kole.state_objects;
 /*
  * Copyright (C) 2012 Square, Inc.
  *

@@ -6,24 +6,22 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
-import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
-import com.trailbook.kole.events.NoteAddedEvent;
 import com.trailbook.kole.events.NotesReceivedEvent;
 import com.trailbook.kole.events.PathSegmentMapRecievedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
 import com.trailbook.kole.events.SegmentPointsReceivedEvent;
 import com.trailbook.kole.services.TrailbookPathServices;
-import com.trailbook.kole.tools.BusProvider;
-import com.trailbook.kole.tools.DownloadImageTask;
-import com.trailbook.kole.tools.PathManager;
-import com.trailbook.kole.tools.TrailbookFileUtilities;
-import com.trailbook.kole.tools.TrailbookPathUtilities;
+import com.trailbook.kole.state_objects.BusProvider;
+import com.trailbook.kole.helpers.DownloadImageTask;
+import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
+import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
 import org.apache.http.entity.mime.MultipartEntity;
 
@@ -246,7 +244,7 @@ public class WorkerFragment extends Fragment {
     }
 
     private void PostImages(Path p) {
-        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p);
+        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p.getId());
         for (PathSegment s:segments) {
             PostImages(s);
         }
@@ -266,10 +264,12 @@ public class WorkerFragment extends Fragment {
     }
 
     private void PostPathSummary(Path p, Callback<String> cb) {
-        String pathSummaryFileContents = TrailbookPathUtilities.getPathSummaryJSONString(p);
-        Log.d(Constants.TRAILBOOK_TAG, pathSummaryFileContents);
+        String pathSummaryFileContents = TrailbookPathUtilities.getPathSummaryJSONString(p.getSummary());
+        Log.d(Constants.TRAILBOOK_TAG, "pathSummaryFileContents: " + pathSummaryFileContents);
         String fileName = p.getId() + "_summary.tb";
         String dir = Constants.pathsDir + "/" + p.getId();
+        Log.d(Constants.TRAILBOOK_TAG, "dir: " + dir);
+        Log.d(Constants.TRAILBOOK_TAG, "fileName: " + fileName);
         mService.postStringFileContents(pathSummaryFileContents, dir, fileName, cb);
     }
 
@@ -282,7 +282,7 @@ public class WorkerFragment extends Fragment {
     }
 
     private void PostPathPoints(Path p, Callback<String> cb) {
-        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p);
+        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p.getId());
         for (PathSegment s:segments) {
             PostSegmentPoints(s, cb);
         }
@@ -297,7 +297,7 @@ public class WorkerFragment extends Fragment {
     }
 
     private void PostPathPointNotes(Path p, Callback<String> cb) {
-        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p);
+        ArrayList<PathSegment> segments = pathManager.getSegmentsForPath(p.getId());
         for (PathSegment s:segments) {
             PostSegmentPointNotes(s, cb);
         }
@@ -343,6 +343,9 @@ public class WorkerFragment extends Fragment {
         };
 
         mService.getPathSegmentMap(options,callback);
+
+        //todo: for now we're just assuming it worked.
+        pathManager.setDownloadComplete(pathId);
     }
 
     private void startDownloadSegment(String segmentId) {

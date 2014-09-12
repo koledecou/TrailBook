@@ -1,32 +1,20 @@
 package com.trailbook.kole.fragments;
 
-import android.app.Activity;
 import android.content.Context;
 import android.media.Image;
-import android.net.Uri;
-import android.os.Bundle;
-import android.app.Fragment;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.ButtonActions;
-import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
-import com.trailbook.kole.tools.MapUtilities;
-import com.trailbook.kole.tools.PathManager;
-import com.trailbook.kole.worker_fragments.LocationServicesFragment;
-import com.trailbook.kole.worker_fragments.WorkerFragment;
+import com.trailbook.kole.state_objects.PathManager;
 
 
 public class PathDetailsView extends LinearLayout implements View.OnClickListener {
@@ -141,7 +129,6 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
             Toast.makeText(getContext(), "following " + mName, Toast.LENGTH_LONG).show();
             actionListener.onFollowRequested(mPathId);
         } else if (v.getId() == R.id.pdv_zoom) {
-            Toast.makeText(getContext(), "zooming " + mName, Toast.LENGTH_LONG).show();
             actionListener.onZoomRequested(mPathId);
         } else if (v.getId() == R.id.pdv_resume) {
             Toast.makeText(getContext(), "resuming leading " + mName, Toast.LENGTH_LONG).show();

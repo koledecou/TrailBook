@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="The Lost World"
+        android:text=""
         android:id="@+id/summary_name"
         android:gravity="center_horizontal"
         android:textStyle="bold" />
@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Path to the Lost World"
+            android:text=""
             android:id="@+id/summary_description"
             android:layout_gravity="center_horizontal" />
 

@@ -11,15 +11,6 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_maps">Map</string>
     <string name="ringtones_cat">Ringtone Settings</string>
-
-    <string-array name="nav_items">
-        <item>Find Path</item>
-        <item>Follow Path</item>
-        <item>Create Path</item>
-        <item>Upload Path</item>
-        <item>Settings</item>
-    </string-array>
-
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="warn_path_unfinished">This action will terminate the current path and start a new one.  Are you sure you want to start a new path?</string>
     <string name="confirm_new_path_title">Confirm New Path</string>
@@ -34,21 +25,12 @@
     <string name="cn_cancel">Cancel</string>
     <string name="create_note">Add Note</string>
     <string name="take_picture">Take Picture</string>
-
     <string name="general_settings">General Settings</string>
     <string name="notification_settings">Notification Settings</string>
     <string name="upload_user_name">User Name</string>
     <string name="upload_user_name_summary">User name to default for path upload.</string>
     <string name="uom">Unit Of Measure</string>
     <string name="uom_summary">Unit of measure for display.</string>
-    <string-array name="uom_items">
-        <item>US (feet/miles)</item>
-        <item>Metric (m/km)</item>
-    </string-array>
-    <string-array name="uom_vals">
-        <item>US</item>
-        <item>Metric</item>
-    </string-array>
     <string name="enable_prox_alert_1">Play Alert 1</string>
     <string name="enable_prox_alert_summary_1">Sound an alert when in the general vicinity of a note.</string>
     <string name="ringtone_1">Ringtone to sound when in the general vicinity of a note.</string>
@@ -89,5 +71,26 @@
     <string name="miles">miles</string>
     <string name="meters">meters</string>
     <string name="kilometers">kilometers</string>
-
+    <string name="delete">delete</string>
+    <string name="upload">upload</string>
+    <string name="stop">Stop</string>
+    <string name="create_quick_note">Quick Note</string>
+    <string name="qn_left">Turn Left</string>
+    <string name="qn_right">Turn Right</string>
+    <string name="qn_straight">Go Straight</string>
+    <string name="note_notification_title">Trail Note in \u0025s</string>
+    <string name="strayed_notification_content">distance to path is \u0025s</string>
+    <string name="dist_bearing_string">\u0025s \u0025s of you.</string>
+    <string name="action_list">List</string>
+    <string name="action_filter">Filter</string>
+    <string name="follow">follow</string>
+    <string name="map_category_title">Map Settings</string>
+    <string name="waiting_for_location_title">Error: No Location</string>
+    <string name="waiting_for_location_message">No location</string>
+    <string name="OK">OK</string>
+    <string name="waiting_for_location">Waiting for location</string>
+    <string name="to_start">go to start</string>
+    <string name="info_no_paths_downloaded_message">To follow a trail, you must first download it locally.  Use the map to search for your trail.</string>
+    <string name="info_no_paths_downloaded_title">No Paths to Follow</string>
+    <string name="action_refresh">Refresh</string>
 </resources>

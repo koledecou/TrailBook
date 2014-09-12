@@ -11,4 +11,8 @@
     <dimen name="navigation_drawer_width">240dp</dimen>
     <dimen name="summary_image_height">100dp</dimen>
     <dimen name="summary_image_width">100dp</dimen>
+    <dimen name="small_note_view_image_pad">5dp</dimen>
+    <dimen name="small_note_image_max_width">150dp</dimen>
+    <dimen name="small_note_view_min_text_panel_width">400dp</dimen>
+    <dimen name="map_message_pad">25dp</dimen>
 </resources>

@@ -3,7 +3,7 @@ package com.trailbook.kole.data;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.trailbook.kole.tools.TrailbookPathUtilities;
+import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,10 +1,12 @@
-package com.trailbook.kole.tools;
+package com.trailbook.kole.helpers;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
@@ -89,6 +91,45 @@ public class PreferenceUtilities {
 
     public static double metersToFeet(double meters) {
         return (double)meters / 0.3048d;
+    }
+
+    public static double getNoteAlertDistanceInMeters(Context c) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
+        if (!prefs.getBoolean("enable_prox_2", true)) {
+            return Integer.MIN_VALUE;
+        }
+        String sTriggerDist = prefs.getString("triggerRadiusClose", "100");
+        int triggerDist = Integer.valueOf(sTriggerDist);
+
+        if ((prefs.getString("unit_of_measure_pref", "US")).equalsIgnoreCase("US")){
+            triggerDist = (int) Math.round(feetToMeters(triggerDist));
+        }
+        Log.d(Constants.TRAILBOOK_TAG, "PreferenceUtilities: note alert distance: "+ triggerDist);
+        return triggerDist;
+    }
+
+    public static String getDistanceAndBearingString(Context context, float distance, float bearing) {
+        String relativeLocationMessage = context.getString(R.string.dist_bearing_string);
+        String distanceString = getDistString(context, distance);
+        String bearingString = getBearingString(context, bearing);
+        return String.format(relativeLocationMessage, distanceString, bearingString);
+    }
+
+    public static int getMapType(Context c) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
+        String mapType = prefs.getString("map_type_pref", "TERRAIN");
+        if ("TERRAIN".equals(mapType))
+            return GoogleMap.MAP_TYPE_TERRAIN;
+        else if ("HYBIRD".equals(mapType))
+            return GoogleMap.MAP_TYPE_HYBRID;
+        else if ("NONE".equals(mapType))
+            return GoogleMap.MAP_TYPE_NONE;
+        else if ("NORMAL".equals(mapType))
+            return GoogleMap.MAP_TYPE_NORMAL;
+        else if ("SATELLITE".equals(mapType))
+            return GoogleMap.MAP_TYPE_SATELLITE;
+        else
+            return GoogleMap.MAP_TYPE_SATELLITE;
     }
 }
 

@@ -13,8 +13,6 @@ import android.widget.ListAdapter;
 import android.widget.TextView;
 import com.trailbook.kole.activities.R;
 
-import com.trailbook.kole.fragments.list_content.PathListContent;
-
 /**
  * A fragment representing a list of Items.
  * <p />
@@ -27,8 +25,12 @@ import com.trailbook.kole.fragments.list_content.PathListContent;
 public abstract class PathSelectorFragment extends Fragment implements AbsListView.OnItemClickListener {
 
     public static final String UPLOAD = "UPLOAD";
+    public static final String DELETE = "DELETE";
+    public static final String FOLLOW = "FOLLOW";
+    public static final String DISMISS = "DISMISS";
+    public static final String TO_START = "TO_START";
 
-    private OnFragmentInteractionListener mListener;
+    private OnPathSelectorFragmentInteractionListener mListener;
 
     /**
      * The fragment's ListView/GridView.
@@ -39,8 +41,7 @@ public abstract class PathSelectorFragment extends Fragment implements AbsListVi
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    public ListAdapter mAdapter;
-    public String mAction;
+    public ArrayAdapter mAdapter;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -49,7 +50,7 @@ public abstract class PathSelectorFragment extends Fragment implements AbsListVi
     public PathSelectorFragment() {
     }
 
-    public abstract ListAdapter getArrayAdapter();
+    public abstract ArrayAdapter getArrayAdapter();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,11 +65,12 @@ public abstract class PathSelectorFragment extends Fragment implements AbsListVi
         View view = inflater.inflate(R.layout.fragment_pathselectorfragment, container, false);
 
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
+        mListView = (AbsListView) view.findViewById(R.id.psf_list);
         ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
+        registerForContextMenu(mListView);
 
         return view;
     }
@@ -77,10 +79,18 @@ public abstract class PathSelectorFragment extends Fragment implements AbsListVi
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (OnPathSelectorFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                 + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    public void sendActionToListener(String action, String pathId) {
+        if (null != mListener) {
+            // Notify the active callbacks interface (the activity, if the
+            // fragment is attached to one) that an item has been selected.
+            mListener.onPathSelectorFragmentResult(action, pathId);
         }
     }
 
@@ -88,15 +98,6 @@ public abstract class PathSelectorFragment extends Fragment implements AbsListVi
     public void onDetach() {
         super.onDetach();
         mListener = null;
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (null != mListener) {
-            // Notify the active callbacks interface (the activity, if the
-            // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(mAction, PathListContent.ITEMS.get(position).id);
-        }
     }
 
     /**
@@ -122,8 +123,8 @@ public abstract class PathSelectorFragment extends Fragment implements AbsListVi
     * "http://developer.android.com/training/basics/fragments/communicating.html"
     * >Communicating with Other Fragments</a> for more information.
     */
-    public interface OnFragmentInteractionListener {
-        public void onFragmentInteraction(String action, String pathId);
+    public interface OnPathSelectorFragmentInteractionListener {
+        public void onPathSelectorFragmentResult(String action, String pathId);
     }
 
 }

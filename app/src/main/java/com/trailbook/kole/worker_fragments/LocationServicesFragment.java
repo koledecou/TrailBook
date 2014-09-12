@@ -3,6 +3,7 @@ package com.trailbook.kole.worker_fragments;
 
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
@@ -20,11 +21,10 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.squareup.otto.Bus;
-import com.squareup.otto.Produce;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.LocationServiceDisconnectedEvent;
-import com.trailbook.kole.tools.BusProvider;
+import com.trailbook.kole.state_objects.BusProvider;
 
 public class LocationServicesFragment extends Fragment implements
         GooglePlayServicesClient.ConnectionCallbacks,
@@ -35,6 +35,7 @@ public class LocationServicesFragment extends Fragment implements
 
     public interface LocationProcessor {
         public void process(Location newLocation);
+        public void removeAllNotifications();
     }
 
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 1;
@@ -68,12 +69,12 @@ public class LocationServicesFragment extends Fragment implements
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);        
+        super.onCreate(savedInstanceState);
         setRetainInstance(true);
         mPowerManager = (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
         mParent = getActivity();
         initializeSharedPreferences();
-        
+
         if (!userHasDisabledGPSLocationServices())
             promptToEnableLocationServices();
 
@@ -235,5 +236,10 @@ public class LocationServicesFragment extends Fragment implements
             mWakeLock.release();
             Log.d(Constants.TRAILBOOK_TAG, "Releasing lock");
         }
+    }
+
+    public void removeAllNotifications() {
+        if (mLocationProcessor != null)
+            mLocationProcessor.removeAllNotifications();
     }
 }

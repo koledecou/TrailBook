@@ -23,9 +23,21 @@
             sothree:shadowHeight="4dp"
             sothree:fadeColor="@android:color/transparent">
             <FrameLayout
-                android:id="@+id/map_container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent">
+                <FrameLayout
+                    android:id="@+id/map_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Test"
+                    android:id="@+id/map_tv_message"
+                    android:layout_gravity="bottom|center_horizontal" />
+            </FrameLayout>
             <LinearLayout
                 android:id="@+id/details_panel_container"
                 android:orientation="vertical"

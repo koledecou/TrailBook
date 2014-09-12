@@ -45,7 +45,19 @@
             android:title="@string/ringtone_title_2"
             android:showSilent="true"
             android:key="ringtoneClose"
-            android:defaultValue="content://settings/system/notification_sound" android:dependency="enable_prox_2" android:summary="@string/ringtone_2"/>
+            android:defaultValue="content://settings/system/notification_sound"
+            android:dependency="enable_prox_2"
+            android:summary="@string/ringtone_2"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:key="map_cat"
+        android:title="@string/map_category_title">
+        <ListPreference
+            android:title="Map Type"
+            android:key="map_type_pref"
+            android:defaultValue="SATELLITE"
+            android:entries="@array/mapTypes"
+            android:entryValues="@array/mapTypeValues" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

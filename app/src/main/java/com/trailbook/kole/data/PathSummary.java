@@ -28,6 +28,11 @@ public class PathSummary {
     LatLng start = null;
     LatLng end = null;
 
+/*    public PathSummary(String id, String ownerID) {
+        this.id=id;
+        this.ownerID = ownerID;
+    }*/
+
     public PathSummary(String id) {
         this.id=id;
     }

@@ -1,4 +1,4 @@
-package com.trailbook.kole.tools;
+package com.trailbook.kole.helpers;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
 
 import org.apache.commons.io.FileUtils;
 

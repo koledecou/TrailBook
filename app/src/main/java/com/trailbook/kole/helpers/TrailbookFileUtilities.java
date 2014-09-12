@@ -1,4 +1,4 @@
-package com.trailbook.kole.tools;
+package com.trailbook.kole.helpers;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -18,8 +18,12 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -36,30 +40,38 @@ public class TrailbookFileUtilities {
         return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.pathsDir;
     }
 
+    public static String getInternalPathDirectory(Context c, String pathId) {
+        return getInternalPathDirectory(c) + File.separator + pathId;
+    }
+
     public static String getInternalSegmentDirectory(Context c) {
         return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.segmentsDir;
     }
 
+    public static String getInternalSegmentDirectory(Context c, String segmentId) {
+        return getInternalSegmentDirectory(c) + File.separator + segmentId;
+    }
+
     public static File getInternalPathSummaryFile(Context c, String pathId) {
-        String fullDirectory = getInternalPathDirectory(c) + File.separator + pathId;
+        String fullDirectory = getInternalPathDirectory(c, pathId);
         String fileName = pathId + "_summary.tb";
         return new File(fullDirectory, fileName);
     }
 
     public static File getInternalSegmentPointsFile(Context c, String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(c) + File.separator + segmentId;
+        String fullDirectory = getInternalSegmentDirectory(c, segmentId);
         String fileName = segmentId + "_points.tb";
         return new File(fullDirectory, fileName);
     }
 
     public static File getInternalSegmentNotesFile(Context c, String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(c) + File.separator + segmentId;
+        String fullDirectory = getInternalSegmentDirectory(c, segmentId);
         String fileName = segmentId + "_notes.tb";
         return new File(fullDirectory, fileName);
     }
 
     public static File getInternalPathSegmentListFile(Context c, String pathId) {
-        String fullDirectory = getInternalPathDirectory(c) + File.separator + pathId;
+        String fullDirectory =  getInternalPathDirectory(c, pathId);
         String fileName = pathId + "_segments.tb";
         return new File(fullDirectory, fileName);
     }
@@ -71,7 +83,7 @@ public class TrailbookFileUtilities {
     }
 
     public static File getInternalImageDirForSegment(Context c, String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(c) + File.separator + segmentId + File.separator + Constants.imageDir;
+        String fullDirectory = getInternalSegmentDirectory(c, segmentId) + File.separator + Constants.imageDir;
         return new File(fullDirectory);
     }
 
@@ -255,5 +267,19 @@ public class TrailbookFileUtilities {
 
     public static String getWebServerImageDir(String segmentId) {
         return Constants.BASE_WEBSERVER_SEGMENT_URL + "/" + segmentId;
+    }
+
+    public static String readTextFromUri(Context c, Uri uri) throws IOException {
+        InputStream inputStream = c.getContentResolver().openInputStream(uri);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                inputStream));
+        StringBuilder stringBuilder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            stringBuilder.append(line);
+        }
+        inputStream.close();
+        reader.close();
+        return stringBuilder.toString();
     }
 }

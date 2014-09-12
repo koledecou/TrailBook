@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
@@ -21,20 +20,17 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.analytics.ExceptionParser;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.tools.TrailbookFileUtilities;
-import com.trailbook.kole.tools.TrailbookPathUtilities;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
+import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -91,9 +87,10 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         outState.putString(PARENT_SEGMENT_ID, mParentSegmentId);
         if (mEditTextContent.getText() != null)
             outState.putString(TEXT, mEditTextContent.getText().toString());
-        if (mLastPictureUri != null)
+        if (mLastPictureUri != null) {
             outState.putString(TEMP_IMAGE_FILE_URI, mLastPictureUri.toString());
-        Log.d(Constants.TRAILBOOK_TAG, "saving uri:" + mLastPictureUri.toString());
+            Log.d(Constants.TRAILBOOK_TAG, "saving uri:" + mLastPictureUri.toString());
+        }
     }
 
     @Override
@@ -197,7 +194,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                     ExifInterface exif=new ExifInterface(fileNameFullBitmap);
                     exif.getAttribute(ExifInterface.TAG_ORIENTATION);
                     bitmap = BitmapFactory.decodeFile(fileNameFullBitmap);
-                    bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, 480);
+                    bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, Constants.IMAGE_CAPTURE_WIDTH);
                     bitmap = TrailbookFileUtilities.getRotatedBitmap(bitmap, exif.getAttribute(ExifInterface.TAG_ORIENTATION));
                     File tempFile = new File(imageUri.getPath());
                     FileUtils.forceDelete(tempFile);
@@ -253,6 +250,8 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             mListener.onNoteCreateCanceled();
         }
     }
+
+
 
     private void hideSoftKeyboard() {
         InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);

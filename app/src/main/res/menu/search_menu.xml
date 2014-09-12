@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MyActivity" >
+    <item android:id="@+id/action_refresh_map"
+        android:title="@string/action_refresh"
+        android:icon="@drawable/ic_action_refresh_map"
+        android:showAsAction="ifRoom" />
+    <item android:id="@+id/action_filter"
+        android:title="@string/action_filter"
+        android:icon="@drawable/ic_action_filter"
+        android:showAsAction="ifRoom" />
+    <item android:id="@+id/action_list"
+        android:title="@string/action_list"
+        android:icon="@drawable/ic_action_list"
+        android:showAsAction="ifRoom" />
+</menu>

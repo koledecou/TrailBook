@@ -3,19 +3,27 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:gravity="fill|top"
-    android:orientation="vertical" >
-
+    android:orientation="vertical"
+    android:id="@+id/nv_full_note_layout">
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="2.6 miles SE of you"
+        android:id="@+id/vn_navigation_details" />
+    <TextView
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/nvf_text" />
-
+        android:text="Leave the main trail at the big tree.  Go right down a rocky hillside."
+        android:id="@+id/vn_text_content"
+        android:layout_gravity="top|left"
+        android:textAlignment="textStart" />
     <ImageView
-        android:id="@+id/nvf_image"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:src="@android:drawable/screen_background_dark" />
+        android:id="@+id/vn_image"
+        android:layout_gravity="top|center_horizontal"
+        android:padding="@dimen/small_note_view_image_pad" />
 
 </LinearLayout>

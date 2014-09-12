@@ -6,63 +6,71 @@ import android.media.Image;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
-import com.trailbook.kole.tools.BusProvider;
-import com.trailbook.kole.tools.PathManager;
-import com.trailbook.kole.tools.PreferenceUtilities;
-import com.trailbook.kole.tools.TrailbookFileUtilities;
+import com.trailbook.kole.helpers.ApplicationUtils;
+import com.trailbook.kole.state_objects.BusProvider;
+import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.helpers.PreferenceUtilities;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 public class NoteView extends LinearLayout {
-    private PathManager mPathManager;
+    PathManager mPathManager;
 
-    private PointAttachedObject<Note> mPaoNote;
-    private String mNoteId = "1";
-    private String mContent = "This is a sample path";
-    private String mImageFileName = null;
-    private Image mImage = null;
-    private TextView mTextViewContent;
-    private TextView mTextViewLocationInfo;
-    private ImageView mImageView;
-    private Bus mBus = BusProvider.getInstance();
-    private Location mCurrentLocation;
+    PointAttachedObject<Note> mPaoNote;
+    String mNoteId = "1";
+    String mContent = "This is a sample path";
+    String mImageFileName = null;
+    Image mImage = null;
+    TextView mTextViewContent;
+    TextView mTextViewLocationInfo;
+    ImageView mImageView;
+    Bus mBus = BusProvider.getInstance();
+    Location mCurrentLocation;
+    int mLayoutId = R.layout.view_note;
 
     public NoteView(Context context) {
         super(context);
-        loadViews();
     }
 
     public NoteView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        loadViews();
+//        loadViews();
     }
 
     public NoteView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+//        loadViews();
+    }
+
+    void init(int layoutId, int id) {
+        mLayoutId = layoutId;
+        if (id != -1)
+            setId(id);
         loadViews();
     }
 
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event){
-        Log.d(Constants.TRAILBOOK_TAG, "location changed event recieved by noteview," + event.getLocation());
+        Log.d(Constants.TRAILBOOK_TAG, "NoteView: location changed event recieved," + event.getLocation());
         mCurrentLocation = event.getLocation();
         setRelativeLocationString();
+    }
+
+    public String getNoteId() {
+        return mNoteId;
     }
 
     public void setNoteId(String noteId) {
@@ -91,34 +99,33 @@ public class NoteView extends LinearLayout {
         LatLng noteLocation = mPaoNote.getLocation();
         float[] results = new float[5];
         if (mCurrentLocation == null) {
-            mCurrentLocation = mPathManager.getCurrentLocation();
+            mCurrentLocation = TrailBookState.getCurrentLocation();
         }
 
         if (noteLocation != null && mCurrentLocation != null) {
-            Log.d(Constants.TRAILBOOK_TAG, "note location:" + noteLocation);
-            Log.d(Constants.TRAILBOOK_TAG, "current location: " + mCurrentLocation);
+            Log.d(Constants.TRAILBOOK_TAG, "NoteView: note location:" + noteLocation);
+            Log.d(Constants.TRAILBOOK_TAG, "NoteView: current location: " + mCurrentLocation);
 
             Location.distanceBetween(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), noteLocation.latitude, noteLocation.longitude, results);
             //String relativeLocationMessage = getContext().getResources().getString(R.string.relative_location_message);
-            String relativeLocationMessage = "%s %s of you";
-            String distanceString = PreferenceUtilities.getDistString(getContext(), results[0]);
-            String bearingString = PreferenceUtilities.getBearingString(getContext(), results[1]);
-            mTextViewLocationInfo.setText(String.format(relativeLocationMessage, distanceString, bearingString));
+            String distAndBearingString  = PreferenceUtilities.getDistanceAndBearingString(getContext(), results[0], results[1]);
+            mTextViewLocationInfo.setText(distAndBearingString);
         } else {
             mTextViewLocationInfo.setText("");
         }
+        invalidate();
     }
 
-    private void loadViews(){
+    void loadViews(){
         mBus = BusProvider.getInstance();
         mBus.register(this);
-
         LayoutInflater inflater = LayoutInflater.from(this.getContext());
-        inflater.inflate(R.layout.view_note, this);
+        inflater.inflate(mLayoutId, this);
 
         mTextViewContent=(TextView)findViewById(R.id.vn_text_content);
+        mTextViewContent.setMinWidth(R.dimen.small_note_view_min_text_panel_width);
         mImageView=(ImageView)findViewById(R.id.vn_image);
         mTextViewLocationInfo=(TextView)findViewById(R.id.vn_navigation_details);
-
+        mTextViewLocationInfo.setMinWidth(R.dimen.small_note_view_min_text_panel_width);
     }
 }

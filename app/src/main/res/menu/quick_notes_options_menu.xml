@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/quick_note_left"
+        android:title="@string/qn_left"
+        android:showAsAction="withText|ifRoom" />
+    <item android:id="@+id/quick_note_right"
+        android:title="@string/qn_right"
+        android:showAsAction="withText|ifRoom" />
+    <item android:id="@+id/quick_note_straight"
+        android:title="@string/qn_straight"
+        android:showAsAction="withText|ifRoom" />
+</menu>

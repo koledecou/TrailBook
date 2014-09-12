@@ -1,4 +1,4 @@
-package com.trailbook.kole.tools;
+package com.trailbook.kole.helpers;
 
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -6,7 +6,7 @@ import com.squareup.picasso.Target;
 import org.apache.commons.io.FileUtils;
 
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.tools.TrailbookFileUtilities;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
 
 import java.io.File;
 import java.io.IOException;

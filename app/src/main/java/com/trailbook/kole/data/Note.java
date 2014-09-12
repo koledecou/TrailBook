@@ -14,7 +14,7 @@ public class Note {
         this.parentSegmentId = parentSegmentId;
     }
 
-    public void setParentPathId(String parentSegmentId) {
+    public void setParentSegmentId(String parentSegmentId) {
         this.parentSegmentId = parentSegmentId;
     }
 

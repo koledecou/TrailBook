@@ -16,7 +16,7 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
+            runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -25,6 +25,9 @@ android {
 }
 
 dependencies {
+    repositories {
+        mavenCentral()
+    }
     compile fileTree(include: ['*.jar'], dir: 'libs')
     // You must install or update the Support Repository through the SDK manager to use this dependency.
     compile 'com.android.support:support-v4:19.+'
@@ -39,11 +42,6 @@ dependencies {
     compile 'org.apache.commons:commons-collections4:4.0'
     compile 'org.apache.httpcomponents:httpmime:4.2.1'
     compile 'org.apache.httpcomponents:httpclient:4.2.1'
-}
-
-dependencies {
-    repositories {
-        mavenCentral()
-    }
     compile 'com.sothree.slidinguppanel:library:+'
 }
+

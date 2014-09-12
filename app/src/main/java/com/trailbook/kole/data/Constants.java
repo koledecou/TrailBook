@@ -25,14 +25,12 @@ public class Constants {
     public static final String segmentsDir = "segments";
     public static final String imageDir = "images";
     public static final String TRAILBOOK_TAG = "trailbook";
-
-    public static int SEARCH_MODE = 0;
-    public static int FOLLOWER_MODE = 1;
-    public static int LEADER_MODE = 2;
+    public static final long CLOUD_REFRESH_DEFAULT_TIME_DELTA = 5*60*1000;
 
     public static int MEDIUM_DETAIL = 500;
     public static int FULL_DETAIL = -1;
 
     public static final int MIN_DISTANCE_BETWEEN_POINTS=3; //distance in meters
     public static final int MAX_DISTANCE_BETWEEN_POINTS = 1000;
+    public static final int IMAGE_CAPTURE_WIDTH = 640;
 }

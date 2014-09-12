@@ -1,7 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_bar_create_quick_note"
+        android:title="@string/create_quick_note"
+        android:icon="@drawable/ic_action_add_quick_note"
+        android:showAsAction="ifRoom">
+        <menu xmlns:android="http://schemas.android.com/apk/res/android">
+            <item android:id="@+id/quick_note_left"
+                android:title="@string/qn_left"
+                android:showAsAction="withText|ifRoom" />
+            <item android:id="@+id/quick_note_right"
+                android:title="@string/qn_right"
+                android:showAsAction="withText|ifRoom" />
+            <item android:id="@+id/quick_note_straight"
+                android:title="@string/qn_straight"
+                android:showAsAction="withText|ifRoom" />
+        </menu>
+     </item>
+
     <item android:id="@+id/action_bar_create_note"
         android:title="@string/create_note"
-        android:showAsAction="withText|ifRoom" />
+        android:icon="@drawable/ic_action_add_note"
+        android:showAsAction="ifRoom">
+    </item>
 </menu>

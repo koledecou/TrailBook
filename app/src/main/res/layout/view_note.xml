@@ -1,34 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="fill_parent"
+    android:orientation="horizontal" android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:id="@+id/vn_parent_layout">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="2.6 miles SE of you"
-        android:id="@+id/vn_navigation_details" />
+    android:id="@+id/nv_small_note_layout">
+
+    <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/vn_image"
+        android:layout_gravity="top|left"
+        android:padding="@dimen/small_note_view_image_pad"
+        android:maxWidth="@dimen/small_note_image_max_width" />
 
     <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent">
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:layout_weight="1"
+        android:minWidth="@dimen/small_note_view_min_text_panel_width"
+        android:measureWithLargestChild="true">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="2.6 miles SE of you"
+            android:id="@+id/vn_navigation_details"
+            android:layout_gravity="top|left"
+            android:minWidth="@dimen/small_note_view_min_text_panel_width" />
+
+        <TextView
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Leave the main trail at the big tree.  Go right down a rocky hillside."
             android:id="@+id/vn_text_content"
-            android:layout_gravity="top|left" />
+            android:layout_gravity="top|left"
+            android:maxWidth="@dimen/small_note_view_min_text_panel_width" />
 
-        <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/vn_image"
-            android:layout_gravity="top|right" />
     </LinearLayout>
 
 </LinearLayout>

@@ -1,4 +1,4 @@
-package com.trailbook.kole.tools;
+package com.trailbook.kole.helpers;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.ExclusionStrategy;
