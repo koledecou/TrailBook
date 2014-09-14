@@ -175,6 +175,7 @@ public class PathManager {
 
     public void savePathSegmentMap(String pathId, Context c) {
         Path path = getPath(pathId);
+        Log.d(Constants.TRAILBOOK_TAG, "saving path: " + path);
         savePathSegmentMap(path, c);
     }
 
@@ -246,31 +247,54 @@ public class PathManager {
         saveSegmentNotes(s, c);
     }
 
-    public void loadPathsFromDevice(Activity activity) {
+    public void loadPathFromDevice(Context c, String pathId) {
+        File summaryFile = TrailbookFileUtilities.getInternalPathSummaryFile(c, pathId);
+        String summaryFileContents = null;
+        PathSummary summary = null;
+        try {
+            summaryFileContents = FileUtils.readFileToString(summaryFile);
+            summary = getSummaryFromString(summaryFileContents);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "PathManager Error: can't load summary file for path " + pathId);
+            return;
+        }
+        bus.post(new PathSummaryAddedEvent(summary));
+        loadPathFromSummary(c, summary);
+    }
+
+    private PathSummary getSummaryFromString(String summaryFileContents) {
+        PathSummary summary = gson.fromJson(summaryFileContents, PathSummary.class);
+        Log.d(Constants.TRAILBOOK_TAG, "loaded summary " + summary.getName() + ", " + summary.getId());
+        return summary;
+    }
+
+    private void loadPathFromSummary(Context c, PathSummary summary) {
+        Path p = new Path(summary.getId());
+        p.setSummary(summary);
+        ArrayList<String> segmentIds = loadSegmentIdsForPath(c, summary.getId());
+        for (String segId : segmentIds) {
+            try {
+                PathSegment segment = loadSegment(c, segId);
+                p.addSegment(segId);
+                addNewSegment(segment);
+                bus.post(new SegmentUpdatedEvent(segment));
+            } catch (Exception e) {
+                Log.e(Constants.TRAILBOOK_TAG, "Error loading segment id: " + segId, e);
+            }
+        }
+        p.setDownloaded(true);
+        addPath(p);
+    }
+
+    public void loadPathsFromDevice(Context c) {
         PathDirectoryWalker walker = new PathDirectoryWalker("_summary.tb");
-        String pathRootDir = TrailbookFileUtilities.getInternalPathDirectory(activity);
+        String pathRootDir = TrailbookFileUtilities.getInternalPathDirectory(c);
         ArrayList<String> pathSummaryFileContents = walker.getPathFileContentsFromDevice(pathRootDir);
         for (String thisContent:pathSummaryFileContents) {
             try {
-                PathSummary summary = gson.fromJson(thisContent, PathSummary.class);
-                Log.d(Constants.TRAILBOOK_TAG, "loaded summary " + summary.getName() + ", " + summary.getId());
+                PathSummary summary = getSummaryFromString(thisContent);
                 bus.post(new PathSummaryAddedEvent(summary));
-
-                Path p = new Path(summary.getId());
-                p.setSummary(summary);
-                ArrayList<String> segmentIds = loadSegmentIdsForPath(activity, summary.getId());
-                for (String segId : segmentIds) {
-                    try {
-                        PathSegment segment = loadSegment(activity, segId);
-                        p.addSegment(segId);
-                        addNewSegment(segment);
-                        bus.post(new SegmentUpdatedEvent(segment));
-                    } catch (Exception e) {
-                        Log.e(Constants.TRAILBOOK_TAG, "Error loading segment id: " + segId, e);
-                    }
-                }
-                p.setDownloaded(true);
-                addPath(p);
+                loadPathFromSummary(c, summary);
             } catch (Exception e) {
                 Log.e(Constants.TRAILBOOK_TAG, "Error loading path.", e);
             }
@@ -285,7 +309,7 @@ public class PathManager {
         mSegments.put(id, segment);
     }
 
-    private PathSegment loadSegment(Context c, String segId) {
+    public PathSegment loadSegment(Context c, String segId) {
         try {
             ArrayList<LatLng> points = loadPoints(c, segId);
             HashMap<String, PointAttachedObject<Note>> notes = loadNotes(c, segId);
@@ -415,6 +439,25 @@ public class PathManager {
                 return paoNote;
         }
         return null;
+    }
+
+    public boolean hasDownloadedPaths() {
+        ArrayList<String> downloadedPathIds = new ArrayList<String>();
+        for (Path p:mPaths.values()) {
+            if (p.isDownloaded())
+                return true;
+        }
+
+        return false;
+    }
+
+    public ArrayList<String> getDownloadedPathIds() {
+        ArrayList<String> downloadedPathIds = new ArrayList<String>();
+        for (Path p:mPaths.values()) {
+            if (p.isDownloaded())
+                downloadedPathIds.add(p.getId());
+        }
+        return downloadedPathIds;
     }
 
     public ArrayList<PathSummary> getDownloadedPathSummaries() {

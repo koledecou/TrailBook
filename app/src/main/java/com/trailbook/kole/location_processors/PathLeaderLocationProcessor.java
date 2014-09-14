@@ -40,7 +40,7 @@ public class PathLeaderLocationProcessor implements LocationServicesFragment.Loc
                 mPathManager.getSegment(mSegmentId) != null &&
                 mPathManager.getPath(mPathId) != null) {
             mPathManager.addPointToSegment(mSegmentId, mPathId, newLocation);
-            mPathManager.savePath(mSegmentId, mContext);
+            mPathManager.savePath(mPathId, mContext);
         }
     }
 

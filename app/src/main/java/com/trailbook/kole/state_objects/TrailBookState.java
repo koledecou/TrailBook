@@ -33,6 +33,7 @@ public class TrailBookState extends Application {
     private static String mCurrentPathId;
     private static String mCurrentSegmentId;
     private static Location mCurrentLocation;
+    private static PathManager mPathManager;
     private static SharedPreferences prefs;
     private static long mLastRefreshedFromCloudTimeStamp;
     private Bus bus;
@@ -48,6 +49,8 @@ public class TrailBookState extends Application {
         bus = BusProvider.getInstance();
         bus.register(this);
 
+        mPathManager = PathManager.getInstance();
+
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
@@ -58,6 +61,10 @@ public class TrailBookState extends Application {
     public static void setMode(int mode) {
         TrailBookState.mMode = mode;
         saveMode();
+    }
+
+    public static PathManager getPathManager() {
+        return mPathManager;
     }
 
     public static long getLastRefreshedFromCloudTimeStamp() {
@@ -92,6 +99,10 @@ public class TrailBookState extends Application {
         return mMode;
     }
 
+    public Context getContext() {
+        return this;
+    }
+
     public static String getActivePathId() {
         return mCurrentPathId;
     }
@@ -115,6 +126,13 @@ public class TrailBookState extends Application {
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving active segment," + mCurrentSegmentId);
         editor.putString(SAVED_ACTIVE_SEGMENT, mCurrentSegmentId);
         editor.commit();
+    }
+
+    public void restoreActivePath() {
+        if (mPathManager.getPath(mCurrentPathId) == null || mPathManager.getSegment(mCurrentSegmentId) == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: re-loading active path: " + mCurrentPathId);
+            mPathManager.loadPathFromDevice(this, mCurrentPathId);
+        }
     }
 
     public static void restoreActiveSegmentId() {
@@ -180,6 +198,8 @@ public class TrailBookState extends Application {
     public static void restoreState() {
         restoreActivePathId();
         restoreActiveSegmentId();
+
+
         restoreMode();
         restoreSavedLocIfNeeded();
         restoreLastRefreshedFromCloudTimeStamp();

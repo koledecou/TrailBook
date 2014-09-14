@@ -31,6 +31,7 @@ import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathContainer;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.events.AllNotesAddedEvent;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.fragments.AlertDialogFragment;
 import com.trailbook.kole.fragments.CreateNoteFragment;
@@ -93,24 +94,25 @@ public class TrailBookActivity extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        //Restore the fragment's instance
-        if (savedInstanceState != null) {
-            Log.d(Constants.TRAILBOOK_TAG, "restoring activity instance state");
-/* this is stored in the application state now
-            mCurrentPathId = savedInstanceState.getString(SAVED_CURRENT_PATH_ID);
-            mCurrentSegmentId = savedInstanceState.getString(SAVED_CURRENT_SEGMENT_ID);
-            mMode = savedInstanceState.getString(SAVED_MODE);
-*/
-        }
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookActivity: OnCreate");
 
         mApplicationState = (TrailBookState) getApplicationContext();
         mResources = this.getResources();
 
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
         bus.register(this);
-        mMapFragment= TrailBookMapFragment.newInstance();
-        mMapFragment.setParentActivity(this);
+
+        if (savedInstanceState != null) {
+            mMapFragment = (TrailBookMapFragment) getFragmentManager().findFragmentByTag("map_fragment");
+        } else {
+            mMapFragment = TrailBookMapFragment.newInstance();
+            getFragmentManager().beginTransaction().add(R.id.map_container, mMapFragment, "map_fragment").commit();
+        }
+
+/*        if (mMapFragment == null) {
+            mMapFragment = TrailBookMapFragment.newInstance();
+            mMapFragment.setParentActivity(this);
+        }*/
         Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment");
         mPathManager = PathManager.getInstance();
 
@@ -120,10 +122,15 @@ public class TrailBookActivity extends Activity
         setUpLocationServicesFragmentIfNeeded();
 
         TrailBookState.restoreState();
-        if (TrailBookState.getMode() == TrailBookState.MODE_LEAD)
+        if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
+            mApplicationState.restoreActivePath();
             startLeading();
-        else if (TrailBookState.getMode()== TrailBookState.MODE_FOLLOW)
+        } else if (TrailBookState.getMode()== TrailBookState.MODE_FOLLOW) {
+            mApplicationState.restoreActivePath();
             startFollowing(TrailBookState.getActivePathId());
+        } else if (TrailBookState.getMode() == TrailBookState.MODE_SEARCH) {
+            mPathManager.loadPathsFromDevice(this);
+        }
     }
 
     @Override
@@ -284,6 +291,9 @@ public class TrailBookActivity extends Activity
             invalidateOptionsMenu();
         } else if (id == R.id.action_bar_stop_following) {
             stopLocationUpdates();
+        } else if (id == R.id.action_bar_stop_leading) {
+            stopLocationUpdates();
+            //todo: prompt for path details and ask to upload if network is available.
         } else if (id == R.id.action_filter) {
             Log.d(Constants.TRAILBOOK_TAG, "show filter dialog");
         } else if (id == R.id.action_list) {
@@ -350,14 +360,21 @@ public class TrailBookActivity extends Activity
         // update the main content by replacing fragments
         Fragment newFrag;
         if (position == 0) { // find paths
+            stopLocationUpdates();
             switchToSearchMode();
         } else if (position == 1) { // follow path
-            switchFragmentAndAddToBackstack(getFollowPathSelectorFragment(), PATH_SELECT_UPLOAD_TAG);
+            if (mPathManager.hasDownloadedPaths())
+                switchFragmentAndAddToBackstack(getFollowPathSelectorFragment(), PATH_SELECT_UPLOAD_TAG);
+            else
+                showNoPathsAlert();
         } else if (position == 2) { // new path
             //TODO:  warnIfStoppingUnfinishedPath();
             openNewPathDialog();
         } else if (position == 3) { // manage paths
-            switchFragmentAndAddToBackstack(getPathSelectorFragmentForDownloadedPaths(), PATH_SELECT_UPLOAD_TAG);
+            if (mPathManager.hasDownloadedPaths())
+                switchFragmentAndAddToBackstack(getPathSelectorFragmentForDownloadedPaths(), PATH_SELECT_UPLOAD_TAG);
+            else
+                showNoPathsAlert();
         } else if (position == 4) { // import
             launchFileChooser();
         } else if (position == 5) { // prefs
@@ -482,15 +499,17 @@ public class TrailBookActivity extends Activity
     }
 
     private void stopLocationUpdates() {
-        mLocationServicesFragment.stopUpdates();
-        mLocationServicesFragment.removeAllNotifications();
-        TrailBookState.setMode(TrailBookState.MODE_SEARCH);
-        TrailBookState.setActivePathId(null);
-        TrailBookState.setActivePathId(null);
-        invalidateOptionsMenu();
-        mMapFragment.showAllPaths();
-        mMapFragment.setVisibilityForAllNoteMarkers(false);
-        mMapFragment.setVisibilityForAllStartMarkers(false);
+        if (mLocationServicesFragment != null && mMapFragment != null) {
+            mLocationServicesFragment.stopUpdates();
+            mLocationServicesFragment.removeAllNotifications();
+            TrailBookState.setMode(TrailBookState.MODE_SEARCH);
+            TrailBookState.setActivePathId(null);
+            TrailBookState.setActivePathId(null);
+            invalidateOptionsMenu();
+            mMapFragment.showAllPaths();
+            mMapFragment.setVisibilityForAllNoteMarkers(false);
+            mMapFragment.setVisibilityForAllStartMarkers(false);
+        }
     }
 
     @Override
@@ -608,19 +627,24 @@ public class TrailBookActivity extends Activity
         return FullNoteViewFragment.newInstance(noteId);
     }
 
-    private PathsOnDeviceSelectorFragment getPathSelectorFragmentForDownloadedPaths() {
-        return PathsOnDeviceSelectorFragment.newInstance();
+    private PathSelectorFragment getPathSelectorFragmentForDownloadedPaths() {
+        //return PathsOnDeviceSelectorFragment.newInstance();
+        ArrayList<String> downloadedPathIds = mPathManager.getDownloadedPathIds();
+        return PathSelectorFragment.newInstance(downloadedPathIds);
     }
 
     private FollowPathSelectorFragment getFollowPathSelectorFragment() {
-        return FollowPathSelectorFragment.newInstance();
+        ArrayList<String> downloadedPathIds = mPathManager.getDownloadedPathIds();
+        return FollowPathSelectorFragment.newInstance(downloadedPathIds);
     }
 
+/*
     private void setUpMapFragment() {
         Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment");
-        mMapFragment= TrailBookMapFragment.newInstance();
-        mMapFragment.setParentActivity(this);
+//        mMapFragment= TrailBookMapFragment.newInstance();
+//        mMapFragment.setParentActivity(this);
     }
+*/
 
     @Override
     public void onActivityResult(int requestCode, int resultCode,
@@ -647,6 +671,15 @@ public class TrailBookActivity extends Activity
         cancelWaitForLocationDialog();
     }
 
+    @Subscribe
+    public void onAllNotesAddedEvent(AllNotesAddedEvent event){
+        try {
+            mPathManager.savePath(event.getPathId(), this);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onAllNotesAddedEvent.", e);
+        }
+    }
+
     private void waitForLocation() {
         mWaitingForLocationDialog = new ProgressDialog(this);
         mWaitingForLocationDialog.setMessage(getString(R.string.waiting_for_location));
@@ -659,5 +692,16 @@ public class TrailBookActivity extends Activity
             mWaitingForLocationDialog.dismiss();
             mWaitingForLocationDialog = null;
         }
+    }
+
+    private void showNoPathsAlert() {
+        DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int id) {
+                Log.d(Constants.TRAILBOOK_TAG, "dismissing no paths dialog");
+                //todo: launch searcher here
+            }
+        };
+        Log.d(Constants.TRAILBOOK_TAG, "showing no paths alert");
+        ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.info_no_paths_downloaded_title), getString(R.string.info_no_paths_downloaded_message), getString(R.string.OK), null);
     }
 }

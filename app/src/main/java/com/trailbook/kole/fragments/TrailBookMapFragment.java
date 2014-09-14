@@ -57,6 +57,7 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -70,12 +71,14 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private static final String SAVED_LAT_LNG_BOUNDS_GSON = "BOUNDS";
 
     private String mActivePathId;
-    private TrailBookActivity parentActivity;
+    //private TrailBookActivity parentActivity;
     private SharedPreferences savedStatePrefs;
 
     public enum MarkerType {START,END,NOTE,UNKNOWN}
 
     private Bus bus;
+    private LinkedList mEventQueue;
+
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private LatLngBounds mBounds;
     private static final LatLngBounds startBounds = new LatLngBounds(
@@ -99,21 +102,29 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     public TrailBookMapFragment() {
         super();
+        createMapObjects();
+        initializeBus();
+        initializePathManager();
         setArguments(new Bundle());
     }
 
-    public void setParentActivity(TrailBookActivity parentActivity) {
+/*    public void setParentActivity(TrailBookActivity parentActivity) {
         this.parentActivity = parentActivity;
-    }
+    }*/
 
     @Override
     public void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initializeBus();
-        initializePathManager();
-        createMapObjects();
-        slidingPanel = (SlidingUpPanelLayout) getActivity().findViewById(R.id.main_panel);
+
 //        slidingPanel.setSlidingEnabled(true);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: onActivityCreated");
+
+        slidingPanel = (SlidingUpPanelLayout) getActivity().findViewById(R.id.main_panel);
     }
 
     @Override
@@ -167,6 +178,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             bus = BusProvider.getInstance();
             bus.register(this);
         }
+        mEventQueue = new LinkedList();
     }
 
     @Override
@@ -182,11 +194,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         mMap = this.getMap();
         setUpMapIfNeeded();
         hideMapMessage();
-        Log.d(Constants.TRAILBOOK_TAG, "Mode:" + TrailBookState.getMode());
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment Mode:" + TrailBookState.getMode());
         if (TrailBookState.getMode()==TrailBookState.MODE_SEARCH) {
             //todo: get paths within the bounds of the current map.
-            mPathManager.loadPathsFromDevice(getActivity());
-
             long msSinceLastRefresh = ApplicationUtils.getCurrentTimeStamp() -TrailBookState.getLastRefreshedFromCloudTimeStamp();
             Log.d(Constants.TRAILBOOK_TAG, "Time since last refresh" + msSinceLastRefresh/1000/60 + " min");
             if (msSinceLastRefresh > Constants.CLOUD_REFRESH_DEFAULT_TIME_DELTA) {
@@ -196,22 +206,36 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 restoreCloudPathsFromDevice();
             }
         }
+        drawLoadedPaths();
+        processQueuedEvents();
 
         Bundle savedState = getArguments();
         if (savedState != null)
             restoreState(savedState);
 
-        Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment instance state");
         return v;
     }
 
+    private void drawLoadedPaths() {
+        ArrayList<PathSummary> summaries = mPathManager.getDownloadedPathSummaries();
+        for (PathSummary s:summaries) {
+            addPathSummaryToMap(s);
+            ArrayList<PathSegment> segments = mPathManager.getSegmentsForPath(s.getId());
+            for (PathSegment segment:segments) {
+                addSegmentToMap(segment);
+            }
+        }
+    }
+
     public void refreshPaths() {
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: activity is:" + getActivity());
+//        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: parent activity is:" + parentActivity);
         mPathManager.loadPathsFromDevice(getActivity());
         startPathSummarySearch();
     }
 
     public void restoreCloudPathsFromDevice() {
-        //todo: restore here
+        //todo: restore saved metadata
     }
 
     private void hideMapMessage() {
@@ -297,6 +321,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void setVisibilityForAllLines(boolean show) {
+        if (mPathPolylines == null)
+            return;
+
         Set<Polyline> lines = mPathPolylines.values();
         for (Polyline line:lines) {
             line.setVisible(show);
@@ -304,6 +331,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void setVisibilityForAllStartMarkers(boolean show) {
+        if (mStartMarkers == null)
+            return;
+
         Set<Marker> startMarkers = mStartMarkers.values();
         for (Marker m:startMarkers) {
             m.setVisible(show);
@@ -311,6 +341,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void setVisibilityForAllEndMarkers(boolean show) {
+        if (mEndMarkers == null)
+            return;
+
         Set<Marker> endMarkers = mEndMarkers.values();
         for (Marker m:endMarkers) {
             m.setVisible(show);
@@ -318,6 +351,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void setVisibilityForAllNoteMarkers(boolean show) {
+        if (mNoteMarkers == null)
+            return;
+
         Set<Marker> noteMarkers = mNoteMarkers.values();
         ArrayList<String> removedNoteIds = new ArrayList<String>();
         for (Marker m:noteMarkers) {
@@ -366,7 +402,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             Log.d(Constants.TRAILBOOK_TAG, "Note clicked");
             collapseSlidingPanelIfExpanded();
 
-            parentActivity.showFullNote(((NoteView)view).getNoteId());
+            ((TrailBookActivity)getActivity()).showFullNote(((NoteView)view).getNoteId());
         }
     }
 
@@ -520,36 +556,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         workFragment.startGetPathSummaries(null, 0);
     }
 
-    @Subscribe
-    public void onNoteAddedEvent(NoteAddedEvent event){
-        PointAttachedObject<Note> paoNote = event.getPaoNote();
-        addPointNote(paoNote, R.drawable.ic_map_note_unselected);
-    }
-
-    @Subscribe
-    public void onAllNotesAddedEvent(AllNotesAddedEvent event){
-        mPathManager.savePath(event.getPathId(), getActivity());
-    }
-
-    @Subscribe
-    public void onPathSummaryAddedEvent(PathSummaryAddedEvent event){
-        PathSummary summary = event.getPathSummary();
-        addPathSummaryToMap(summary);
-    }
-
-    @Subscribe
-    public void onSegmentUpdatedEvent(SegmentUpdatedEvent event){
-        PathSegment seg = event.getSegment();
-        addSegmentToMap(seg);
-    }
-
-    @Subscribe
-    public void onPathDeletedEvent(PathDeletedEvent event) {
-        String id = event.getPath().getId();
-        removeEndMarker(id);
-        removeStartMarker(id);
-    }
-
     private void removeStartMarker(String pathId) {
         Marker startMarker = mStartMarkers.get(pathId);
         if (startMarker != null) {
@@ -564,12 +570,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             endMarker.remove();
             mEndMarkers.remove(pathId);
         }
-    }
-
-    @Subscribe
-    public void onSegmentDeletedEvent(SegmentDeletedEvent event) {
-        PathSegment seg = event.getSegment();
-        removeSegmentFromMap(seg);
     }
 
     private void removeSegmentFromMap(PathSegment segment) {
@@ -775,6 +775,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event) {
+        if (mMap == null)
+            return; //don't want to queue location changed events because they are frequent and transient.
+
         try {
             if (mPathManager == null || TrailBookState.getMode() != TrailBookState.MODE_FOLLOW)
                 return;
@@ -796,7 +799,111 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 }
             }
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "Exception updating note markers", e);
+            Log.e(Constants.TRAILBOOK_TAG, "Exception updating note markers.  map may not have been initialized", e);
         }
     }
+
+
+    @Subscribe
+    public void onSegmentDeletedEvent(SegmentDeletedEvent event) {
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            PathSegment seg = event.getSegment();
+            removeSegmentFromMap(seg);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onSegmentDeletedEvent.  map may not have been initialized", e);
+        }
+
+    }
+
+
+    @Subscribe
+    public void onNoteAddedEvent(NoteAddedEvent event){
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            PointAttachedObject<Note> paoNote = event.getPaoNote();
+            addPointNote(paoNote, R.drawable.ic_map_note_unselected);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onNoteAddedEvent.  map may not have been initialized", e);
+        }
+    }
+
+    @Subscribe
+    public void onPathSummaryAddedEvent(PathSummaryAddedEvent event){
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            PathSummary summary = event.getPathSummary();
+            addPathSummaryToMap(summary);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onPathSummaryAddedEvent.  map may not have been initialized", e);
+        }
+    }
+
+    @Subscribe
+    public void onSegmentUpdatedEvent(SegmentUpdatedEvent event){
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            PathSegment seg = event.getSegment();
+            addSegmentToMap(seg);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onSegmentUpdatedEvent.  map may not have been initialized", e);
+        }
+    }
+
+    @Subscribe
+    public void onPathDeletedEvent(PathDeletedEvent event) {
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            String id = event.getPath().getId();
+            removeEndMarker(id);
+            removeStartMarker(id);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onPathDeletedEvent.  map may not have been initialized", e);
+        }
+    }
+
+    private void queueEventIfMapNotAvailable(Object event) {
+        if (mMap == null)
+            mEventQueue.add(event);
+    }
+
+    private void processQueuedEvents() {
+        while (!mEventQueue.isEmpty()){
+            Object event = mEventQueue.remove();
+            Log.d(Constants.TRAILBOOK_TAG, "processing missed event: " + event);
+            if (event instanceof SegmentDeletedEvent)
+                onSegmentDeletedEvent((SegmentDeletedEvent) event);
+            else if (event instanceof NoteAddedEvent)
+                onNoteAddedEvent((NoteAddedEvent) event);
+            else if (event instanceof PathSummaryAddedEvent)
+                onPathSummaryAddedEvent((PathSummaryAddedEvent) event);
+            else if (event instanceof SegmentUpdatedEvent)
+                onSegmentUpdatedEvent((SegmentUpdatedEvent) event);
+            else if (event instanceof PathDeletedEvent)
+                onPathDeletedEvent((PathDeletedEvent) event);
+        }
+    }
+
+
+
 }

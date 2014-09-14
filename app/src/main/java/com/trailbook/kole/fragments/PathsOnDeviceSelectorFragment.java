@@ -28,15 +28,7 @@ import java.util.ArrayList;
  */
 public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
 
-    static final int MENU_CONTEXT_DELETE_ID = 1;
-    static final int MENU_CONTEXT_UPLOAD_ID = 2;
-    static final int MENU_CONTEXT_FOLLOW_ID = 3;
-    static final int MENU_CONTEXT_TO_START_ID = 4;
 
-    static final int DELETE_TEXT = R.string.delete;
-    static final int UPLOAD_TEXT = R.string.upload;
-    static final int FOLLOW_TEXT = R.string.follow;
-    static final int TO_START_TEXT = R.string.to_start;
 
     // TODO: Rename and change types of parameters
     public static PathsOnDeviceSelectorFragment newInstance() {
@@ -80,24 +72,6 @@ public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
         ApplicationUtils.showAlert(getActivity(), clickListenerOK, getString(R.string.info_no_paths_downloaded_title), getString(R.string.info_no_paths_downloaded_message), getString(R.string.OK), null);
     }
 
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        if (v.getId() == R.id.psf_list) {
-            ListView lv = (ListView) v;
-            AdapterView.AdapterContextMenuInfo info  = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            PathListContent.PathSummaryItem obj = (PathListContent.PathSummaryItem) lv.getItemAtPosition(info.position);
-
-            menu.setHeaderTitle(obj.pathName);
-            addMenuItems(menu);
-        }
-    }
-
-    public void addMenuItems(Menu m) {
-        m.add(Menu.NONE, MENU_CONTEXT_DELETE_ID, Menu.NONE, DELETE_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_UPLOAD_ID, Menu.NONE, UPLOAD_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_FOLLOW_ID, Menu.NONE, FOLLOW_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_TO_START_ID, Menu.NONE, TO_START_TEXT);
-    }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
