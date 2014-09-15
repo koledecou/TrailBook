@@ -129,7 +129,7 @@ public class TrailBookState extends Application {
     }
 
     public void restoreActivePath() {
-        if (mPathManager.getPath(mCurrentPathId) == null || mPathManager.getSegment(mCurrentSegmentId) == null) {
+        if (mPathManager.getPath(mCurrentPathId) == null) {
             Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: re-loading active path: " + mCurrentPathId);
             mPathManager.loadPathFromDevice(this, mCurrentPathId);
         }
@@ -198,7 +198,6 @@ public class TrailBookState extends Application {
     public static void restoreState() {
         restoreActivePathId();
         restoreActiveSegmentId();
-
 
         restoreMode();
         restoreSavedLocIfNeeded();

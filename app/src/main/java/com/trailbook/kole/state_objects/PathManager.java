@@ -112,14 +112,11 @@ public class PathManager {
     }
 
     public Path getPath(String pathId) {
-        if (mPaths == null)
-            return null;
-        else
-            return mPaths.get(pathId);
+        return mPaths != null? mPaths.get(pathId) : null;
     }
 
     public PathSegment getSegment(String segmentId) {
-        return mSegments.get(segmentId);
+        return mSegments!= null ? mSegments.get(segmentId) : null;
     }
 
     public PathSummary getPathSummary(String pathId) {

@@ -93,4 +93,10 @@
     <string name="info_no_paths_downloaded_message">To follow a trail, you must first download it locally.  Use the map to search for your trail.</string>
     <string name="info_no_paths_downloaded_title">No Paths to Follow</string>
     <string name="action_refresh">Refresh</string>
+    <string name="title_activity_note_notification">TrailBook</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="title_activity_notification_note">NotificationNoteActivity</string>
+    <string name="hello_world">Hello world!</string>
+
 </resources>

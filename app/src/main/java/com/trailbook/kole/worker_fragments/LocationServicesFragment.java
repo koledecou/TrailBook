@@ -132,6 +132,7 @@ public class LocationServicesFragment extends Fragment implements
      */
     @Override
     public void onDestroy() {
+        Log.d(Constants.TRAILBOOK_TAG, "LocationServicesFragment onDestroy()");
         mBus.unregister(this);
         stopUpdates();
 

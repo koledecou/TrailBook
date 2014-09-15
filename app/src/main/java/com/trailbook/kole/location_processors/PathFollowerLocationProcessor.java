@@ -1,7 +1,9 @@
 package com.trailbook.kole.location_processors;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -9,8 +11,9 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.trailbook.kole.activities.NoteNotificationReceiverActivity;
 import com.trailbook.kole.activities.R;
+import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PointAttachedObject;
@@ -28,6 +31,7 @@ import java.util.HashMap;
 public class PathFollowerLocationProcessor implements LocationServicesFragment.LocationProcessor {
     private static final int OFF_ROUTE_NOTIFICATION_ID = 1;
     private static final long ONE_MINUTE = 60000;
+    public static final String EXTRA_NOTE_ID = "EXTRA_NOTE_ID";
     private final NotificationCompat.Builder mOffRouteNotifyBuilder;
     private final NotificationCompat.Builder mApproachingNoteNotificationBuilder;
     NotificationManager mNotificationManager;
@@ -135,6 +139,7 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
     private void sendOffRouteNotification(double currentDistanceFromPath) {
         String notificationContent = String.format(mContext.getResources().getString(R.string.strayed_notification_content), PreferenceUtilities.getDistString(mContext, currentDistanceFromPath));
         mOffRouteNotifyBuilder.setContentText(notificationContent);
+        mOffRouteNotifyBuilder.setContentIntent(getOffRouteNotificationPendingIntent());
         updateOffRouteRingtone();
         mNotificationManager.notify(
                 OFF_ROUTE_NOTIFICATION_ID,
@@ -148,6 +153,7 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
         String notificationContent = String.format(mContext.getString(R.string.note_notification_title), PreferenceUtilities.getDistString(mContext, distance));
         mApproachingNoteNotificationBuilder.setContentTitle(notificationContent);
         mApproachingNoteNotificationBuilder.setContentText(note.getNoteContent());
+        mApproachingNoteNotificationBuilder.setContentIntent(getNoteNotificationPendingIntent(note.getNoteID()));
         updateApproachingNoteRingtone();
         Log.d(Constants.TRAILBOOK_TAG,  "PathFollowerLocationProcessor: notification text: " + PreferenceUtilities.getDistString(mContext, distance) + ": " + note.getNoteContent());
 
@@ -198,5 +204,40 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
 
     public void removeAllNotifications() {
         mNotificationManager.cancelAll();
+    }
+
+    private PendingIntent getNoteNotificationPendingIntent(String noteId) {
+        Intent resultIntent = new Intent(mContext, NoteNotificationReceiverActivity.class);
+        resultIntent.putExtra(EXTRA_NOTE_ID, noteId);
+        resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        // Because clicking the notification launches a new ("special") activity,
+        // there's no need to create an artificial back stack.
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        mContext,
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+        return resultPendingIntent;
+    }
+
+    private PendingIntent getOffRouteNotificationPendingIntent() {
+        Intent resultIntent = new Intent(mContext, TrailBookActivity.class);
+        resultIntent.setAction("android.intent.action.MAIN");
+        resultIntent.addCategory("android.intent.category.LAUNCHER");
+
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        mContext,
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+        return resultPendingIntent;
     }
 }
