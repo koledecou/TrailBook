@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="mapTypes">
+        <item>Terrain</item>
+        <item>Road Map</item>
+        <item>Satellite</item>
+        <item>Hybrid</item>
+        <item>Blank</item>
+    </string-array>
+    <string-array name="mapTypeValues">
+        <item>TERRAIN</item>
+        <item>NORMAL</item>
+        <item>SATELLITE</item>
+        <item>HYBIRD</item>
+        <item>NONE</item>
+    </string-array>
+
+    <string-array name="uom_items">
+        <item>US (feet/miles)</item>
+        <item>Metric (m/km)</item>
+    </string-array>
+    <string-array name="uom_vals">
+        <item>US</item>
+        <item>Metric</item>
+    </string-array>
+
+    <string-array name="nav_items">
+        <item>Find Path</item>
+        <item>Follow Path</item>
+        <item>Create Path</item>
+        <item>Manage Paths</item>
+        <item>Import Path</item>
+        <item>Settings</item>
+    </string-array>
+</resources>
