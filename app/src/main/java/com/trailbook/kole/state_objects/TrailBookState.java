@@ -1,20 +1,26 @@
 package com.trailbook.kole.state_objects;
 
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.gson.Gson;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.events.LocationChangedEvent;
+import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.helpers.ApplicationUtils;
+import com.trailbook.kole.location_processors.BackgroundLocationService;
+import com.trailbook.kole.location_processors.LocationProcessor;
+import com.trailbook.kole.location_processors.PathLeaderLocationProcessor;
+import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 
 /**
  * Created by kole on 9/8/2014.
@@ -36,6 +42,7 @@ public class TrailBookState extends Application {
     private static PathManager mPathManager;
     private static SharedPreferences prefs;
     private static long mLastRefreshedFromCloudTimeStamp;
+    private static LocationProcessor locationProcessor;
     private Bus bus;
 
     private static TrailBookState INSTANCE;
@@ -202,5 +209,88 @@ public class TrailBookState extends Application {
         restoreMode();
         restoreSavedLocIfNeeded();
         restoreLastRefreshedFromCloudTimeStamp();
+    }
+
+    public static void setLocationProcessor(LocationProcessor processor) {
+        locationProcessor = processor;
+    }
+
+    public static LocationProcessor getLocationProcessor() {
+        return locationProcessor;
+    }
+
+    public void startLocationUpdates() {
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: startLocationUpdates()");
+        ComponentName comp = new ComponentName(this.getPackageName(), BackgroundLocationService.class.getName());
+        ComponentName service = startService(new Intent().setComponent(comp));
+        enableLocationReceiver();
+
+        if (null == service){
+            // something really wrong here
+            Log.e(Constants.TRAILBOOK_TAG, "Could not start service " + comp.toString());
+        }
+    }
+
+    public void stopLocationUpdates() {
+        disableLocationReceiver();
+        ComponentName comp = new ComponentName(this.getPackageName(), BackgroundLocationService.class.getName());
+        stopService(new Intent().setComponent(comp));
+    }
+
+    public void enableLocationReceiver(){
+        ComponentName receiver = new ComponentName(this, TrailBookLocationReceiver.class);
+        PackageManager pm = this.getPackageManager();
+        pm.setComponentEnabledSetting(receiver,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP);
+        Log.d(Constants.TRAILBOOK_TAG, "enabled location reciever");
+    }
+
+    public void disableLocationReceiver(){
+        ComponentName receiver = new ComponentName(this, TrailBookLocationReceiver.class);
+        PackageManager pm = this.getPackageManager();
+        pm.setComponentEnabledSetting(receiver,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+        Log.d(Constants.TRAILBOOK_TAG, "disabled location reciever");
+    }
+
+    //todo: all mode changes should go through here and use the event listener
+    public void switchToSearchMode() {
+        int oldMode = mMode;
+        mCurrentPathId=null;
+        mCurrentSegmentId=null;
+        stopLocationUpdates();
+
+        if (locationProcessor != null) {
+            locationProcessor.removeAllNotifications();
+            setLocationProcessor(null);
+        }
+
+        setMode(MODE_SEARCH);
+        bus.post(new ModeChangedEvent(oldMode, MODE_SEARCH));
+    }
+
+    public void switchToLeadMode(String pathId, String segmentId) {
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: switchingToLeadMode " + pathId + "," + segmentId);
+        int oldMode = mMode;
+        mCurrentPathId=pathId;
+        mCurrentSegmentId=segmentId;
+        setLocationProcessor(new PathLeaderLocationProcessor(
+                this,
+                segmentId,
+                pathId));
+
+        startLocationUpdates();
+
+        setMode(MODE_LEAD);
+        bus.post(new ModeChangedEvent(oldMode, MODE_LEAD));
+    }
+
+    public void resumeLeadingActivePath(boolean restoreState) {
+        if (restoreState)
+            restoreActivePath();
+
+        switchToLeadMode(mCurrentPathId, mCurrentSegmentId);
     }
 }

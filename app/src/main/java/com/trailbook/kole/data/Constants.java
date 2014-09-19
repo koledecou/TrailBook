@@ -27,6 +27,11 @@ public class Constants {
     public static final String TRAILBOOK_TAG = "trailbook";
     public static final long CLOUD_REFRESH_DEFAULT_TIME_DELTA = 5*60*1000;
 
+    private static final int UPDATE_INTERVAL_IN_SECONDS = 0;
+    public static final long UPDATE_INTERVAL = 1000 * UPDATE_INTERVAL_IN_SECONDS;
+    private static final int FASTEST_INTERVAL_IN_SECONDS = 0;
+    public static final long FASTEST_INTERVAL = 1000 * FASTEST_INTERVAL_IN_SECONDS;
+
     public static int MEDIUM_DETAIL = 500;
     public static int FULL_DETAIL = -1;
 

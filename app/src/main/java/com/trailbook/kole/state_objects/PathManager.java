@@ -80,9 +80,26 @@ public class PathManager {
     public void onPathSummariesReceivedEvent(PathSummariesReceivedEvent event){
         ArrayList<PathSummary> summaries = event.getPathSummaries();
         for (PathSummary summary:summaries) {
-            //add the path
-            addPathSummary(summary);
+            //only add the path from the cloud if it's not stored locally.
+            //todo: get last updated date and let user refresh if it's out of date.
+            if (!isStoredLocally(summary.getId()))
+                addPathSummary(summary);
+            else
+                Log.d(Constants.TRAILBOOK_TAG, "PathManager: path " + summary.getName() + " is local, not adding from cloud.");
         }
+    }
+
+    private boolean isStoredLocally(String pathId) {
+        File pathDir = new File(TrailbookFileUtilities.getInternalPathDirectory(TrailBookState.getInstance()));
+        String[] pathIds = pathDir.list();
+        for (int i=0; i<pathIds.length; i++) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathManager: comparing pathId " + pathId + " to " + pathIds[i]);
+            if (pathId.equals(pathIds[i])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Subscribe

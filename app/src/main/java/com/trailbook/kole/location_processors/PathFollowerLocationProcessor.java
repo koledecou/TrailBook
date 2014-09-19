@@ -2,25 +2,29 @@ package com.trailbook.kole.location_processors;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.NoteNotificationReceiverActivity;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
+import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.PreferenceUtilities;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
-import com.trailbook.kole.worker_fragments.LocationServicesFragment;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -28,40 +32,57 @@ import java.util.HashMap;
 /**
  * Created by kole on 7/19/2014.
  */
-public class PathFollowerLocationProcessor implements LocationServicesFragment.LocationProcessor {
+public class PathFollowerLocationProcessor extends LocationProcessor {
     private static final int OFF_ROUTE_NOTIFICATION_ID = 1;
+
     private static final long ONE_MINUTE = 60000;
     public static final String EXTRA_NOTE_ID = "EXTRA_NOTE_ID";
-    private final NotificationCompat.Builder mOffRouteNotifyBuilder;
-    private final NotificationCompat.Builder mApproachingNoteNotificationBuilder;
-    NotificationManager mNotificationManager;
+
+    private NotificationCompat.Builder mOffRouteNotifyBuilder;
+    private NotificationCompat.Builder mApproachingNoteNotificationBuilder;
+
     Location mCurrentLocation;
 
     String mPathId;
     long mStrayFromPathAlertLastPlayedTime = 0;
-    Context mContext;
 
     public PathFollowerLocationProcessor(String pathId, Context context) {
-        mPathId=pathId;
-        mContext=context;
+        super(context);
 
-        mOffRouteNotifyBuilder = new NotificationCompat.Builder(mContext)
-                .setSmallIcon(R.drawable.trail_book_logo)
-                .setContentTitle("Off Route Notification")
-                .setContentText("You are off route.")
-                .setOnlyAlertOnce(true)
-                .setSound(getOffRouteSoundURI());
-        mApproachingNoteNotificationBuilder = new NotificationCompat.Builder(mContext)
+        mPathId=pathId;
+        createNotificationBuilders();
+
+        sendListeningNotification();
+    }
+
+    private void createNotificationBuilders() {
+        mOffRouteNotifyBuilder = createOffRouteNotifyBuilder();
+        mApproachingNoteNotificationBuilder = createApproachingNoteNotifyBuilder();
+        mListeningNotifyBuilder = createListeningNotifyBuilder();
+    }
+
+    private NotificationCompat.Builder createListeningNotifyBuilder() {
+        Path p = PathManager.getInstance().getPath(mPathId);
+        String title = String.format(mContext.getString(R.string.following_trail_title), p.getSummary().getName());
+        return super.createListeningNotifyBuilder(title, mContext.getString(R.string.following_trail_notification_content));
+    }
+
+    private NotificationCompat.Builder createApproachingNoteNotifyBuilder() {
+        return new NotificationCompat.Builder(mContext)
                 .setSmallIcon(R.drawable.trail_book_logo)
                 .setContentTitle("Trail Note Nearby")
                 .setContentText("There is a path note nearby.")
                 .setSound(getApproachingNoteSoundURI())
                 .setOnlyAlertOnce(true);
+    }
 
-        mNotificationManager = (NotificationManager)
-                mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-
-//        removeAll();
+    private NotificationCompat.Builder createOffRouteNotifyBuilder() {
+       return new NotificationCompat.Builder(mContext)
+                .setSmallIcon(R.drawable.trail_book_logo)
+                .setContentTitle("Off Route Notification")
+                .setContentText("You are off route.")
+                .setOnlyAlertOnce(true)
+                .setSound(getOffRouteSoundURI());
     }
 
     private Uri getOffRouteSoundURI() {
@@ -136,6 +157,12 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
         Log.d(Constants.TRAILBOOK_TAG, "Strayed");
     }
 
+    private void sendListeningNotification() {
+        mNotificationManager.notify(
+                LISTENING_NOTIFICATION_ID,
+                mListeningNotifyBuilder.build());
+    }
+
     private void sendOffRouteNotification(double currentDistanceFromPath) {
         String notificationContent = String.format(mContext.getResources().getString(R.string.strayed_notification_content), PreferenceUtilities.getDistString(mContext, currentDistanceFromPath));
         mOffRouteNotifyBuilder.setContentText(notificationContent);
@@ -153,7 +180,7 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
         String notificationContent = String.format(mContext.getString(R.string.note_notification_title), PreferenceUtilities.getDistString(mContext, distance));
         mApproachingNoteNotificationBuilder.setContentTitle(notificationContent);
         mApproachingNoteNotificationBuilder.setContentText(note.getNoteContent());
-        mApproachingNoteNotificationBuilder.setContentIntent(getNoteNotificationPendingIntent(note.getNoteID()));
+        mApproachingNoteNotificationBuilder.setContentIntent( getNoteNotificationPendingIntent(note.getNoteID(), notificationId) );
         updateApproachingNoteRingtone();
         Log.d(Constants.TRAILBOOK_TAG,  "PathFollowerLocationProcessor: notification text: " + PreferenceUtilities.getDistString(mContext, distance) + ": " + note.getNoteContent());
 
@@ -197,16 +224,11 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
         mOffRouteNotifyBuilder.setSound(getOffRouteSoundURI());
     }
 
-
     private void updateApproachingNoteRingtone() {
         mApproachingNoteNotificationBuilder.setSound(getApproachingNoteSoundURI());
     }
 
-    public void removeAllNotifications() {
-        mNotificationManager.cancelAll();
-    }
-
-    private PendingIntent getNoteNotificationPendingIntent(String noteId) {
+    private PendingIntent getNoteNotificationPendingIntent(String noteId, int notificationId) {
         Intent resultIntent = new Intent(mContext, NoteNotificationReceiverActivity.class);
         resultIntent.putExtra(EXTRA_NOTE_ID, noteId);
         resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
@@ -217,7 +239,7 @@ public class PathFollowerLocationProcessor implements LocationServicesFragment.L
         PendingIntent resultPendingIntent =
                 PendingIntent.getActivity(
                         mContext,
-                        0,
+                        notificationId,
                         resultIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );

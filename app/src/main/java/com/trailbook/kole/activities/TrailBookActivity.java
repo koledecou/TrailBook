@@ -2,6 +2,7 @@ package com.trailbook.kole.activities;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -11,7 +12,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.hardware.TriggerEventListener;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -33,6 +37,7 @@ import com.trailbook.kole.data.PathContainer;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.AllNotesAddedEvent;
 import com.trailbook.kole.events.LocationChangedEvent;
+import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.fragments.AlertDialogFragment;
 import com.trailbook.kole.fragments.CreateNoteFragment;
 import com.trailbook.kole.fragments.CreatePathDialogFragment;
@@ -42,10 +47,11 @@ import com.trailbook.kole.fragments.TrailBookMapFragment;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.fragments.PathDetailsActionListener;
 import com.trailbook.kole.fragments.PathSelectorFragment;
-import com.trailbook.kole.fragments.PathsOnDeviceSelectorFragment;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
+import com.trailbook.kole.location_processors.LocationProcessor;
+import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 import com.trailbook.kole.state_objects.TrailBookState;
 import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.helpers.MapUtilities;
@@ -53,7 +59,6 @@ import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
 import com.trailbook.kole.location_processors.PathLeaderLocationProcessor;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
-import com.trailbook.kole.worker_fragments.LocationServicesFragment;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
 
 import java.util.ArrayList;
@@ -65,6 +70,8 @@ public class TrailBookActivity extends Activity
         CreatePathDialogFragment.CreatePathDialogListener,
         CreateNoteFragment.CreateNoteFragmentListener,
         PathSelectorFragment.OnPathSelectorFragmentInteractionListener {
+
+    private static final String className = "TrailBookActivity";
 
     private static final int CONFIRM_CREATE_DIALOG_ID = 1;
     private static final int FILE_CHOOSER_DIALOG_ID = 2;
@@ -81,7 +88,7 @@ public class TrailBookActivity extends Activity
     private WorkerFragment mWorkFragment;
     private PathManager mPathManager;
     private NavigationDrawerFragment mNavigationDrawerFragment;
-    private LocationServicesFragment mLocationServicesFragment;
+    //private LocationServicesFragment mLocationServicesFragment;
     private TBPreferenceFragment mPreferencesFragment;
     private Bus bus;
     private Resources mResources;
@@ -89,47 +96,43 @@ public class TrailBookActivity extends Activity
     private Fragment mPathSelectorFragment;
     private Fragment mContent;
     private ProgressDialog mWaitingForLocationDialog;
-    private TrailBookState mApplicationState;
+    private TrailBookLocationReceiver mLocationReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookActivity: OnCreate");
+        Log.d(Constants.TRAILBOOK_TAG, className + " OnCreate");
 
-        mApplicationState = (TrailBookState) getApplicationContext();
+        mLocationReceiver = new TrailBookLocationReceiver();
         mResources = this.getResources();
 
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
         bus.register(this);
 
         if (savedInstanceState != null) {
+            Log.d(Constants.TRAILBOOK_TAG, className + " restoring map fragment");
             mMapFragment = (TrailBookMapFragment) getFragmentManager().findFragmentByTag("map_fragment");
         } else {
+            Log.d(Constants.TRAILBOOK_TAG, className + " creating map fragment");
             mMapFragment = TrailBookMapFragment.newInstance();
             getFragmentManager().beginTransaction().add(R.id.map_container, mMapFragment, "map_fragment").commit();
         }
 
-/*        if (mMapFragment == null) {
-            mMapFragment = TrailBookMapFragment.newInstance();
-            mMapFragment.setParentActivity(this);
-        }*/
-        Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment");
         mPathManager = PathManager.getInstance();
 
         setContentView(R.layout.activity_maps);
         setUpNavDrawerFragment();
         setUpPreferencesFragment();
-        setUpLocationServicesFragmentIfNeeded();
+        setUpWorkFragmentIfNeeded();
 
         TrailBookState.restoreState();
         if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
-            mApplicationState.restoreActivePath();
-            startLeading();
+            TrailBookState.getInstance().resumeLeadingActivePath(true);
         } else if (TrailBookState.getMode()== TrailBookState.MODE_FOLLOW) {
-            mApplicationState.restoreActivePath();
+            TrailBookState.getInstance().restoreActivePath();
             startFollowing(TrailBookState.getActivePathId());
         } else if (TrailBookState.getMode() == TrailBookState.MODE_SEARCH) {
-            mPathManager.loadPathsFromDevice(this);
+            refreshPaths();
         }
     }
 
@@ -139,7 +142,7 @@ public class TrailBookActivity extends Activity
         invalidateOptionsMenu();
         PointAttachedObject<Note> paoNote = attachNoteToCurrentLocation(newNote);
         addNoteToActiveSegment(paoNote);
-        Log.d(Constants.TRAILBOOK_TAG, "added note:" + newNote.getNoteContent() + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
+        Log.d(Constants.TRAILBOOK_TAG, className +  " added note:" + newNote.getNoteContent() + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
     }
 
     private void addNoteToActiveSegment(PointAttachedObject<Note> note) {
@@ -176,18 +179,23 @@ public class TrailBookActivity extends Activity
 
         Path p = mPathManager.getPath(pathId);
         if (p == null) {
-            Log.e(Constants.TRAILBOOK_TAG, "onPathSelectorFragmentResult can't find path:" + pathId);
+            Log.e(Constants.TRAILBOOK_TAG, className + " onPathSelectorFragmentResult can't find path:" + pathId);
             return;
         }
 
         if (PathSelectorFragment.UPLOAD.equals(action)) {
-            Log.d(Constants.TRAILBOOK_TAG, "Uploading path:" + pathId);
-            //TODO: update path details and confirm
-            //TODO: show progress dialog
-            Toast.makeText(this, "Uploading " + p.getSummary().getName(), Toast.LENGTH_SHORT).show();
-            mWorkFragment.startPathUpload(mPathManager.getPath(pathId));
+            if (isNetworkConnected()) {
+                Log.d(Constants.TRAILBOOK_TAG, className + " Uploading path:" + pathId);
+                //TODO: update path details and confirm
+                //TODO: show progress dialog
+                Toast.makeText(this, "Uploading " + p.getSummary().getName(), Toast.LENGTH_LONG).show();
+                mWorkFragment.startPathUpload(mPathManager.getPath(pathId));
+            } else {
+                Log.d(Constants.TRAILBOOK_TAG, className + " no network connectivity");
+                showNoNetworkStatusDialog();
+            }
         } else if (PathSelectorFragment.DELETE.equals(action) ) {
-            Log.d(Constants.TRAILBOOK_TAG, "Deleting path:" + pathId);
+            Log.d(Constants.TRAILBOOK_TAG, className + " Deleting path:" + pathId);
             mPathManager.deletePath(pathId, this);
         } else if (PathSelectorFragment.FOLLOW.equals(action) ) {
             getFragmentManager().popBackStackImmediate();
@@ -201,13 +209,6 @@ public class TrailBookActivity extends Activity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-/* this is in application state now
-        outState.putString(SAVED_CURRENT_PATH_ID, mCurrentPathId);
-        outState.putString(SAVED_CURRENT_SEGMENT_ID, mCurrentSegmentId);
-        outState.putString(SAVED_MODE, mMode);
-*/
-        Log.d(Constants.TRAILBOOK_TAG, "putting fragment state");
-//        getFragmentManager().putFragment(outState, "mContent", mContent);
     }
 
     private void setUpPreferencesFragment() {
@@ -286,23 +287,23 @@ public class TrailBookActivity extends Activity
             invalidateOptionsMenu();
         } else if (id == R.id.quick_note_left || id == R.id.quick_note_right || id == R.id.quick_note_straight) {
             collapseSlidingPanel();
-            Log.d(Constants.TRAILBOOK_TAG, "creating quicknote contextmenu");
+            Log.d(Constants.TRAILBOOK_TAG, className + " creating quicknote contextmenu");
             createQuickNote(id);
             invalidateOptionsMenu();
         } else if (id == R.id.action_bar_stop_following) {
-            stopLocationUpdates();
+//            stopLocationUpdates();
+            switchToSearchMode();
         } else if (id == R.id.action_bar_stop_leading) {
-            stopLocationUpdates();
+//            stopLocationUpdates();
+            switchToSearchMode();
             //todo: prompt for path details and ask to upload if network is available.
         } else if (id == R.id.action_filter) {
-            Log.d(Constants.TRAILBOOK_TAG, "show filter dialog");
+            Log.d(Constants.TRAILBOOK_TAG, className + " show filter dialog");
         } else if (id == R.id.action_list) {
-            Log.d(Constants.TRAILBOOK_TAG, "listing paths within the view");
+            Log.d(Constants.TRAILBOOK_TAG, className + " listing paths within the view");
         } else if (id == R.id.action_refresh_map) {
-            Log.d(Constants.TRAILBOOK_TAG, "refreshing paths the view");
-            if (mMapFragment!=null) {
-                mMapFragment.refreshPaths();
-            }
+            Log.d(Constants.TRAILBOOK_TAG, className + " refreshing paths the view");
+            refreshPaths();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -323,26 +324,6 @@ public class TrailBookActivity extends Activity
         }
     }
 
-    public WorkerFragment getWorkerFragment() {
-        setUpWorkFragmentIfNeeded();
-        return mWorkFragment;
-    }
-
-    private void setUpLocationServicesFragmentIfNeeded() {
-        Log.d(Constants.TRAILBOOK_TAG, "Setting up location services fragment");
-        FragmentManager fm = getFragmentManager();
-        mLocationServicesFragment = (LocationServicesFragment)fm.findFragmentByTag("locationServices");
-        if (mLocationServicesFragment == null) {
-            createLocationServicesFragment();
-        }
-    }
-
-    private void createLocationServicesFragment() {
-        Log.d(Constants.TRAILBOOK_TAG, "creating new location services fragment");
-        mLocationServicesFragment = new LocationServicesFragment();
-        getFragmentManager().beginTransaction().add(mLocationServicesFragment, "locationServices").commit();
-    }
-
     private void createWorkerFragment() {
         mWorkFragment = new WorkerFragment();
         getFragmentManager().beginTransaction().add(mWorkFragment, "work").commit();
@@ -360,7 +341,7 @@ public class TrailBookActivity extends Activity
         // update the main content by replacing fragments
         Fragment newFrag;
         if (position == 0) { // find paths
-            stopLocationUpdates();
+//            stopLocationUpdates();
             switchToSearchMode();
         } else if (position == 1) { // follow path
             if (mPathManager.hasDownloadedPaths())
@@ -385,33 +366,30 @@ public class TrailBookActivity extends Activity
     }
 
     private void launchFileChooser() {
-        // ACTION_OPEN_DOCUMENT is the intent to choose a file via the system's file
-        // browser.
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 
-        // Filter to only show results that can be "opened", such as a
-        // file (as opposed to a list of contacts or timezones)
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-        // Filter to show only images, using the image MIME data type.
-        // If one wanted to search for ogg vorbis files, the type would be "audio/ogg".
-        // To search for all documents available via installed storage providers,
-        // it would be "*/*".
         intent.setType("*/*");
 
         startActivityForResult(intent, FILE_CHOOSER_DIALOG_ID);
     }
 
     private void switchToSearchMode() {
-        getActionBar().setTitle("Find Paths");
-        FragmentManager fragmentManager = getFragmentManager();
-        Fragment newFrag;
-        TrailBookState.setMode(TrailBookState.MODE_SEARCH);
-        invalidateOptionsMenu();
-        newFrag = mMapFragment;
-        fragmentManager.beginTransaction()
-                .replace(R.id.map_container, newFrag)
-                .commit();
+        TrailBookState.getInstance().switchToSearchMode();
+    }
+
+    @Subscribe
+    public void onModeChangedEvent(ModeChangedEvent event) {
+        if (event.getNewMode() == TrailBookState.MODE_SEARCH) {
+            getActionBar().setTitle("Find Paths");
+            invalidateOptionsMenu();
+            /*FragmentManager fragmentManager = getFragmentManager();
+            Fragment newFrag;
+            newFrag = mMapFragment;
+            fragmentManager.beginTransaction()
+                    .replace(R.id.map_container, newFrag)
+                    .commit();*/
+        }
     }
 
     private void openNewPathDialog() {
@@ -437,12 +415,12 @@ public class TrailBookActivity extends Activity
         TrailBookState.setActivePathId(newPathId);
         Fragment f = getFragmentManager().findFragmentByTag("new_path_dialog");
         if (f != null) {
-            Log.d(Constants.TRAILBOOK_TAG, "removing dialog");
+            Log.d(Constants.TRAILBOOK_TAG, className + " removing dialog");
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.remove(f);
             ft.commit();
         }
-        startLeading();
+        startLeading(newPathId, newSegmentId);
     }
 
     private void warnIfStoppingUnfinishedPath() {
@@ -471,10 +449,6 @@ public class TrailBookActivity extends Activity
 
     public TrailBookActivity() {}
 
-    public LocationServicesFragment getLocationServicesFragment() {
-        return mLocationServicesFragment;
-    }
-
     @Override
     public void onDownloadRequested(String pathId) {
         mWorkFragment.startDownloadPath(pathId);
@@ -495,22 +469,18 @@ public class TrailBookActivity extends Activity
     private void startFollowing(String pathId) {
         TrailBookState.setActivePathId( pathId);
         TrailBookState.setActiveSegmentId( null);
-        mLocationServicesFragment.startUpdates(new PathFollowerLocationProcessor(pathId, this));
+        TrailBookState.setLocationProcessor(new PathFollowerLocationProcessor(pathId, this));
+        TrailBookState.getInstance().startLocationUpdates();
     }
 
     private void stopLocationUpdates() {
-        if (mLocationServicesFragment != null && mMapFragment != null) {
-            mLocationServicesFragment.stopUpdates();
-            mLocationServicesFragment.removeAllNotifications();
-            TrailBookState.setMode(TrailBookState.MODE_SEARCH);
-            TrailBookState.setActivePathId(null);
-            TrailBookState.setActivePathId(null);
-            invalidateOptionsMenu();
-            mMapFragment.showAllPaths();
-            mMapFragment.setVisibilityForAllNoteMarkers(false);
-            mMapFragment.setVisibilityForAllStartMarkers(false);
+        LocationProcessor processor = TrailBookState.getLocationProcessor();
+        if (processor != null) {
+            processor.removeAllNotifications();
         }
+        TrailBookState.getInstance().stopLocationUpdates();
     }
+
 
     @Override
     public void onZoomRequested(String pathId) {
@@ -521,10 +491,11 @@ public class TrailBookActivity extends Activity
     @Override
     public void onNavigateToStart(String pathId) {
         collapseSlidingPanel();
-        if (TrailBookState.getMode() == TrailBookState.MODE_FOLLOW ||
+/*        if (TrailBookState.getMode() == TrailBookState.MODE_FOLLOW ||
                     TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
             stopLocationUpdates();
-        }
+        }*/
+        switchToSearchMode();
 
         LatLng startCoords = mPathManager.getStartCoordsForPath(pathId);
         if (startCoords != null)
@@ -533,25 +504,30 @@ public class TrailBookActivity extends Activity
 
     @Override
     public void onResumeLeadingRequested(String pathId) {
-        collapseSlidingPanel();
+/*        collapseSlidingPanel();
         TrailBookState.setActivePathId(pathId);
 
         //resume the last segment
         TrailBookState.setActiveSegmentId(mPathManager.getPath(pathId).getLastSegment());
-        mMapFragment.zoomToCurrentLocation();
-        startLeading();
+        mMapFragment.zoomToCurrentLocation();*/
+
+        startLeading(pathId, mPathManager.getPath(pathId).getLastSegment());
     }
 
-    private void startLeading() {
+    private void startLeading(String pathId, String segmentId) {
+        collapseSlidingPanel();
+        invalidateOptionsMenu();
+        TrailBookState.getInstance().switchToLeadMode(pathId, segmentId);
+        waitForLocation();
+
+/*
         TrailBookState.setMode(TrailBookState.MODE_LEAD);
         invalidateOptionsMenu();
-        mLocationServicesFragment.startUpdates(
-                new PathLeaderLocationProcessor(
-                        this,
-                        TrailBookState.getActiveSegmentId(),
-                        TrailBookState.getActivePathId())
-        );
-        waitForLocation();
+        TrailBookState.setLocationProcessor(new PathLeaderLocationProcessor(
+                this,
+                TrailBookState.getActiveSegmentId(),
+                TrailBookState.getActivePathId()));
+        TrailBookState.getInstance().startLocationUpdates();*/
     }
 
     private void collapseSlidingPanel() {
@@ -574,38 +550,18 @@ public class TrailBookActivity extends Activity
             collapseSlidingPanel();
         } else {
             int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
-            Log.d(Constants.TRAILBOOK_TAG, "MapsActivity: backstack count:" + backStackEntryCount);
+            Log.d(Constants.TRAILBOOK_TAG, className + ": backstack count:" + backStackEntryCount);
             if(backStackEntryCount == 0) {
-                //we're exiting the main activity
-                mLocationServicesFragment.stopUpdates();
-                mLocationServicesFragment.removeAllNotifications();
+                if (TrailBookState.getMode() == TrailBookState.MODE_LEAD)
+                    showExitAlert(getString(R.string.exit_confirm_lead_mesage));
+                else if (TrailBookState.getMode() == TrailBookState.MODE_FOLLOW)
+                    showExitAlert(getString(R.string.exit_confirm_follow_mesage));
+                else
+                    super.onBackPressed();
+            } else {
+                getFragmentManager().popBackStack();
             }
-
-            super.onBackPressed();
         }
-    }
-
-/*    private void startSavedMode() {
-        if (mMode.equals(MODE_LEAD)) {
-            startLeading();
-        } else if (mMode.equals(MODE_FOLLOW)) {
-            startFollowing(mCurrentPathId);
-        } else if (mMode.equals(MODE_SEARCH)) {
-            switchToSearchMode();
-        }
-    }*/
-
-    private void setUpFragments() {
-        setUpNavDrawerFragment();
-        setUpPreferencesFragment();
-        setUpLocationServicesFragmentIfNeeded();
-    }
-
-    private void initializeGlobals() {
-        mResources = this.getResources();
-        bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
-        bus.register(this);
-        mPathManager = PathManager.getInstance();
     }
 
     private void createQuickNote(int id) {
@@ -615,7 +571,7 @@ public class TrailBookActivity extends Activity
             qn.setNoteContent(content);
             PointAttachedObject<Note> paoNote = attachNoteToCurrentLocation(qn);
             addNoteToActiveSegment(paoNote);
-            Log.d(Constants.TRAILBOOK_TAG, "added quick note:" + content + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
+            Log.d(Constants.TRAILBOOK_TAG, className + ": added quick note:" + content + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
         }
     }
 
@@ -638,14 +594,6 @@ public class TrailBookActivity extends Activity
         return FollowPathSelectorFragment.newInstance(downloadedPathIds);
     }
 
-/*
-    private void setUpMapFragment() {
-        Log.d(Constants.TRAILBOOK_TAG, "restoring map fragment");
-//        mMapFragment= TrailBookMapFragment.newInstance();
-//        mMapFragment.setParentActivity(this);
-    }
-*/
-
     @Override
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
@@ -654,14 +602,14 @@ public class TrailBookActivity extends Activity
                 Uri uri = null;
                 if (resultData != null) {
                     uri = resultData.getData();
-                    Log.d(Constants.TRAILBOOK_TAG, "Chosen file Uri: " + uri.toString());
+                    Log.d(Constants.TRAILBOOK_TAG, className + ": Chosen file Uri: " + uri.toString());
                     String pathKml = TrailbookFileUtilities.readTextFromUri(this, uri);
                     PathContainer pathContainer = TrailbookPathUtilities.parseXML(pathKml);
-                    Log.d(Constants.TRAILBOOK_TAG, "parsed path:" + pathContainer.path.getSummary().getName());
+                    Log.d(Constants.TRAILBOOK_TAG, className + ": parsed path:" + pathContainer.path.getSummary().getName());
                     mPathManager.savePath(pathContainer, this);
                 }
             } catch (Exception e) {
-                Log.d(Constants.TRAILBOOK_TAG, "Exception getting kml file", e);
+                Log.d(Constants.TRAILBOOK_TAG, className + ": Exception getting kml file", e);
             }
         }
     }
@@ -677,6 +625,31 @@ public class TrailBookActivity extends Activity
             mPathManager.savePath(event.getPathId(), this);
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Exception onAllNotesAddedEvent.", e);
+        }
+    }
+
+    public void refreshPaths() {
+        mPathManager.loadPathsFromDevice(this);
+        if (isTimeToRereshFromCloud()) {
+            refreshFromCloudIfConnectedToNetwork();
+        }
+    }
+
+    private void refreshFromCloudIfConnectedToNetwork() {
+        if (isNetworkConnected()) {
+            mWorkFragment.startGetPathSummaries(null, 0);
+        } else {
+            toastNoNetwork();
+        }
+    }
+
+    private boolean isTimeToRereshFromCloud() {
+        long msSinceLastRefresh = ApplicationUtils.getCurrentTimeStamp() -TrailBookState.getLastRefreshedFromCloudTimeStamp();
+        Log.d(Constants.TRAILBOOK_TAG, "Time since last refresh" + msSinceLastRefresh/1000/60 + " min");
+        if (msSinceLastRefresh > Constants.CLOUD_REFRESH_DEFAULT_TIME_DELTA) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -697,11 +670,48 @@ public class TrailBookActivity extends Activity
     private void showNoPathsAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, "dismissing no paths dialog");
+                Log.d(Constants.TRAILBOOK_TAG, className + ": dismissing no paths dialog");
                 //todo: launch searcher here
             }
         };
-        Log.d(Constants.TRAILBOOK_TAG, "showing no paths alert");
+        Log.d(Constants.TRAILBOOK_TAG, className + ": showing no paths alert");
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.info_no_paths_downloaded_title), getString(R.string.info_no_paths_downloaded_message), getString(R.string.OK), null);
     }
+
+    private void showExitAlert(String reason) {
+        DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int id) {
+                Log.d(Constants.TRAILBOOK_TAG, className + ": exiting application");
+                stopLocationUpdates();
+                finish();
+            }
+        };
+        Log.d(Constants.TRAILBOOK_TAG, className + ": showing exit confirm alert");
+        ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.confirm_exit_title), reason, getString(R.string.exit_confirm), getString(R.string.cn_cancel));
+    }
+
+    private boolean isNetworkConnected() {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void showNoNetworkStatusDialog() {
+        DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int id) {
+                Log.d(Constants.TRAILBOOK_TAG, className + ": dismissing no paths dialog");
+            }
+        };
+        ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.no_network_title), getString(R.string.no_network_message), getString(R.string.OK), null);
+    }
+
+    private void toastNoNetwork() {
+        Toast.makeText(this, getString(R.string.no_network_toast), Toast.LENGTH_LONG).show();
+    }
+
 }

@@ -98,5 +98,14 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="title_activity_notification_note">NotificationNoteActivity</string>
     <string name="hello_world">Hello world!</string>
-
+    <string name="following_trail_title">Following \u0025s</string>
+    <string name="leading_trail_title">Leading \u0025s</string>
+    <string name="following_trail_notification_content">Trailbook is tracking your location to keep you on course.</string>
+    <string name="exit_confirm">Exit</string>
+    <string name="exit_confirm_lead_mesage">This action will stop recording the path.  You can resume leading later by re-entering Trailbook.</string>
+    <string name="exit_confirm_follow_mesage">By exiting you will no longer receive alerts when you get off course.</string>
+    <string name="confirm_exit_title">Exit?</string>
+    <string name="no_network_title">No Network Connectivity</string>
+    <string name="no_network_message">Network connectivity is required for this operation.  Please try again later.</string>
+    <string name="no_network_toast">No network access.  Showing only your trails.</string>
 </resources>

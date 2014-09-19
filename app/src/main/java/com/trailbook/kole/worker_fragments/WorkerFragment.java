@@ -22,6 +22,7 @@ import com.trailbook.kole.helpers.DownloadImageTask;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 import org.apache.http.entity.mime.MultipartEntity;
 
@@ -125,6 +126,7 @@ public class WorkerFragment extends Fragment {
         };
 
         mService.getPathSummaries(options, callback);
+        TrailBookState.resetLastRefreshedFromCloudTimeStamp();
     }
 
     public void startGetPathPoints(String pathId, Integer maxPoints) {

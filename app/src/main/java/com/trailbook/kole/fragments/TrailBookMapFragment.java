@@ -37,6 +37,7 @@ import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.AllNotesAddedEvent;
 import com.trailbook.kole.events.LocationChangedEvent;
+import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.NoteAddedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
@@ -69,6 +70,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private static final float MEDIUM = 6;
     private static final String SAVED_ZOOM_LEVEL = "ZOOM";
     private static final String SAVED_LAT_LNG_BOUNDS_GSON = "BOUNDS";
+    private static final float DEFAULT_ZOOM_LEVEL = 5;
 
     private String mActivePathId;
     //private TrailBookActivity parentActivity;
@@ -148,6 +150,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         String startBoundsJson = gson.toJson(startBounds, LatLngBounds.class);
         String jsonLastBounds = savedStatePrefs.getString(SAVED_LAT_LNG_BOUNDS_GSON, startBoundsJson);
         mBounds = gson.fromJson(jsonLastBounds, LatLngBounds.class);
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: restored bounds:" + mBounds);
     }
 
     @Override
@@ -195,17 +198,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         setUpMapIfNeeded();
         hideMapMessage();
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment Mode:" + TrailBookState.getMode());
-        if (TrailBookState.getMode()==TrailBookState.MODE_SEARCH) {
-            //todo: get paths within the bounds of the current map.
-            long msSinceLastRefresh = ApplicationUtils.getCurrentTimeStamp() -TrailBookState.getLastRefreshedFromCloudTimeStamp();
-            Log.d(Constants.TRAILBOOK_TAG, "Time since last refresh" + msSinceLastRefresh/1000/60 + " min");
-            if (msSinceLastRefresh > Constants.CLOUD_REFRESH_DEFAULT_TIME_DELTA) {
-                startPathSummarySearch();
-                TrailBookState.resetLastRefreshedFromCloudTimeStamp();
-            } else {
-                restoreCloudPathsFromDevice();
-            }
-        }
+
         drawLoadedPaths();
         processQueuedEvents();
 
@@ -227,17 +220,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
     }
 
-    public void refreshPaths() {
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: activity is:" + getActivity());
-//        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: parent activity is:" + parentActivity);
-        mPathManager.loadPathsFromDevice(getActivity());
-        startPathSummarySearch();
-    }
-
-    public void restoreCloudPathsFromDevice() {
-        //todo: restore saved metadata
-    }
-
     private void hideMapMessage() {
         TextView tvMapMessage = (TextView)(getActivity().findViewById(R.id.map_tv_message));
         if (tvMapMessage != null) {
@@ -251,24 +233,28 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
         Log.d(Constants.TRAILBOOK_TAG, "saving map fragment instance state");
         String jsonBounds = getJsonBounds();
-        saveLastBounds(jsonBounds);
+        if (isBoundsValid(jsonBounds))
+            saveLastBounds(jsonBounds);
         //getArguments().putString(SAVED_LAT_LNG_BOUNDS_GSON, jsonBounds);
     }
 
+    private boolean isBoundsValid(String jsonBounds) {
+        return !jsonBounds.contains("\"latitude\":0.0,\"longitude\":0.0");
+    }
+
     private void saveLastBounds(String jsonBounds) {
-        if (mIsMapLoaded) {
-            SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(SAVED_LAT_LNG_BOUNDS_GSON, jsonBounds);
-            editor.commit();
-        }
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(SAVED_LAT_LNG_BOUNDS_GSON, jsonBounds);
+        editor.commit();
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: Saved bounds " + jsonBounds);
     }
 
     private String getJsonBounds() {
         mBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
         Gson gson = new Gson();
         String jsonBounds = gson.toJson(mBounds);
-        Log.d(Constants.TRAILBOOK_TAG, "bounds," + jsonBounds);
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: bounds," + jsonBounds);
         return jsonBounds;
     }
 
@@ -550,11 +536,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         return fragment;
     }
 
-    public void startPathSummarySearch() {
-        // If not retained (or first time running), we need to create it.
-        WorkerFragment workFragment = ((TrailBookActivity)getActivity()).getWorkerFragment();
-        workFragment.startGetPathSummaries(null, 0);
-    }
 
     private void removeStartMarker(String pathId) {
         Marker startMarker = mStartMarkers.get(pathId);
@@ -710,6 +691,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             Log.d(Constants.TRAILBOOK_TAG, "Map is null");
             return;
         }
+
         addPointsToPolylineOptions(o, points);
         Polyline polyline = mMap.addPolyline(o);
         mPathPolylines.put(segmentId, polyline);
@@ -731,7 +713,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         MarkerOptions options = new MarkerOptions()
                 .position(summary.getEnd())
                 .title(summary.getName())
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_destination));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark));
         return options;
     }
 
@@ -767,7 +749,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (currentLocation != null) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                             new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
-                            mMap.getMaxZoomLevel()
+                            DEFAULT_ZOOM_LEVEL
                     )
             );
         }
@@ -882,6 +864,24 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
     }
 
+    @Subscribe
+    public void onModeChangedEvent(ModeChangedEvent event) {
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        if (event.getNewMode() == TrailBookState.MODE_SEARCH) {
+            showAllPaths();
+            setVisibilityForAllNoteMarkers(false);
+            setVisibilityForAllStartMarkers(false);
+        } else if (event.getNewMode() == TrailBookState.MODE_LEAD) {
+            showNotesOnlyForPath(TrailBookState.getActivePathId());
+            setVisibilityForAllEndMarkers(false);
+            zoomToCurrentLocation();
+        }
+    }
+
     private void queueEventIfMapNotAvailable(Object event) {
         if (mMap == null)
             mEventQueue.add(event);
@@ -901,6 +901,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 onSegmentUpdatedEvent((SegmentUpdatedEvent) event);
             else if (event instanceof PathDeletedEvent)
                 onPathDeletedEvent((PathDeletedEvent) event);
+            else if (event instanceof ModeChangedEvent)
+                onModeChangedEvent((ModeChangedEvent) event);
         }
     }
 
