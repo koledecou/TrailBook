@@ -2,7 +2,6 @@ package com.trailbook.kole.activities;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -12,7 +11,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.hardware.TriggerEventListener;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -28,14 +26,12 @@ import android.widget.Toast;
 import com.google.android.gms.maps.model.LatLng;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
-
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
-import com.trailbook.kole.data.PathContainer;
+import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
-import com.trailbook.kole.events.AllNotesAddedEvent;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.fragments.AlertDialogFragment;
@@ -43,22 +39,20 @@ import com.trailbook.kole.fragments.CreateNoteFragment;
 import com.trailbook.kole.fragments.CreatePathDialogFragment;
 import com.trailbook.kole.fragments.FollowPathSelectorFragment;
 import com.trailbook.kole.fragments.FullNoteViewFragment;
-import com.trailbook.kole.fragments.TrailBookMapFragment;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.fragments.PathDetailsActionListener;
 import com.trailbook.kole.fragments.PathSelectorFragment;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
+import com.trailbook.kole.fragments.TrailBookMapFragment;
 import com.trailbook.kole.helpers.ApplicationUtils;
-import com.trailbook.kole.helpers.TrailbookFileUtilities;
-import com.trailbook.kole.location_processors.LocationProcessor;
-import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
-import com.trailbook.kole.state_objects.TrailBookState;
-import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.helpers.MapUtilities;
-import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
-import com.trailbook.kole.location_processors.PathLeaderLocationProcessor;
-import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
+import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
+import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
+import com.trailbook.kole.state_objects.BusProvider;
+import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.state_objects.TrailBookState;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
 
 import java.util.ArrayList;
@@ -137,19 +131,23 @@ public class TrailBookActivity extends Activity
     }
 
     @Override
-    public void onNoteCreated(Note newNote) {
+    public void onNoteCreated(String noteId, Note newNote) {
         getFragmentManager().popBackStackImmediate();
         invalidateOptionsMenu();
-        PointAttachedObject<Note> paoNote = attachNoteToCurrentLocation(newNote);
-        addNoteToActiveSegment(paoNote);
-        Log.d(Constants.TRAILBOOK_TAG, className +  " added note:" + newNote.getNoteContent() + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
+        PointAttachedObject<Note> paoNote = mPathManager.getNote(noteId);
+        if (paoNote == null)
+            paoNote = attachNoteToCurrentLocation(newNote);
+        else {
+            paoNote.setAttachment(newNote);
+        }
+        addNoteToActivePath(paoNote);
+        Log.d(Constants.TRAILBOOK_TAG, className +  " added note: " + paoNote.getId() + " contnt: " + newNote.getNoteContent() + " at " + paoNote.getLocation() + " to path " + TrailBookState.getActivePathId());
     }
 
-    private void addNoteToActiveSegment(PointAttachedObject<Note> note) {
-        String segmentId = TrailBookState.getActiveSegmentId();
+    private void addNoteToActivePath(PointAttachedObject<Note> note) {
         String pathId = TrailBookState.getActivePathId();
-        if (segmentId != null && pathId != null) {
-            mPathManager.addNoteToSegment(mPathManager.getSegment(segmentId), note);
+        if (pathId != null) {
+            mPathManager.addNoteToPath(pathId, note);
             mPathManager.savePath(pathId, this);
         }
     }
@@ -158,7 +156,7 @@ public class TrailBookActivity extends Activity
         Location l = TrailBookState.getCurrentLocation();
         if (l != null) {
             LatLng point = TrailbookPathUtilities.locationToLatLon(l);
-            return new PointAttachedObject<Note>(point, newNote);
+            return new PointAttachedObject<Note>(TrailbookPathUtilities.getNewNoteId(), point, newNote);
         } else {
             return null;
         }
@@ -177,8 +175,8 @@ public class TrailBookActivity extends Activity
             return;
         }
 
-        Path p = mPathManager.getPath(pathId);
-        if (p == null) {
+        PathSummary summary = mPathManager.getPathSummary(pathId);
+        if (summary == null) {
             Log.e(Constants.TRAILBOOK_TAG, className + " onPathSelectorFragmentResult can't find path:" + pathId);
             return;
         }
@@ -188,8 +186,8 @@ public class TrailBookActivity extends Activity
                 Log.d(Constants.TRAILBOOK_TAG, className + " Uploading path:" + pathId);
                 //TODO: update path details and confirm
                 //TODO: show progress dialog
-                Toast.makeText(this, "Uploading " + p.getSummary().getName(), Toast.LENGTH_LONG).show();
-                mWorkFragment.startPathUpload(mPathManager.getPath(pathId));
+                Toast.makeText(this, "Uploading " + summary.getName(), Toast.LENGTH_LONG).show();
+                mWorkFragment.startPathUploadMongo(mPathManager.getPathSummary(pathId));
             } else {
                 Log.d(Constants.TRAILBOOK_TAG, className + " no network connectivity");
                 showNoNetworkStatusDialog();
@@ -281,8 +279,7 @@ public class TrailBookActivity extends Activity
             return true;
         } else if (id == R.id.action_bar_create_note) {
             collapseSlidingPanel();
-            switchFragmentAndAddToBackstack(CreateNoteFragment.newInstance(TrailbookPathUtilities.getNewNoteId(),
-                            TrailBookState.getActiveSegmentId()),
+            switchFragmentAndAddToBackstack(getCreateNoteFragment(TrailbookPathUtilities.getNewNoteId()),
                             ADD_NOTE_FRAG_TAG);
             invalidateOptionsMenu();
         } else if (id == R.id.quick_note_left || id == R.id.quick_note_right || id == R.id.quick_note_straight) {
@@ -461,7 +458,7 @@ public class TrailBookActivity extends Activity
         TrailBookState.setMode(TrailBookState.MODE_FOLLOW);
         mMapFragment.showNotesOnlyForPath(pathId);
         mMapFragment.zoom(pathId);
-        getActionBar().setTitle("Following " + mPathManager.getPath(pathId).getSummary().getName());
+        getActionBar().setTitle("Following " + mPathManager.getPathSummary(pathId).getName());
         invalidateOptionsMenu();
         startFollowing(pathId);
     }
@@ -472,15 +469,6 @@ public class TrailBookActivity extends Activity
         TrailBookState.setLocationProcessor(new PathFollowerLocationProcessor(pathId, this));
         TrailBookState.getInstance().startLocationUpdates();
     }
-
-    private void stopLocationUpdates() {
-        LocationProcessor processor = TrailBookState.getLocationProcessor();
-        if (processor != null) {
-            processor.removeAllNotifications();
-        }
-        TrailBookState.getInstance().stopLocationUpdates();
-    }
-
 
     @Override
     public void onZoomRequested(String pathId) {
@@ -511,7 +499,7 @@ public class TrailBookActivity extends Activity
         TrailBookState.setActiveSegmentId(mPathManager.getPath(pathId).getLastSegment());
         mMapFragment.zoomToCurrentLocation();*/
 
-        startLeading(pathId, mPathManager.getPath(pathId).getLastSegment());
+        startLeading(pathId, mPathManager.getPathSummary(pathId).getLastSegment());
     }
 
     private void startLeading(String pathId, String segmentId) {
@@ -567,16 +555,26 @@ public class TrailBookActivity extends Activity
     private void createQuickNote(int id) {
         String content = TrailbookPathUtilities.getQuickNoteContent(getResources(), id);
         if (content != null) {
-            Note qn = new Note(TrailbookPathUtilities.getNewNoteId(), TrailBookState.getActiveSegmentId());
+            Note qn = new Note();
             qn.setNoteContent(content);
             PointAttachedObject<Note> paoNote = attachNoteToCurrentLocation(qn);
-            addNoteToActiveSegment(paoNote);
+            addNoteToActivePath(paoNote);
             Log.d(Constants.TRAILBOOK_TAG, className + ": added quick note:" + content + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
         }
     }
 
     public void showFullNote(String noteId) {
-        switchFragmentAndAddToBackstack(getFullNoteViewFragment(noteId), PATH_SELECT_UPLOAD_TAG);
+        if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
+            switchFragmentAndAddToBackstack(getCreateNoteFragment(noteId), ADD_NOTE_FRAG_TAG);
+            invalidateOptionsMenu();
+        } else {
+            switchFragmentAndAddToBackstack(getFullNoteViewFragment(noteId), PATH_SELECT_UPLOAD_TAG);
+        }
+    }
+
+    private Fragment getCreateNoteFragment(String noteId) {
+        CreateNoteFragment f = CreateNoteFragment.newInstance(noteId);
+        return f;
     }
 
     private Fragment getFullNoteViewFragment(String noteId) {
@@ -604,8 +602,8 @@ public class TrailBookActivity extends Activity
                     uri = resultData.getData();
                     Log.d(Constants.TRAILBOOK_TAG, className + ": Chosen file Uri: " + uri.toString());
                     String pathKml = TrailbookFileUtilities.readTextFromUri(this, uri);
-                    PathContainer pathContainer = TrailbookPathUtilities.parseXML(pathKml);
-                    Log.d(Constants.TRAILBOOK_TAG, className + ": parsed path:" + pathContainer.path.getSummary().getName());
+                    Path pathContainer = TrailbookPathUtilities.parseXML(pathKml);
+                    Log.d(Constants.TRAILBOOK_TAG, className + ": parsed path:" + pathContainer.summary.getName());
                     mPathManager.savePath(pathContainer, this);
                 }
             } catch (Exception e) {
@@ -619,14 +617,14 @@ public class TrailBookActivity extends Activity
         cancelWaitForLocationDialog();
     }
 
-    @Subscribe
+/*    @Subscribe
     public void onAllNotesAddedEvent(AllNotesAddedEvent event){
         try {
             mPathManager.savePath(event.getPathId(), this);
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Exception onAllNotesAddedEvent.", e);
         }
-    }
+    }*/
 
     public void refreshPaths() {
         mPathManager.loadPathsFromDevice(this);
@@ -682,7 +680,7 @@ public class TrailBookActivity extends Activity
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
                 Log.d(Constants.TRAILBOOK_TAG, className + ": exiting application");
-                stopLocationUpdates();
+                TrailBookState.getInstance().stopLocationUpdates();
                 finish();
             }
         };

@@ -13,6 +13,8 @@
     <dimen name="summary_image_width">100dp</dimen>
     <dimen name="small_note_view_image_pad">5dp</dimen>
     <dimen name="small_note_image_max_width">150dp</dimen>
-    <dimen name="small_note_view_min_text_panel_width">400dp</dimen>
+    <dimen name="small_note_view_min_text_panel_width">500dp</dimen>
     <dimen name="map_message_pad">25dp</dimen>
+    <dimen name="vn_image_top_pad">15dp</dimen>
+    <dimen name="small_note_expand_image_max_height">20dp</dimen>
 </resources>

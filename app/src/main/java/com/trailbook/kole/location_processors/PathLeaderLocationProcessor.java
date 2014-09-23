@@ -10,7 +10,7 @@ import android.util.Log;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.state_objects.PathManager;
 
 /**
@@ -36,8 +36,8 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
     }
 
     private NotificationCompat.Builder createListeningNotifyBuilder() {
-        Path p = PathManager.getInstance().getPath(mPathId);
-        String title = String.format(mContext.getString(R.string.leading_trail_title), p.getSummary().getName());
+        PathSummary p = PathManager.getInstance().getPathSummary(mPathId);
+        String title = String.format(mContext.getString(R.string.leading_trail_title), p.getName());
 
         return super.createListeningNotifyBuilder(title, mContext.getString(R.string.following_trail_notification_content));
     }
@@ -54,7 +54,7 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
         Log.d(Constants.TRAILBOOK_TAG, "PathLeaderLocationProcessor: accuracy is " + newLocation.getAccuracy());
         if (!newLocation.hasAccuracy() || newLocation.getAccuracy() < MIN_ACCURACY &&
                 mPathManager.getSegment(mSegmentId) != null &&
-                mPathManager.getPath(mPathId) != null) {
+                mPathManager.getPathSummary(mPathId) != null) {
             mPathManager.addPointToSegment(mSegmentId, mPathId, newLocation);
             mPathManager.savePath(mPathId, mContext);
         }
@@ -63,8 +63,8 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
     }
 
     private void sendListeningNotification() {
-        Path p = PathManager.getInstance().getPath(mPathId);
-        String notificationContent = String.format(mContext.getResources().getString(R.string.leading_trail_title), p.getSummary().getName());
+        PathSummary p = PathManager.getInstance().getPathSummary(mPathId);
+        String notificationContent = String.format(mContext.getResources().getString(R.string.leading_trail_title), p.getName());
         mListeningNotifyBuilder.setContentTitle(notificationContent);
         mListeningNotifyBuilder.setContentText("there will be distance info and an off button here");
         mListeningNotifyBuilder.setContentIntent(getListeningNotificationPendingIntent());

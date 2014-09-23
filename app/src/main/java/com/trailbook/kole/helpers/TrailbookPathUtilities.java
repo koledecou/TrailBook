@@ -10,10 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.Path;
-import com.trailbook.kole.data.PathContainer;
-import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
+import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -74,7 +73,6 @@ public class TrailbookPathUtilities {
 
     public static double getDistanceToNote(PointAttachedObject<Note> paoNote, Location l){
         LatLng noteLoc = paoNote.getLocation();
-        Note note = paoNote.getAttachment();
         double distanceToNote = TrailbookPathUtilities.getDistanceInMeters(TrailbookPathUtilities.locationToLatLon(l), noteLoc);
         return distanceToNote;
     }
@@ -100,6 +98,14 @@ public class TrailbookPathUtilities {
         return String.valueOf(date.getTime());
     }
 
+    public static String getNoteJSONString(PointAttachedObject<Note> note) {
+        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
+        if (gson == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
+        }
+        return gson.toJson(note);
+    }
+
     public static String getPathSummaryJSONString(PathSummary summary) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
         if (gson == null) {
@@ -108,34 +114,14 @@ public class TrailbookPathUtilities {
         return gson.toJson(summary);
     }
 
-    public static String getSegmentListJSONString(Path path) {
-        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        return gson.toJson(path.getSegmentIdList());
-    }
-
-    public static String getSegmentNotesJSONString(PathSegment segment) {
-        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        return gson.toJson(segment.getPointNotes());
-    }
-
     public static String getSegmentPointsJSONString(PathSegment segment) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
         return gson.toJson(segment.getPoints());
     }
 
-    public static String getPathJSONString(Path path) {
-        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        return gson.toJson(path);
-    }
-
     public static String getSegmentJSONString(PathSegment s) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
         return gson.toJson(s);
-    }
-
-    public static String getPathSegmentMapJSONString(Path p) {
-        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        return gson.toJson(p.getSegmentIdList());
     }
 
     public static String getQuickNoteContent(Resources r, int resourceId) {
@@ -157,12 +143,12 @@ public class TrailbookPathUtilities {
             return PLACEMARK_TYPE_NOTE;
     }
 
-    public static PathContainer parseXML(String pathXML) {
+    public static Path parseXML(String pathXML) {
         Log.d("path xml", pathXML);
         Document pathXMLDoc = TrailbookPathUtilities.XMLfromString(pathXML);
         pathXMLDoc.getDocumentElement ().normalize ();
 
-        Path p = new Path(getNewPathId());
+        PathSummary summary = new PathSummary(getNewPathId());
         PathSegment s = new PathSegment((getNewSegmentId()));
         ArrayList<PathSegment> segments = new ArrayList<PathSegment>();
         ArrayList<PointAttachedObject<Note>> paoNotes = new ArrayList<PointAttachedObject<Note>>();
@@ -182,7 +168,6 @@ public class TrailbookPathUtilities {
                     ArrayList<LatLng> points = getLatLngArrayFromLineStringList(lineStringList);
                     s.addPoints(points);
                     String pathName = getNameFromPlaceMarkNameList(markNameList);
-                    PathSummary summary = p.getSummary();
                     summary.setName(pathName);
                     if (points.size()>0) {
                         summary.setStart(points.get(0));
@@ -195,20 +180,22 @@ public class TrailbookPathUtilities {
                     NodeList markNameList = placeMarkElement.getElementsByTagName("description");
 
                     LatLng point = getLatLngFromCoordsList(coordsNodeList);
-                    Note newNote = new Note(getNewNoteId(), s.getId());
+                    Note newNote = new Note();
                     if (point != null) {
-                        PointAttachedObject<Note> paoNote = new PointAttachedObject<Note>(point, newNote);
+                        String noteId=TrailbookPathUtilities.getNewNoteId();
+                        PointAttachedObject<Note> paoNote = new PointAttachedObject<Note>(noteId, point, newNote);
                         String noteContent = getNoteContentFromPlaceMarkNameList(markNameList);
                         paoNote.getAttachment().setNoteContent(noteContent);
-                        s.addPointNote(paoNote);
+                        summary.addNote(noteId);
+//deleteme                        s.addPointNote(paoNote);
                     }
                 }
             }
         }
-        p.addSegment(s.getId());
+        summary.addSegment(s.getId());
         segments.add(s);
 
-        return new PathContainer(p, segments);
+        return new Path(summary, segments, paoNotes);
     }
 
     private static String getNoteContentFromPlaceMarkNameList(NodeList markNameList) {

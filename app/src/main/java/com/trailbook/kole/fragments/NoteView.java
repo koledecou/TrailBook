@@ -1,6 +1,7 @@
 package com.trailbook.kole.fragments;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.Image;
 import android.util.AttributeSet;
@@ -19,11 +20,10 @@ import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
-import com.trailbook.kole.helpers.ApplicationUtils;
-import com.trailbook.kole.state_objects.BusProvider;
-import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.helpers.PreferenceUtilities;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
+import com.trailbook.kole.state_objects.BusProvider;
+import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 public class NoteView extends LinearLayout {
@@ -37,6 +37,7 @@ public class NoteView extends LinearLayout {
     TextView mTextViewContent;
     TextView mTextViewLocationInfo;
     ImageView mImageView;
+    ImageView mExpandImage;
     Bus mBus = BusProvider.getInstance();
     Location mCurrentLocation;
     int mLayoutId = R.layout.view_note;
@@ -87,9 +88,8 @@ public class NoteView extends LinearLayout {
 
         mImageFileName = note.getImageFileName();
         if (mImageFileName != null && mImageFileName.length()>0) {
-            String segmentId = note.getParentSegmentId();
             Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileName);
-            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(getContext(), segmentId, mImageFileName)).into(mImageView);
+            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(getContext(), mImageFileName)).into(mImageView);
         }
 
         setRelativeLocationString();
@@ -113,7 +113,7 @@ public class NoteView extends LinearLayout {
         } else {
             mTextViewLocationInfo.setText("");
         }
-        invalidate();
+        mTextViewLocationInfo.invalidate();
     }
 
     void loadViews(){
@@ -127,5 +127,12 @@ public class NoteView extends LinearLayout {
         mImageView=(ImageView)findViewById(R.id.vn_image);
         mTextViewLocationInfo=(TextView)findViewById(R.id.vn_navigation_details);
         mTextViewLocationInfo.setMinWidth(R.dimen.small_note_view_min_text_panel_width);
+
+        mExpandImage = (ImageView)findViewById(R.id.vn_button_expand);
+        if (mExpandImage != null) {
+            if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
+                mExpandImage.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_expand_edit));
+            }
+        }
     }
 }

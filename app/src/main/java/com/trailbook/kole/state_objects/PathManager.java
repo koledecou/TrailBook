@@ -1,6 +1,5 @@
 package com.trailbook.kole.state_objects;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
@@ -14,22 +13,20 @@ import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
-import com.trailbook.kole.data.PathContainer;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
-import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.NoteAddedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
+import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
-import com.trailbook.kole.events.SegmentPointsReceivedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
+import com.trailbook.kole.helpers.PathDirectoryWalker;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
-import com.trailbook.kole.helpers.PathDirectoryWalker;
 
 import org.apache.commons.io.FileUtils;
 
@@ -37,8 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
@@ -46,15 +41,17 @@ import java.util.Hashtable;
  */
 public class PathManager {
     private static final PathManager INSTANCE = new PathManager();
-    private static Hashtable<String,Path> mPaths;
+    private static Hashtable<String,PathSummary> mPaths;
+    private static Hashtable<String,PointAttachedObject<Note>> mNotes;
     private static Hashtable<String,PathSegment> mSegments;
     private static Bus bus;
 
     private Gson gson = new Gson();
 
     private PathManager() {
-        mPaths = new Hashtable<String, Path>();
+        mPaths = new Hashtable<String, PathSummary>();
         mSegments = new Hashtable<String, PathSegment>();
+        mNotes = new Hashtable<String, PointAttachedObject<Note>>();
         bus = BusProvider.getInstance();
         bus.register(this);
     }
@@ -66,14 +63,22 @@ public class PathManager {
     public static void addPathSummary(PathSummary summary) {
         String id = summary.getId();
         Log.d(Constants.TRAILBOOK_TAG, "adding path summary,"+id);
-        Path path = mPaths.get(id);
+/*        Path2 path = mPaths.get(id);
         if (path==null) {
             Log.d(Constants.TRAILBOOK_TAG, "creating new path," + id);
-            path = new Path(id);
-        }
-        path.setSummary(summary);
-        mPaths.put(id, path);
+            path = new Path2(id);
+        }*/
+        mPaths.put(id, summary);
         bus.post(new PathSummaryAddedEvent(summary));
+    }
+
+    public boolean noteBelongsToPath(String noteId, String pathId) {
+        PathSummary summary = getPathSummary(pathId);
+        ArrayList<String> noteIdsForPath = summary.getNoteIdList();
+        if (noteIdsForPath != null && noteIdsForPath.contains(noteId))
+            return true;
+        else
+            return false;
     }
 
     @Subscribe
@@ -91,7 +96,13 @@ public class PathManager {
 
     private boolean isStoredLocally(String pathId) {
         File pathDir = new File(TrailbookFileUtilities.getInternalPathDirectory(TrailBookState.getInstance()));
+        if (pathDir == null)
+            return false;
+
         String[] pathIds = pathDir.list();
+        if (pathIds == null)
+            return false;
+
         for (int i=0; i<pathIds.length; i++) {
             Log.d(Constants.TRAILBOOK_TAG, "PathManager: comparing pathId " + pathId + " to " + pathIds[i]);
             if (pathId.equals(pathIds[i])) {
@@ -103,16 +114,25 @@ public class PathManager {
     }
 
     @Subscribe
-    public void onSegmentPointsReceivedEvent(SegmentPointsReceivedEvent event){
-        String segmentId = event.getSegmentId();
-        ArrayList<LatLng> points = event.getPoints();
-        PathSegment thisSegment = mSegments.get(segmentId);
-        if (thisSegment != null) {
-            thisSegment.removePoints();
-        } else {
-            addSegmentIfNeeded(segmentId);
+    public void onPathReceivedEvent(PathReceivedEvent event){
+        Path path = event.getPath();
+        ArrayList<PointAttachedObject<Note>> notes = path.notes;
+        ArrayList<PathSegment> segments = path.segments;
+
+        for (PointAttachedObject<Note> note:notes) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathManager: received note " + note.getAttachment().getNoteContent());
+            mNotes.put(note.getId(), note);
+            bus.post(new NoteAddedEvent(note));
         }
-        addPointsToSegment(points, thisSegment);
+
+        for (PathSegment segment:segments) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathManager: received segment " + segment.getId());
+            mSegments.put(segment.getId(), segment);
+            saveSegment(segment, TrailBookState.getInstance());
+            bus.post(new SegmentUpdatedEvent(segment));
+        }
+
+        savePath(path, TrailBookState.getInstance());
     }
 
     private void addPointsToSegment(ArrayList<LatLng> points, PathSegment thisSegment) {
@@ -122,75 +142,87 @@ public class PathManager {
         bus.post(new SegmentUpdatedEvent(thisSegment));
     }
 
-    public void addNoteToSegment(PathSegment s, PointAttachedObject<Note> paoNote) {
-        Log.d(Constants.TRAILBOOK_TAG, "adding note: " + paoNote.getLocation() + "   " + paoNote.attachment.getNoteContent());
+/*deleteme    public void addNoteToSegment(PathSegment s, PointAttachedObject<Note> paoNote) {
+        Log.d(Constants.TRAILBOOK_TAG, "adding note: " + paoNote.getLocation() + "   " + paoNote.getAttachment().getNoteContent());
         s.addPointNote(paoNote);
         bus.post(new NoteAddedEvent(paoNote));
-    }
+    }*/
 
-    public Path getPath(String pathId) {
+/*deleteme    public Path2 getPath(String pathId) {
         return mPaths != null? mPaths.get(pathId) : null;
-    }
+    }*/
 
     public PathSegment getSegment(String segmentId) {
         return mSegments!= null ? mSegments.get(segmentId) : null;
     }
 
     public PathSummary getPathSummary(String pathId) {
-        return mPaths.get(pathId)==null?null:mPaths.get(pathId).getSummary();
+        return mPaths.get(pathId)==null?null:mPaths.get(pathId);
     }
 
     public void savePath(String pathId, Context c) {
         try {
-            savePathSummary(pathId, c);
-            savePathSegmentMap(pathId, c);
+            PathSummary summary = getPathSummary(pathId);
+            savePathSummary(summary, c);
             saveSegments(pathId, c);
-            Path path = getPath(pathId);
-            bus.post(new PathUpdatedEvent(path));
-            path.setDownloaded(true);
+            saveNotes(getPointNotesForPath(pathId));
+            bus.post(new PathUpdatedEvent(summary));
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + pathId, e);
         }
     }
 
-    public void savePath(PathContainer pathContainer, Context c) {
-        Path path = pathContainer.path;
-        Log.d(Constants.TRAILBOOK_TAG, "Saving path:" + path.getSummary().getName() + ", id: " + path.getSummary().getId());
+
+    public void savePath(Path pathContainer, Context c) {
+        PathSummary summary = pathContainer.summary;
+        Log.d(Constants.TRAILBOOK_TAG, "Saving path:" + summary.getName() + ", id: " + summary.getId());
         ArrayList<PathSegment> segments = pathContainer.segments;
+        ArrayList<PointAttachedObject<Note>> paoNotes = pathContainer.notes;
         try {
-            savePathSummary(path.getSummary(), c);
-            savePathSegmentMap(path, c);
+            savePathSummary(summary, c);
             saveSegments(segments, c);
-            bus.post(new PathUpdatedEvent(path));
-            path.setDownloaded(true);
+            saveNotes(paoNotes);
+            bus.post(new PathUpdatedEvent(summary));
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + path.getId(), e);
+            Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + summary.getId(), e);
         }
 
-        addPath(path);
+        //todo: is this needed?
+        addPathSummary(summary);
         addSegments(segments);
+    }
+
+    private PointAttachedObject<Note> loadNote(Context c, String noteId) {
+        File noteFile = TrailbookFileUtilities.getInternalNoteFile(c, noteId);
+        PointAttachedObject<Note> note = null;
+        try {
+            String noteFileContents = FileUtils.readFileToString(noteFile);
+            Log.d(Constants.TRAILBOOK_TAG, "note file contents:" + noteFileContents);
+            Type paoNoteType = new TypeToken<PointAttachedObject<Note>>() {
+            }.getType();
+            note = gson.fromJson(noteFileContents, paoNoteType);
+        } catch (Exception e){
+            Log.e(Constants.TRAILBOOK_TAG, "PathManager: error loading note " + noteId, e);
+        }
+        return note;
+    }
+
+    private void saveNotes(ArrayList<PointAttachedObject<Note>> paoNotes) {
+        for (PointAttachedObject<Note> paoNote:paoNotes) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathManager: saving note: " + paoNote.getAttachment().getNoteContent());
+            String noteJSON = TrailbookPathUtilities.getNoteJSONString(paoNote);
+            File noteFile = TrailbookFileUtilities.getInternalNoteFile(TrailBookState.getInstance(), paoNote.getId());
+            try {
+                FileUtils.write(noteFile, noteJSON);
+            } catch (IOException e) {
+                Log.e(Constants.TRAILBOOK_TAG, "PathManager: error saving note: " + paoNote.getId(), e);
+            }
+        }
     }
 
     private void saveSegment (PathSegment segment, Context c) {
         Log.d(Constants.TRAILBOOK_TAG, "Saving segment " + segment.getId());
         saveSegmentPoints(segment, c);
-        saveSegmentNotes(segment, c);
-    }
-
-    public void savePathSegmentMap(Path path, Context c) {
-        String segmentListJSON = TrailbookPathUtilities.getSegmentListJSONString(path);
-        File pathSegmentsFile = TrailbookFileUtilities.getInternalPathSegmentListFile(c, path.getId());
-        try {
-            FileUtils.write(pathSegmentsFile, segmentListJSON);
-        } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error saving path " + path.getId(), e);
-        }
-    }
-
-    public void savePathSegmentMap(String pathId, Context c) {
-        Path path = getPath(pathId);
-        Log.d(Constants.TRAILBOOK_TAG, "saving path: " + path);
-        savePathSegmentMap(path, c);
     }
 
     public void savePathSummary(PathSummary summary, Context c) {
@@ -205,19 +237,18 @@ public class PathManager {
         }
     }
 
-    public void savePathSummary (String pathId, Context c) {
+/*deleteme    public void savePathSummary (String pathId, Context c) {
         Log.d(Constants.TRAILBOOK_TAG, "Saving " + pathId);
-        Path path = getPath(pathId);
-        if (path == null)
+        Path2 summary = getPathSummary(pathId);
+        if (summary == null)
             return;
 
-        PathSummary summary = path.getSummary();
         savePathSummary(summary, c);
-    }
+    }*/
 
     public void saveSegments(String pathId, Context c) {
-        Path p = getPath(pathId);
-        ArrayList<String> segmentIds = p.getSegmentIdList();
+        PathSummary summary = getPathSummary(pathId);
+        ArrayList<String> segmentIds = summary.getSegmentIdList();
         for (String id:segmentIds) {
             saveSegment(id, c);
         }
@@ -225,8 +256,7 @@ public class PathManager {
 
     public void saveSegment(String segmentId, Context c) {
         Log.d(Constants.TRAILBOOK_TAG, "Saving segment " + segmentId);
-        saveSegmentPoints(segmentId, c);
-        saveSegmentNotes(segmentId, c);
+        saveSegmentPoints(getSegment(segmentId), c);
     }
 
     public void saveSegmentPoints(PathSegment segment, Context c) {
@@ -238,27 +268,6 @@ public class PathManager {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Error saving segment points", e);
         }
-    }
-
-    public void saveSegmentPoints(String segmentId, Context c) {
-        PathSegment s = getSegment(segmentId);
-        saveSegmentPoints(s, c);
-    }
-
-    public void saveSegmentNotes(PathSegment segment, Context c) {
-        String segmentNotesString = TrailbookPathUtilities.getSegmentNotesJSONString(segment);
-        Log.d(Constants.TRAILBOOK_TAG, "saving notes: " + segmentNotesString);
-        File segmentNotesFile = TrailbookFileUtilities.getInternalSegmentNotesFile(c, segment.getId());
-        try {
-            FileUtils.write(segmentNotesFile, segmentNotesString);
-        } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error saving segment notes", e);
-        }
-    }
-
-    public void saveSegmentNotes(String segmentId, Context c) {
-        PathSegment s = getSegment(segmentId);
-        saveSegmentNotes(s, c);
     }
 
     public void loadPathFromDevice(Context c, String pathId) {
@@ -283,21 +292,28 @@ public class PathManager {
     }
 
     private void loadPathFromSummary(Context c, PathSummary summary) {
-        Path p = new Path(summary.getId());
-        p.setSummary(summary);
-        ArrayList<String> segmentIds = loadSegmentIdsForPath(c, summary.getId());
+        ArrayList<String> segmentIds = summary.getSegmentIdList();
         for (String segId : segmentIds) {
             try {
                 PathSegment segment = loadSegment(c, segId);
-                p.addSegment(segId);
                 addNewSegment(segment);
                 bus.post(new SegmentUpdatedEvent(segment));
             } catch (Exception e) {
                 Log.e(Constants.TRAILBOOK_TAG, "Error loading segment id: " + segId, e);
             }
         }
-        p.setDownloaded(true);
-        addPath(p);
+
+        ArrayList<String> noteIds = summary.getNoteIdList();
+        for (String noteId: noteIds) {
+            PointAttachedObject<Note> paoNote = loadNote(c, noteId);
+            if (paoNote != null) {
+                Log.d(Constants.TRAILBOOK_TAG, "PathManager: loaded note:" + paoNote.getAttachment().getNoteContent());
+                mNotes.put(paoNote.getId(), paoNote);
+                bus.post(new NoteAddedEvent(paoNote));
+            }
+        }
+//deleteme        p.setDownloaded(true);
+        addPathSummary(summary);
     }
 
     public void loadPathsFromDevice(Context c) {
@@ -307,6 +323,7 @@ public class PathManager {
         for (String thisContent:pathSummaryFileContents) {
             try {
                 PathSummary summary = getSummaryFromString(thisContent);
+                Log.d(Constants.TRAILBOOK_TAG, "Note Ids for " + summary.getName() + ":" + summary.getNoteIdList());
                 bus.post(new PathSummaryAddedEvent(summary));
                 loadPathFromSummary(c, summary);
             } catch (Exception e) {
@@ -326,10 +343,8 @@ public class PathManager {
     public PathSegment loadSegment(Context c, String segId) {
         try {
             ArrayList<LatLng> points = loadPoints(c, segId);
-            HashMap<String, PointAttachedObject<Note>> notes = loadNotes(c, segId);
             PathSegment segment = new PathSegment(segId);
             segment.addPoints(points);
-            segment.setNotes(notes);
             return segment;
         } catch (Exception e) {
             e.printStackTrace();
@@ -343,34 +358,6 @@ public class PathManager {
         Type arrayLatLngType = new TypeToken<ArrayList<LatLng>>(){}.getType();
         ArrayList<LatLng> points = gson.fromJson(pointsFileContents, arrayLatLngType);
         return points;
-    }
-
-    private HashMap<String, PointAttachedObject<Note>> loadNotes(Context c, String segId) throws IOException {
-        File segmentNotesFile = TrailbookFileUtilities.getInternalSegmentNotesFile(c, segId);
-        String notesFileContents = FileUtils.readFileToString(segmentNotesFile);
-        Type mapType = new TypeToken<HashMap<String, PointAttachedObject<Note>>>(){}.getType();
-        HashMap<String, PointAttachedObject<Note>> notes = gson.fromJson(notesFileContents, mapType);
-        return notes;
-    }
-
-    private ArrayList<String> loadSegmentIdsForPath(Context c, String pathId) {
-        try {
-            File pathSegmentListFile = TrailbookFileUtilities.getInternalPathSegmentListFile(c, pathId);
-            String fileContents = FileUtils.readFileToString(pathSegmentListFile);
-            Type arrayStringType = new TypeToken<ArrayList<String>>(){}.getType();
-            ArrayList<String> segIdList =gson.fromJson(fileContents, arrayStringType);
-            return segIdList;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public void addPath(Path p) {
-        String id = p.getSummary().getId();
-        if (mPaths.get(id)==null)
-            mPaths.put(id, p);
-        bus.post(new PathUpdatedEvent(p));
     }
 
     private void addSegments(ArrayList<PathSegment> segments) {
@@ -395,8 +382,8 @@ public class PathManager {
     public ButtonActions getButtonActions(String pathId) {
         ButtonActions actions = new ButtonActions();
 
-        Path p = getPath(pathId);
-        if (!p.isDownloaded()) {
+        PathSummary p = getPathSummary(pathId);
+        if (!isStoredLocally(pathId)) {
             actions.mCanFollowPath = false;
             actions.mCanDownloadPath = true;
         } else {
@@ -409,14 +396,13 @@ public class PathManager {
 
     public String makeNewPath(String pathName, String segmentId, String ownerId) {
         String pathId = TrailbookPathUtilities.getNewPathId();
-        Path p = new Path(pathId);
-        PathSummary summary = p.getSummary();
+        PathSummary summary = new PathSummary(pathId);
         summary.setName(pathName);
         summary.setDescription("");
 
-        p.addSegment(segmentId);
+        summary.addSegment(segmentId);
 
-        addPath(p);
+        addPathSummary(summary);
         return pathId;
     }
 
@@ -431,34 +417,34 @@ public class PathManager {
 
         LatLng point = new LatLng(newLocation.getLatitude(), newLocation.getLongitude());
         s.addPoint(point);
-        updatePathSummaryStartAndEndPoints(point, getPath(pathId));
+        updatePathSummaryStartAndEndPoints(point, getPathSummary(pathId));
 
         bus.post(new SegmentUpdatedEvent(s));
     }
 
-    private void updatePathSummaryStartAndEndPoints(LatLng point, Path path) {
-        PathSummary summary = path.getSummary();
+    private void updatePathSummaryStartAndEndPoints(LatLng point, PathSummary summary) {
+//deleteme        PathSummary summary = path.getSummary();
         summary.setEnd(point);
-        if (path.getSummary().getStart() == null) {
+        if (summary.getStart() == null) {
             summary.setStart(point);
         }
     }
 
     public PointAttachedObject<Note> getNote(String noteId) {
-        Collection<PathSegment> segmentColl = mSegments.values();
+/*        Collection<PathSegment> segmentColl = mSegments.values();
         for (PathSegment s: segmentColl) {
             HashMap<String,PointAttachedObject<Note>> notes = s.getPointNotes();
             PointAttachedObject<Note> paoNote = notes.get(noteId);
             if (paoNote != null)
                 return paoNote;
-        }
-        return null;
+        }*/
+        return mNotes.get(noteId);
     }
 
     public boolean hasDownloadedPaths() {
         ArrayList<String> downloadedPathIds = new ArrayList<String>();
-        for (Path p:mPaths.values()) {
-            if (p.isDownloaded())
+        for (PathSummary p:mPaths.values()) {
+            if (isStoredLocally(p.getId()))
                 return true;
         }
 
@@ -467,8 +453,8 @@ public class PathManager {
 
     public ArrayList<String> getDownloadedPathIds() {
         ArrayList<String> downloadedPathIds = new ArrayList<String>();
-        for (Path p:mPaths.values()) {
-            if (p.isDownloaded())
+        for (PathSummary p:mPaths.values()) {
+            if (isStoredLocally(p.getId()))
                 downloadedPathIds.add(p.getId());
         }
         return downloadedPathIds;
@@ -476,53 +462,44 @@ public class PathManager {
 
     public ArrayList<PathSummary> getDownloadedPathSummaries() {
         ArrayList<PathSummary> downloadedPathSummaries = new ArrayList<PathSummary>();
-        for (Path p:mPaths.values()) {
-            if (p.isDownloaded())
-                downloadedPathSummaries.add(p.getSummary());
+        for (PathSummary p:mPaths.values()) {
+            if (isStoredLocally(p.getId()))
+                downloadedPathSummaries.add(p);
         }
         return downloadedPathSummaries;
     }
 
     public ArrayList<PathSegment> getSegmentsForPath(String pathId) {
-        Path p = getPath(pathId);
+        PathSummary p = getPathSummary(pathId);
+        if (p == null)
+            return null;
+
         ArrayList<PathSegment> segments = new ArrayList<PathSegment>();
         ArrayList<String> segIds = p.getSegmentIdList();
+        if (segIds == null || segIds.size()<1) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathManager: no segments in path");
+            return null;
+        }
+
         for (String segId:segIds) {
             PathSegment s = getSegment(segId);
-            segments.add(s);
+            if (s != null)
+                segments.add(s);
         }
 
         return segments;
     }
 
-    public HashMap<String, PointAttachedObject<Note>> getPointNotesForPath(String pathId) {
-        HashMap<String, PointAttachedObject<Note>> allNotes = new HashMap<String, PointAttachedObject<Note>>();
-        ArrayList<PathSegment> segments = getSegmentsForPath(pathId);
-        for (PathSegment s:segments) {
-            HashMap<String, PointAttachedObject<Note>> notes = s.getPointNotes();
-            allNotes.putAll(notes);
+    public ArrayList<PointAttachedObject<Note>> getPointNotesForPath(String pathId) {
+        Log.d(Constants.TRAILBOOK_TAG, "PathManager: getting notes for path " + pathId);
+        ArrayList<PointAttachedObject<Note>> allNotes = new ArrayList<PointAttachedObject<Note>>();
+        PathSummary summary = getPathSummary(pathId);
+        ArrayList<String> noteIds = summary.getNoteIdList();
+        for (String noteId:noteIds) {
+            PointAttachedObject<Note> thisNote = getNote(noteId);
+            allNotes.add(thisNote);
         }
         return allNotes;
-    }
-
-    public void setSegmentIdsForPath(String pathId, ArrayList<String> segmentIds) {
-        Path p = getPath(pathId);
-        p.setSegmentIdList(segmentIds);
-    }
-
-    public void setSegmentPoints(String segmentId, ArrayList<LatLng> points) {
-        addSegmentIfNeeded(segmentId);
-        PathSegment s = mSegments.get(segmentId);
-        s.setPoints(points);
-
-        bus.post(new SegmentUpdatedEvent(s));
-    }
-
-    public void setSegmentNotes(String segmentId, HashMap<String,PointAttachedObject<Note>> notes) {
-        addSegmentIfNeeded(segmentId);
-        PathSegment s = mSegments.get(segmentId);
-        s.setNotes(notes);
-        bus.post(new SegmentUpdatedEvent(s));
     }
 
     public void addSegmentIfNeeded(String segmentId) {
@@ -551,7 +528,7 @@ public class PathManager {
     }
 
     public void deleteSegments(String pathId, Context c) {
-        Path p = getPath(pathId);
+        PathSummary p = getPathSummary(pathId);
         ArrayList<String> segmentIds = p.getSegmentIdList();
         for (String segmentId:segmentIds) {
             if (!isSegmentUsedByPathsOtherThan(pathId, segmentId)) {
@@ -579,7 +556,7 @@ public class PathManager {
 
     private ArrayList<String> getPathsContainingSegment(String segmentId) {
         ArrayList<String> pathsWithSegment = new ArrayList<String>();
-        for (Path p:mPaths.values()) {
+        for (PathSummary p:mPaths.values()) {
             if (p.getSegmentIdList().contains(segmentId))
                 pathsWithSegment.add(p.getId());
         }
@@ -605,12 +582,15 @@ public class PathManager {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Cannot delete Path:" + pathId, e);
         }
-        bus.post(new PathDeletedEvent(getPath(pathId)));
+        bus.post(new PathDeletedEvent(getPathSummary(pathId)));
         mPaths.remove(pathId);
     }
 
-    public void setDownloadComplete(String pathId) {
-        Path p = getPath(pathId);
-        p.setDownloaded(true);
+    public void addNoteToPath(String pathId, PointAttachedObject<Note> paoNote) {
+        PathSummary summary = getPathSummary(pathId);
+        Log.d(Constants.TRAILBOOK_TAG, "adding note: " + paoNote.getLocation() + "   " + paoNote.getAttachment().getNoteContent());
+        summary.addNote(paoNote.getId());
+        mNotes.put(paoNote.getId(), paoNote);
+        bus.post(new NoteAddedEvent(paoNote));
     }
 }

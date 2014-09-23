@@ -16,7 +16,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -42,6 +41,10 @@ public class TrailbookFileUtilities {
 
     public static String getInternalPathDirectory(Context c, String pathId) {
         return getInternalPathDirectory(c) + File.separator + pathId;
+    }
+
+    public static String getInternalNoteDirectory(Context c) {
+        return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.notesDir;
     }
 
     public static String getInternalSegmentDirectory(Context c) {
@@ -70,20 +73,19 @@ public class TrailbookFileUtilities {
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalPathSegmentListFile(Context c, String pathId) {
-        String fullDirectory =  getInternalPathDirectory(c, pathId);
-        String fileName = pathId + "_segments.tb";
+    public static File getInternalNoteFile(Context c, String noteId) {
+        String fullDirectory = getInternalNoteDirectory(c);
+        String fileName = noteId + "_note.tb";
         return new File(fullDirectory, fileName);
     }
 
-
-    public static File getInternalImageFile(Context c, String segmentId, String imageFileName) {
-        File fullDirectory = getInternalImageDirForSegment(c, segmentId);
+    public static File getInternalImageFile(Context c, String imageFileName) {
+        String fullDirectory = c.getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
         return new File(fullDirectory, imageFileName);
     }
 
-    public static File getInternalImageDirForSegment(Context c, String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(c, segmentId) + File.separator + Constants.imageDir;
+    public static File getInternalImageFileDir(Context c) {
+        String fullDirectory = c.getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
         return new File(fullDirectory);
     }
 
@@ -174,24 +176,16 @@ public class TrailbookFileUtilities {
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
 
-    public static void saveImageForPathSegment(Context c, Bitmap bitmap, String segmentId, String fileName) {
-        File dir = TrailbookFileUtilities.getInternalImageDirForSegment(c, segmentId);
+    public static void saveImage(Context c, Bitmap bitmap, String fileName) {
+        File dir = getInternalImageFileDir(c);
         File imageFile = new File(dir, fileName);
         try {
+            Log.d(Constants.TRAILBOOK_TAG, "TrailBookUtilities: saving image " +imageFile);
             FileUtils.writeByteArrayToFile(imageFile, TrailbookFileUtilities.getBytes(bitmap));
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "exception in saving image ", e);
             e.printStackTrace();
         }
-    }
-
-    public static Bitmap loadImageFromFileForNote(Context c, Note note) {
-        String imageFileName = note.getImageFileName();
-        String segmentId = note.getParentSegmentId();
-
-        File fullDirectory = TrailbookFileUtilities.getInternalImageDirForSegment(c, segmentId);
-        String fileNameWithPath = fullDirectory.toString() + "/" + imageFileName;
-        return loadBitmapFromFile(fileNameWithPath);
     }
 
     public static Bitmap loadBitmapFromFile (String fileNameWithPath) {
@@ -213,11 +207,11 @@ public class TrailbookFileUtilities {
 
     public static MultipartEntity getMultipartEntityForNoteImage(Context c, Note n) {
         try {
-            File imageFile = getInternalImageFile(c, n.getParentSegmentId(), n.getImageFileName());
+            File imageFile = getInternalImageFile(c, n.getImageFileName());
             MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 
-            entity.addPart("segmentId", new StringBody(n.getParentSegmentId()));
-            entity.addPart("noteId", new StringBody(n.getNoteID()));
+/*deleteme            entity.addPart("segmentId", new StringBody(n.getParentSegmentId()));
+            entity.addPart("noteId", new StringBody(n.getNoteID()));*/
             entity.addPart("imageFile",  new FileBody(imageFile)); //image should be a String
 
             return entity;
@@ -265,9 +259,14 @@ public class TrailbookFileUtilities {
         return os;
     }
 
-    public static String getWebServerImageDir(String segmentId) {
+/*    public static String getWebServerImageDir(String segmentId) {
         return Constants.BASE_WEBSERVER_SEGMENT_URL + "/" + segmentId;
+    }*/
+
+    public static String getWebServerImageDir() {
+        return Constants.BASE_WEBSERVERFILE_URL + "/" + Constants.imageDir;
     }
+
 
     public static String readTextFromUri(Context c, Uri uri) throws IOException {
         InputStream inputStream = c.getContentResolver().openInputStream(uri);
@@ -282,4 +281,6 @@ public class TrailbookFileUtilities {
         reader.close();
         return stringBuilder.toString();
     }
+
+
 }

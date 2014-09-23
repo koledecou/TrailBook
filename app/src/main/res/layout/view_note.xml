@@ -1,45 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/nv_small_note_layout">
 
-    <ImageView
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/vn_image"
+            android:layout_gravity="top|left"
+            android:maxWidth="@dimen/small_note_image_max_width"
+            android:adjustViewBounds="true"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentTop="true"
+            android:paddingRight="@dimen/small_note_view_image_pad"
+            android:paddingTop="@dimen/small_note_view_image_pad"
+            android:paddingLeft="@dimen/small_note_view_image_pad"
+            android:paddingBottom="@dimen/small_note_view_image_pad" />
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/vn_image"
-        android:layout_gravity="top|left"
-        android:padding="@dimen/small_note_view_image_pad"
-        android:maxWidth="@dimen/small_note_image_max_width" />
+            android:layout_gravity="top|left"
+            android:layout_weight="1"
+            android:minWidth="@dimen/small_note_view_min_text_panel_width"
+            android:measureWithLargestChild="true"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/vn_image"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true">
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="2.6 miles SE of you"
+                android:id="@+id/vn_navigation_details"
+                android:layout_gravity="top|left"
+                android:minWidth="@dimen/small_note_view_min_text_panel_width"
+                android:paddingTop="@dimen/vn_image_top_pad" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Leave the main trail at the big tree.  Go right down a rocky hillside. This is an example for testing only."
+                android:id="@+id/vn_text_content"
+                android:layout_gravity="top|left"
+                android:minWidth="@dimen/small_note_view_min_text_panel_width" />
+
+        </LinearLayout>
+    </RelativeLayout>
 
     <LinearLayout
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
-        android:layout_weight="1"
-        android:minWidth="@dimen/small_note_view_min_text_panel_width"
-        android:measureWithLargestChild="true">
+        android:layout_alignParentBottom="false"
+        android:layout_alignParentRight="false"
+        android:layout_alignParentTop="false"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal">
 
-        <TextView
-            android:layout_width="fill_parent"
+        <ImageView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="2.6 miles SE of you"
-            android:id="@+id/vn_navigation_details"
-            android:layout_gravity="top|left"
-            android:minWidth="@dimen/small_note_view_min_text_panel_width" />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Leave the main trail at the big tree.  Go right down a rocky hillside."
-            android:id="@+id/vn_text_content"
-            android:layout_gravity="top|left"
-            android:maxWidth="@dimen/small_note_view_min_text_panel_width" />
+            android:maxHeight="@dimen/small_note_expand_image_max_height"
+            android:adjustViewBounds="true"
+            android:id="@+id/vn_button_expand"
+            android:src="@drawable/ic_expand_up"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentRight="true"
+            android:background="@color/White"
+            android:baselineAlignBottom="true"
+            android:layout_gravity="left" />
 
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>

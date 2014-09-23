@@ -1,6 +1,5 @@
 package com.trailbook.kole.events;
 
-import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSummary;
 
 /**

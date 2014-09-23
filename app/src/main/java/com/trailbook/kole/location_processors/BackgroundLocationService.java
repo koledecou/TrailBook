@@ -77,7 +77,10 @@ public class BackgroundLocationService extends Service implements
 
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        boolean isStopCommand = intent.getBooleanExtra(LocationProcessor.EXTRA_STOP, false);
+        boolean isStopCommand = false;
+        if (intent != null)
+            isStopCommand = intent.getBooleanExtra(LocationProcessor.EXTRA_STOP, false);
+
         Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: " + (isStopCommand ? "Stop" : "Start") + " Command");
         if (isStopCommand) {
             stopSelf();

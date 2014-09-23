@@ -1,7 +1,6 @@
 package com.trailbook.kole.events;
 
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 
 /**

@@ -5,13 +5,10 @@ package com.trailbook.kole.fragments;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;

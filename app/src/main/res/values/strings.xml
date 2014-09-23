@@ -108,4 +108,7 @@
     <string name="no_network_title">No Network Connectivity</string>
     <string name="no_network_message">Network connectivity is required for this operation.  Please try again later.</string>
     <string name="no_network_toast">No network access.  Showing only your trails.</string>
+    <string name="upload_completed">Upload completed for path</string>
+    <string name="upload_failed">Upload failed for path</string>
+    <string name="edit">Edit</string>
 </resources>

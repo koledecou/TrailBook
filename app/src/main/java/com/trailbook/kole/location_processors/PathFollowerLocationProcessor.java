@@ -2,32 +2,28 @@ package com.trailbook.kole.location_processors;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.location.Location;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.NoteNotificationReceiverActivity;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.PreferenceUtilities;
-import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
+import com.trailbook.kole.state_objects.PathManager;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * Created by kole on 7/19/2014.
@@ -62,8 +58,8 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
     }
 
     private NotificationCompat.Builder createListeningNotifyBuilder() {
-        Path p = PathManager.getInstance().getPath(mPathId);
-        String title = String.format(mContext.getString(R.string.following_trail_title), p.getSummary().getName());
+        PathSummary p = PathManager.getInstance().getPathSummary(mPathId);
+        String title = String.format(mContext.getString(R.string.following_trail_title), p.getName());
         return super.createListeningNotifyBuilder(title, mContext.getString(R.string.following_trail_notification_content));
     }
 
@@ -107,20 +103,28 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
     @Override
     public void process(Location newLocation) {
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: following " + mPathId + " "  + newLocation.toString() );
-        processOffRouteNotification(newLocation);
-        processApproachingNoteNotifications(newLocation);
+        try {
+            processOffRouteNotification(newLocation);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: error processing off route notification", e);
+        }
+        try {
+            processApproachingNoteNotifications(newLocation);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: error processing note notification", e);
+        }
     }
 
     public void processApproachingNoteNotifications(Location newLocation) {
-        HashMap<String, PointAttachedObject<Note>> paoNotes = PathManager.getInstance().getPointNotesForPath(mPathId);
-        for (PointAttachedObject<Note> paoNote:paoNotes.values()) {
+        ArrayList<PointAttachedObject<Note>> paoNotes = PathManager.getInstance().getPointNotesForPath(mPathId);
+        for (PointAttachedObject<Note> paoNote:paoNotes) {
             Note note = paoNote.getAttachment();
             double distanceToNote = TrailbookPathUtilities.getDistanceToNote(paoNote, newLocation);
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: distance to note " + note.getNoteID() + " : " + distanceToNote);
+            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: distance to note " + paoNote.getId()+ " : " + distanceToNote);
             if (distanceToNote < PreferenceUtilities.getNoteAlertDistanceInMeters(mContext)) {
-                sendApproachingNoteNotification(note, distanceToNote);
+                sendApproachingNoteNotification(paoNote.getId(), note, distanceToNote);
             } else {
-                cancelNotification(getNotificationId(note.getNoteID()));
+                cancelNotification(getNotificationId(paoNote.getId()));
             }
         }
     }
@@ -173,14 +177,14 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
                 mOffRouteNotifyBuilder.build());
     }
 
-    private void sendApproachingNoteNotification(Note note, double distance) {
-        int notificationId = getNotificationId(note.getNoteID());
+    private void sendApproachingNoteNotification(String noteId, Note note, double distance) {
+        int notificationId = getNotificationId(noteId);
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notificationid" + notificationId);
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: title: " + mContext.getString(R.string.note_notification_title));
         String notificationContent = String.format(mContext.getString(R.string.note_notification_title), PreferenceUtilities.getDistString(mContext, distance));
         mApproachingNoteNotificationBuilder.setContentTitle(notificationContent);
         mApproachingNoteNotificationBuilder.setContentText(note.getNoteContent());
-        mApproachingNoteNotificationBuilder.setContentIntent( getNoteNotificationPendingIntent(note.getNoteID(), notificationId) );
+        mApproachingNoteNotificationBuilder.setContentIntent( getNoteNotificationPendingIntent(noteId, notificationId) );
         updateApproachingNoteRingtone();
         Log.d(Constants.TRAILBOOK_TAG,  "PathFollowerLocationProcessor: notification text: " + PreferenceUtilities.getDistString(mContext, distance) + ": " + note.getNoteContent());
 

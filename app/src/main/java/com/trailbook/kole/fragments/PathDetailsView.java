@@ -3,6 +3,7 @@ package com.trailbook.kole.fragments;
 import android.content.Context;
 import android.media.Image;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.ButtonActions;
+import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -60,6 +62,10 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         mPathId=pathId;
         mPathManager = PathManager.getInstance();
         PathSummary summary = mPathManager.getPathSummary(pathId);
+        if (summary == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathDetailsView: summary is null");
+            return;
+        }
         mDescription=summary.getDescription();
         mName=summary.getName();
         //TODO: add summary image

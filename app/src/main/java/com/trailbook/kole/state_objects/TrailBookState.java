@@ -1,6 +1,7 @@
 package com.trailbook.kole.state_objects;
 
 import android.app.Application;
+import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -136,7 +137,7 @@ public class TrailBookState extends Application {
     }
 
     public void restoreActivePath() {
-        if (mPathManager.getPath(mCurrentPathId) == null) {
+        if (mPathManager.getPathSummary(mCurrentPathId) == null) {
             Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: re-loading active path: " + mCurrentPathId);
             mPathManager.loadPathFromDevice(this, mCurrentPathId);
         }
@@ -235,6 +236,7 @@ public class TrailBookState extends Application {
         disableLocationReceiver();
         ComponentName comp = new ComponentName(this.getPackageName(), BackgroundLocationService.class.getName());
         stopService(new Intent().setComponent(comp));
+        removeAllNotificaions();
     }
 
     public void enableLocationReceiver(){
@@ -263,12 +265,16 @@ public class TrailBookState extends Application {
         stopLocationUpdates();
 
         if (locationProcessor != null) {
-            locationProcessor.removeAllNotifications();
             setLocationProcessor(null);
         }
 
         setMode(MODE_SEARCH);
         bus.post(new ModeChangedEvent(oldMode, MODE_SEARCH));
+    }
+
+    private void removeAllNotificaions() {
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
     }
 
     public void switchToLeadMode(String pathId, String segmentId) {
