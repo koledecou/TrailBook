@@ -12,13 +12,13 @@ public class PathExclusionStrategy implements ExclusionStrategy {
 
     public boolean shouldSkipField(FieldAttributes f) {
         if (f.getDeclaringClass() == LatLng.class) {
-            return shouldSkipLatLonFiled(f.getName());
+            return shouldSkipLatLonField(f.getName());
         }
 
         return false;
     }
 
-    private boolean shouldSkipLatLonFiled(String fieldName) {
+    private boolean shouldSkipLatLonField(String fieldName) {
         if (fieldName.equals("latitude") || fieldName.equals("longitude")) {
             return false;
         } else {

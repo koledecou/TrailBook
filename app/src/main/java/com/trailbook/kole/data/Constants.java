@@ -1,9 +1,6 @@
 package com.trailbook.kole.data;
 
-import android.content.Context;
 import android.os.Environment;
-
-import java.io.File;
 
 /**
  * Created by Fistik on 6/30/2014.
@@ -21,7 +18,8 @@ public class Constants {
     public static final String uploadJson = "/uploadJson.py";
     public static final String uploadImage = "/uploadImage.py";
     public static final String deviceExternalDir = Environment.getExternalStorageDirectory().getPath();
-    public static final String pathsDir = "paths";
+    public static final String pathsRootDir = "paths";
+    public static final String cachedPathsRootDir = "temp_cloud_paths";
     public static final String segmentsDir = "segments";
     public static final String imageDir = "images";
     public static final String notesDir = "notes";

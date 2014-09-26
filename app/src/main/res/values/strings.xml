@@ -111,4 +111,10 @@
     <string name="upload_completed">Upload completed for path</string>
     <string name="upload_failed">Upload failed for path</string>
     <string name="edit">Edit</string>
+    <string name="edit_lowercase">edit</string>
+    <string name="select_location_first">First select a point on the path.  Then add note.</string>
+    <string name="parse_error">Import Error</string>
+    <string name="parse_error_message">There was a problem importing the file.  Make sure it is a google earth KML file (not KMZ) with only one path.</string>
+    <string name="path_exists">Path \u0025s already exists</string>
+    <string name="path_exists_message">Could not import the path \u0025s because the name is already used.  Please change the name or delete the previous path.</string>
 </resources>

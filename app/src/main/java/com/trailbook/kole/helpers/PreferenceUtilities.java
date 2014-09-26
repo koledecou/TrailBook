@@ -1,13 +1,11 @@
 package com.trailbook.kole.helpers;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 
@@ -117,7 +115,7 @@ public class PreferenceUtilities {
 
     public static int getMapType(Context c) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
-        String mapType = prefs.getString("map_type_pref", "TERRAIN");
+        String mapType = prefs.getString("map_type_pref", "SATELLITE");
         if ("TERRAIN".equals(mapType))
             return GoogleMap.MAP_TYPE_TERRAIN;
         else if ("HYBIRD".equals(mapType))

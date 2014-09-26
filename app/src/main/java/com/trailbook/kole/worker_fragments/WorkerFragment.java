@@ -110,7 +110,7 @@ public class WorkerFragment extends Fragment {
 
     private void startGetImage(Note note) {
         String imageFileName = note.getImageFileName();
-        File deviceImageFile = TrailbookFileUtilities.getInternalImageFile(getActivity(), imageFileName);
+        File deviceImageFile = TrailbookFileUtilities.getInternalImageFile(imageFileName);
 
         Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading to: " + deviceImageFile);
         String webServerImageDir=TrailbookFileUtilities.getWebServerImageDir();
@@ -134,81 +134,6 @@ public class WorkerFragment extends Fragment {
 
         PostImages(summary);
     }
-/*
-    public void startPathUpload(Path p) {
-        Callback<String> pathSummaryUploadedCallback = new Callback<String>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path summary", error);
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
-            }
-
-            @Override
-            public void success(String sResponse, Response response) {
-                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
-            }
-        };
-        Callback<String> pathSegmentMapUploadedCallback = new Callback<String>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload path segment map", error);
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
-            }
-
-            @Override
-            public void success(String sResponse, Response response) {
-                Log.d(Constants.TRAILBOOK_TAG, "Response from path segment map upload: " + sResponse);
-            }
-        };
-        Callback<String> pathPointsUploadedCallback = new Callback<String>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload points", error);
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
-            }
-
-            @Override
-            public void success(String sResponse, Response response) {
-                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
-            }
-        };
-        Callback<String> pathPointNotesUploadedCallback = new Callback<String>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload point notes", error);
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
-            }
-
-            @Override
-            public void success(String sResponse, Response response) {
-                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
-            }
-        };
-
-        Callback<String> imageUploadedCallback = new Callback<String>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(Constants.TRAILBOOK_TAG, "Failed to upload images", error);
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse());
-                Log.e(Constants.TRAILBOOK_TAG,"status="+error.getResponse().getStatus());
-            }
-
-            @Override
-            public void success(String sResponse, Response response) {
-                Log.d(Constants.TRAILBOOK_TAG, "Response from path upload: " + sResponse);
-            }
-        };
-
-        PostPathSummary(p, pathSummaryUploadedCallback);
-        PostPathSegmentMap(p, pathSegmentMapUploadedCallback);
-        PostPathPoints(p, pathPointsUploadedCallback);
-        PostPathPointNotes(p, pathPointNotesUploadedCallback);
-        PostImages(p);
-    }*/
 
     private void PostImages(PathSummary summary) {
         ArrayList<PointAttachedObject<Note>> paoNotes = pathManager.getPointNotesForPath(summary.getId());
@@ -220,7 +145,7 @@ public class WorkerFragment extends Fragment {
     private void PostImage(Note n) {
         ArrayList<MultipartEntity> entities = new ArrayList<MultipartEntity>();
         if (n.getImageFileName() != null && n.getImageFileName().length()>0) {
-            MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForNoteImage(getActivity(), n);
+            MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForNoteImage(n);
             if (entity != null)
                 entities.add(entity);
         }
@@ -249,59 +174,4 @@ public class WorkerFragment extends Fragment {
                 startGetImage(paoNote.getAttachment());
         }
     }
-
- /*   private void startDownloadSegment(String segmentId) {
-        startDownloadPoints(segmentId);
-        startDownloadNotes(segmentId);
-    }
-
-    private void startDownloadPoints(String segmentId) {
-        Map<String, String> options = new HashMap<String, String>();
-        options.put("segmentid",segmentId);
-        Log.d(Constants.TRAILBOOK_TAG, "downloading points for segment id " + segmentId);
-        Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints> callback = new Callback<SegmentPointsReceivedEvent.SegmentIDWithPoints>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e("Trailbook", "Failed to get segment points", error);
-            }
-
-            @Override
-            public void success(SegmentPointsReceivedEvent.SegmentIDWithPoints segmentIDWithPoints, Response response) {
-                String segmentId = segmentIDWithPoints.getSegmentId();
-                ArrayList<LatLng> points = segmentIDWithPoints.getPoints();
-
-                pathManager.setSegmentPoints(segmentId, points);
-                pathManager.saveSegmentPoints(segmentId, getActivity());
-            }
-        };
-
-        mService.getPoints(options, callback);
-    }
-
-    private void startDownloadNotes(String segmentId) {
-        Map<String, String> options = new HashMap<String, String>();
-        options.put("segmentid",segmentId);
-        Log.d(Constants.TRAILBOOK_TAG, "downloading notes for segment id " + segmentId);
-        Callback<NotesReceivedEvent.SegmentIDWithNotes> callback = new Callback<NotesReceivedEvent.SegmentIDWithNotes>(){
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e("Trailbook", "Failed to get segment notes", error);
-            }
-
-            @Override
-            public void success(NotesReceivedEvent.SegmentIDWithNotes segmentIDWithNotes, Response response) {
-                String segmentId = segmentIDWithNotes.getSegmentId();
-                HashMap<String,PointAttachedObject<Note>> notes = segmentIDWithNotes.getPointNotes();
-                pathManager.setSegmentNotes(segmentId, notes);
-                for (PointAttachedObject<Note> paoNote:notes.values()) {
-                    String imageFileName = paoNote.getAttachment().getImageFileName();
-                    if (imageFileName != null && imageFileName.length()>0)
-                        startGetImage(paoNote.getAttachment());
-                }
-                pathManager.saveSegmentNotes(segmentId, getActivity());
-            }
-        };
-
-        mService.getNotes(options, callback);
-    }*/
 }

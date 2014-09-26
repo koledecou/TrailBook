@@ -114,7 +114,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             mEditTextContent.setText(noteContent);
             mImageFileName = note.getAttachment().getImageFileName();
             if (mImageFileName != null && mImageFileName.length()>0) {
-                File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir(getActivity());
+                File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir();
                 mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileName);
             }
 

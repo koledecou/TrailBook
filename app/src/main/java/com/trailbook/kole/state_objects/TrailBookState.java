@@ -30,6 +30,8 @@ public class TrailBookState extends Application {
     public static final int MODE_SEARCH = 1;
     public static final int MODE_LEAD = 2;
     public static final int MODE_FOLLOW = 3;
+    public static final int MODE_EDIT = 4;
+
     public static final String SAVED_MODE = "SAVED_MODE";
     private static final String SAVED_LOCATION = "SAVED_LOCATION";
     private static final String SAVED_ACTIVE_SEGMENT = "SAVED_ACTIVE_SEGMENT";
@@ -257,7 +259,6 @@ public class TrailBookState extends Application {
         Log.d(Constants.TRAILBOOK_TAG, "disabled location reciever");
     }
 
-    //todo: all mode changes should go through here and use the event listener
     public void switchToSearchMode() {
         int oldMode = mMode;
         mCurrentPathId=null;
@@ -293,10 +294,27 @@ public class TrailBookState extends Application {
         bus.post(new ModeChangedEvent(oldMode, MODE_LEAD));
     }
 
+    public void switchToEditMode(String pathId) {
+        int oldMode = mMode;
+        mCurrentPathId=pathId;
+        mCurrentSegmentId=null;
+        stopLocationUpdates();
+        if (locationProcessor != null) {
+            setLocationProcessor(null);
+        }
+
+        setMode(MODE_EDIT);
+        bus.post(new ModeChangedEvent(oldMode, MODE_EDIT));
+    }
+
     public void resumeLeadingActivePath(boolean restoreState) {
         if (restoreState)
             restoreActivePath();
 
         switchToLeadMode(mCurrentPathId, mCurrentSegmentId);
+    }
+
+    public static String getCurrentUserId() {
+        return "-1";
     }
 }

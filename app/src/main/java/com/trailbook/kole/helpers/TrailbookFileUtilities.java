@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -35,57 +36,71 @@ import java.net.URL;
 
 public class TrailbookFileUtilities {
 
-    public static String getInternalPathDirectory(Context c) {
-        return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.pathsDir;
+    public static String getInternalPathDirectory() {
+        return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.pathsRootDir;
     }
 
-    public static String getInternalPathDirectory(Context c, String pathId) {
-        return getInternalPathDirectory(c) + File.separator + pathId;
+    public static String getInternalCacheDirectory() {
+        return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.cachedPathsRootDir;
     }
 
-    public static String getInternalNoteDirectory(Context c) {
-        return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.notesDir;
+    public static String getInternalPathDirectory(String pathId) {
+        return getInternalPathDirectory() + File.separator + pathId;
     }
 
-    public static String getInternalSegmentDirectory(Context c) {
-        return c.getFilesDir().getAbsolutePath() + File.separator  + Constants.segmentsDir;
+    public static String getCacheDirectoryForPath(String pathId) {
+        return getInternalCacheDirectory() + File.separator + pathId;
     }
 
-    public static String getInternalSegmentDirectory(Context c, String segmentId) {
-        return getInternalSegmentDirectory(c) + File.separator + segmentId;
+    public static String getInternalNoteDirectory() {
+        return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.notesDir;
     }
 
-    public static File getInternalPathSummaryFile(Context c, String pathId) {
-        String fullDirectory = getInternalPathDirectory(c, pathId);
+    public static String getInternalSegmentDirectory() {
+        return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.segmentsDir;
+    }
+
+    public static String getInternalSegmentDirectory(String segmentId) {
+        return getInternalSegmentDirectory() + File.separator + segmentId;
+    }
+
+    public static File getInternalPathSummaryFile(String pathId) {
+        String fullDirectory = getInternalPathDirectory(pathId);
         String fileName = pathId + "_summary.tb";
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalSegmentPointsFile(Context c, String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(c, segmentId);
+    public static File getCachedPathSummaryFile(String pathId) {
+        String fullDirectory = getCacheDirectoryForPath(pathId);
+        String fileName = pathId + "_summary.tb";
+        return new File(fullDirectory, fileName);
+    }
+
+    public static File getInternalSegmentPointsFile(String segmentId) {
+        String fullDirectory = getInternalSegmentDirectory(segmentId);
         String fileName = segmentId + "_points.tb";
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalSegmentNotesFile(Context c, String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(c, segmentId);
+    public static File getInternalSegmentNotesFile(String segmentId) {
+        String fullDirectory = getInternalSegmentDirectory(segmentId);
         String fileName = segmentId + "_notes.tb";
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalNoteFile(Context c, String noteId) {
-        String fullDirectory = getInternalNoteDirectory(c);
+    public static File getInternalNoteFile(String noteId) {
+        String fullDirectory = getInternalNoteDirectory();
         String fileName = noteId + "_note.tb";
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalImageFile(Context c, String imageFileName) {
-        String fullDirectory = c.getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
+    public static File getInternalImageFile(String imageFileName) {
+        String fullDirectory = TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
         return new File(fullDirectory, imageFileName);
     }
 
-    public static File getInternalImageFileDir(Context c) {
-        String fullDirectory = c.getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
+    public static File getInternalImageFileDir() {
+        String fullDirectory = TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
         return new File(fullDirectory);
     }
 
@@ -177,7 +192,7 @@ public class TrailbookFileUtilities {
     }
 
     public static void saveImage(Context c, Bitmap bitmap, String fileName) {
-        File dir = getInternalImageFileDir(c);
+        File dir = getInternalImageFileDir();
         File imageFile = new File(dir, fileName);
         try {
             Log.d(Constants.TRAILBOOK_TAG, "TrailBookUtilities: saving image " +imageFile);
@@ -205,9 +220,9 @@ public class TrailbookFileUtilities {
         return uploadPicturesURL;
     }
 
-    public static MultipartEntity getMultipartEntityForNoteImage(Context c, Note n) {
+    public static MultipartEntity getMultipartEntityForNoteImage(Note n) {
         try {
-            File imageFile = getInternalImageFile(c, n.getImageFileName());
+            File imageFile = getInternalImageFile(n.getImageFileName());
             MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 
 /*deleteme            entity.addPart("segmentId", new StringBody(n.getParentSegmentId()));

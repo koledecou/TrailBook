@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
+import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -39,7 +39,38 @@ import javax.xml.parsers.ParserConfigurationException;
 public class TrailbookPathUtilities {
     private static final int PLACEMARK_TYPE_LINE = 1;
     private static final int PLACEMARK_TYPE_NOTE = 2;
-    private static String newNoteId;
+
+    public static LatLng getNearestPointOnPath(LatLng referenceLocation, String pathId) {
+        double minDist = Double.MAX_VALUE;
+        LatLng nearestPointOnPath = null;
+        ArrayList<PathSegment> segments = PathManager.getInstance().getSegmentsForPath(pathId);
+        if (segments == null || segments.size()<1 )
+            return null;
+
+        for (PathSegment s : segments) {
+            LatLng nearestPointOnSegment = getNearestPointOnSegment(referenceLocation, s);
+            double thisDist = getDistanceInMeters(nearestPointOnSegment, referenceLocation);
+            if (thisDist < minDist) {
+                minDist = thisDist;
+                nearestPointOnPath = nearestPointOnSegment;
+            }
+        }
+
+        return nearestPointOnPath;
+    }
+
+    private static LatLng getNearestPointOnSegment(LatLng referenceLocation, PathSegment s) {
+        double minDist = Double.MAX_VALUE;
+        LatLng closestPoint = null;
+        for (LatLng thisPathPoint : s.getPoints()) {
+            float thisDist = getDistanceInMeters(referenceLocation, thisPathPoint);
+            if (thisDist < minDist) {
+                minDist = thisDist;
+                closestPoint = thisPathPoint;
+            }
+        }
+        return closestPoint;
+    }
 
     public static double getNearestDistanceFromPointToPath(LatLng currentLocation, String pathId) {
         double minDist = Double.MAX_VALUE;
@@ -103,6 +134,7 @@ public class TrailbookPathUtilities {
         if (gson == null) {
             Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
         }
+        Log.d(Constants.TRAILBOOK_TAG, "delete me: attachment type is " + note.attachmentType);
         return gson.toJson(note);
     }
 
@@ -157,12 +189,12 @@ public class TrailbookPathUtilities {
         for (int i = 0; i < listOfPlaceMarks.getLength(); i++) {
             Node placeMarkNode = listOfPlaceMarks.item(i);
             if (placeMarkNode.getNodeType() == Node.ELEMENT_NODE) {
-
                 Element placeMarkElement = (Element) placeMarkNode;
 
                 //if line string exists, then this placemark is the path coords.
                 //the path name is in the name item, the coords is in coordinates.
                 if (getPlaceMarkType(placeMarkElement) == PLACEMARK_TYPE_LINE) {
+                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: importing segment");
                     NodeList lineStringList = placeMarkElement.getElementsByTagName("LineString");
                     NodeList markNameList = placeMarkElement.getElementsByTagName("name");
                     ArrayList<LatLng> points = getLatLngArrayFromLineStringList(lineStringList);
@@ -174,20 +206,27 @@ public class TrailbookPathUtilities {
                         summary.setEnd(points.get(points.size() - 1));
                     }
                 } else if (getPlaceMarkType(placeMarkElement) == PLACEMARK_TYPE_NOTE) {
+                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: importing note");
                     NodeList pointList = placeMarkElement.getElementsByTagName("Point");
                     Element pointElement = (Element) pointList.item(0);
                     NodeList coordsNodeList = pointElement.getElementsByTagName("coordinates");
-                    NodeList markNameList = placeMarkElement.getElementsByTagName("description");
+                    NodeList markNameList = placeMarkElement.getElementsByTagName("name");
 
                     LatLng point = getLatLngFromCoordsList(coordsNodeList);
                     Note newNote = new Note();
                     if (point != null) {
                         String noteId=TrailbookPathUtilities.getNewNoteId();
                         PointAttachedObject<Note> paoNote = new PointAttachedObject<Note>(noteId, point, newNote);
-                        String noteContent = getNoteContentFromPlaceMarkNameList(markNameList);
+                        String noteContent = null;
+                        try {
+                            noteContent = getNoteContentFromPlaceMarkNameList(markNameList);
+                        } catch (Exception e) {
+                            Log.e(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: Error getting note", e);
+                            continue;
+                        }
                         paoNote.getAttachment().setNoteContent(noteContent);
+                        paoNotes.add(paoNote);
                         summary.addNote(noteId);
-//deleteme                        s.addPointNote(paoNote);
                     }
                 }
             }
@@ -203,6 +242,7 @@ public class TrailbookPathUtilities {
         Node placeMarkNameNode = (Node)markNameList.item(0);
         try {
             name = placeMarkNameNode.getFirstChild().getNodeValue();
+            Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: name is " + name);
         } catch (Exception e) {
             name = "";
         }

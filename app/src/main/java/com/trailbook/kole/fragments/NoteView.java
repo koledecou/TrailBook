@@ -89,7 +89,7 @@ public class NoteView extends LinearLayout {
         mImageFileName = note.getImageFileName();
         if (mImageFileName != null && mImageFileName.length()>0) {
             Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileName);
-            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(getContext(), mImageFileName)).into(mImageView);
+            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileName)).into(mImageView);
         }
 
         setRelativeLocationString();
@@ -130,7 +130,8 @@ public class NoteView extends LinearLayout {
 
         mExpandImage = (ImageView)findViewById(R.id.vn_button_expand);
         if (mExpandImage != null) {
-            if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
+            if (TrailBookState.getMode() == TrailBookState.MODE_LEAD
+                    || TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
                 mExpandImage.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_expand_edit));
             }
         }

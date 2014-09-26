@@ -14,8 +14,11 @@ public class PathSummary {
     String description;
     long lastUpdatedTimestamp;
     String ownerID;
+    int upVotes=0;
+    int downVotes=0;
     ArrayList<String> noteIds;
     ArrayList<String> segmentIds;
+    ArrayList<String> climbIds;
 
     //TODO: add objects for associated climbs, books, summary images, etc...
 
@@ -34,16 +37,18 @@ public class PathSummary {
         noteIds = new ArrayList<String>();
         startCoords = new GeoPoint();
         endCoords = new GeoPoint();
+        updateTimeStamp();
     }
-
 
     public void setSegmentIdList(ArrayList<String> segmentIds) {
         this.segmentIds = segmentIds;
+        updateTimeStamp();
     }
 
 
     public void setNoteIdList(ArrayList<String> noteIds) {
         this.noteIds = noteIds;
+        updateTimeStamp();
     }
 
     public String getLastSegment() {
@@ -61,25 +66,41 @@ public class PathSummary {
     }
 
     public void addSegment(String segmentId) {
-        if (segmentId != null && !segmentIds.contains(segmentId))
+        if (segmentId != null && !segmentIds.contains(segmentId)) {
             segmentIds.add(segmentId);
+            updateTimeStamp();
+        }
     }
     public void addNote(String noteId) {
-        if (!noteIds.contains(noteId))
+        if (!noteIds.contains(noteId)) {
             noteIds.add(noteId);
+            updateTimeStamp();
+        }
     }
 
-    public void setIDWithTimestamp()        { this._id = String.valueOf(new Date().getTime()); }
-    public void setID(String id)            { this._id = id; }
+    public void setID(String id)            {
+        this._id = id;
+        updateTimeStamp();
+    }
+
     public void setStart(LatLng start)      {
         startCoords.setCoordinates(new double[]{start.longitude, start.latitude});
+        updateTimeStamp();
     }
     public void setEnd(LatLng end)          {
         endCoords.setCoordinates(new double[]{end.longitude, end.latitude});
+        updateTimeStamp();
     }
 
-    public void setName(String name)        { this.name = name; }
-    public void setDescription(String desc) { this.description = desc; }
+    public void setName(String name)        {
+        this.name = name;
+        updateTimeStamp();
+    }
+
+    public void setDescription(String desc) {
+        this.description = desc;
+        updateTimeStamp();
+    }
 
     public String getName()                 { return name; }
     public String getDescription()          { return description; }
@@ -92,5 +113,13 @@ public class PathSummary {
 
     public String getId() {
         return _id;
+    }
+
+    private void updateTimeStamp() {
+        lastUpdatedTimestamp = new Date().getTime();
+    }
+
+    public String getOwnerId() {
+        return ownerID;
     }
 }
