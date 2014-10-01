@@ -32,4 +32,19 @@
         <item>Import Path</item>
         <item>Settings</item>
     </string-array>
+
+    <string-array name="grading_systems">
+        <item>YDS</item>
+        <item>UIAA</item>
+        <item>Australian</item>
+        <item>French</item>
+    </string-array>
+
+    <string-array name="climb_type">
+        <item>Traditional</item>
+        <item>Sport</item>
+        <item>Ice</item>
+        <item>Boulder Problem</item>
+        <item>Mountaineering</item>
+    </string-array>
 </resources>

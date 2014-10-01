@@ -102,8 +102,8 @@ public class TrailbookPathUtilities {
         return results[0];
     }
 
-    public static double getDistanceToNote(PointAttachedObject<Note> paoNote, Location l){
-        LatLng noteLoc = paoNote.getLocation();
+    public static double getDistanceToNote(PointAttachedObject paObject, Location l){
+        LatLng noteLoc = paObject.getLocation();
         double distanceToNote = TrailbookPathUtilities.getDistanceInMeters(TrailbookPathUtilities.locationToLatLon(l), noteLoc);
         return distanceToNote;
     }
@@ -129,7 +129,8 @@ public class TrailbookPathUtilities {
         return String.valueOf(date.getTime());
     }
 
-    public static String getNoteJSONString(PointAttachedObject<Note> note) {
+/*
+    public static String getPointAttachedObjectJSONString(PointAttachedObject note) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
         if (gson == null) {
             Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
@@ -137,6 +138,7 @@ public class TrailbookPathUtilities {
         Log.d(Constants.TRAILBOOK_TAG, "delete me: attachment type is " + note.attachmentType);
         return gson.toJson(note);
     }
+*/
 
     public static String getPathSummaryJSONString(PathSummary summary) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
@@ -183,7 +185,7 @@ public class TrailbookPathUtilities {
         PathSummary summary = new PathSummary(getNewPathId());
         PathSegment s = new PathSegment((getNewSegmentId()));
         ArrayList<PathSegment> segments = new ArrayList<PathSegment>();
-        ArrayList<PointAttachedObject<Note>> paoNotes = new ArrayList<PointAttachedObject<Note>>();
+        ArrayList<PointAttachedObject> paoNotes = new ArrayList<PointAttachedObject>();
 
         NodeList listOfPlaceMarks = pathXMLDoc.getElementsByTagName("Placemark");
         for (int i = 0; i < listOfPlaceMarks.getLength(); i++) {
@@ -216,17 +218,18 @@ public class TrailbookPathUtilities {
                     Note newNote = new Note();
                     if (point != null) {
                         String noteId=TrailbookPathUtilities.getNewNoteId();
-                        PointAttachedObject<Note> paoNote = new PointAttachedObject<Note>(noteId, point, newNote);
                         String noteContent = null;
+                        PointAttachedObject paoNote = null;
                         try {
                             noteContent = getNoteContentFromPlaceMarkNameList(markNameList);
+                            newNote.setNoteContent(noteContent);
+                            paoNote = new PointAttachedObject(noteId, point, newNote);
+                            paoNotes.add(paoNote);
+                            summary.addPao(noteId);
                         } catch (Exception e) {
                             Log.e(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: Error getting note", e);
                             continue;
                         }
-                        paoNote.getAttachment().setNoteContent(noteContent);
-                        paoNotes.add(paoNote);
-                        summary.addNote(noteId);
                     }
                 }
             }

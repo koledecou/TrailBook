@@ -7,10 +7,10 @@ import java.util.ArrayList;
 /**
  * Created by Fistik on 7/2/2014.
  */
-public class PathSummariesReceivedEvent {
+public class PathSummariesReceivedFromCloudEvent {
 
     ArrayList<PathSummary> pathSummaries;
-    public PathSummariesReceivedEvent(ArrayList<PathSummary> pathSummaries) {
+    public PathSummariesReceivedFromCloudEvent(ArrayList<PathSummary> pathSummaries) {
         this.pathSummaries=pathSummaries;
     }
 

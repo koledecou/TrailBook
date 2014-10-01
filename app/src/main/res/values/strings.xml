@@ -21,6 +21,7 @@
     <string name="cpd_cancel">Cancel</string>
     <string name="cpd_title">New Path</string>
     <string name="trailNotesHint">Write notes here.</string>
+    <string name="climb_name_hint"></string>
     <string name="cn_ok">Save</string>
     <string name="cn_cancel">Cancel</string>
     <string name="create_note">Add Note</string>
@@ -117,4 +118,21 @@
     <string name="parse_error_message">There was a problem importing the file.  Make sure it is a google earth KML file (not KMZ) with only one path.</string>
     <string name="path_exists">Path \u0025s already exists</string>
     <string name="path_exists_message">Could not import the path \u0025s because the name is already used.  Please change the name or delete the previous path.</string>
+    <string name="gallery">Gallery</string>
+    <string name="create_climb_name">Name</string>
+    <string name="create_climb_grade">Grade</string>
+    <string name="create_climb_description">Description</string>
+    <string name="create_climb_rack">Rack</string>
+    <string name="create_climb_type">Type</string>
+    <string name="create_climb">Add Climb</string>
+    <string name="action_create_note">Add Note</string>
+    <string name="action_create_climb">Add Climb</string>
+    <string name="More">More</string>
+    <string name="zoom">Zoom</string>
+    <string name="follow_button_text">Follow</string>
+    <string name="download">Download</string>
+    <string name="go_to_start">Go to Start</string>
+    <string name="resume">Resume Leading</string>
+    <string name="delete_from_cloud">Delete from Cloud</string>
+    <string name="actions">actions...</string>
 </resources>

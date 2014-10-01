@@ -6,28 +6,25 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.data.geo.GeoPoint;
 
-public class PointAttachedObject<T> {
+public class PointAttachedObject {
     //public LatLng point;
-    T attachment;
-    GeoPoint point;
+    Attachment attachment;
     String _id;
-    public String attachmentType = "Climb";
+    GeoPoint point;
 
-    public PointAttachedObject(String id, LatLng c, T attachment) {
+    public PointAttachedObject(String id, LatLng c, Attachment attachment) {
         this.point = new GeoPoint();
         this.point.setCoordinates(new double[]{c.longitude, c.latitude});
         this.attachment = attachment;
         this._id = id;
-        this.attachmentType = attachment.getClass().getSimpleName();
-        Log.d(Constants.TRAILBOOK_TAG, "PAO: Creating attachment with type " +attachmentType);
+        Log.d(Constants.TRAILBOOK_TAG, "PAO: Creating attachment with type " +attachment.getType());
     }
 
-    public void setAttachment(T a) {
+    public void setAttachment(Attachment a) {
         this.attachment=a;
-        this.attachmentType = a.getClass().getSimpleName();
     }
 
-    public T getAttachment() {
+    public Attachment getAttachment() {
         return attachment;
     }
 
@@ -48,8 +45,4 @@ public class PointAttachedObject<T> {
         return _id;
     }
 
-    public void updateAttachmentType() {
-        if (attachment != null)
-            this.attachmentType = attachment.getClass().getSimpleName();
-    }
 }

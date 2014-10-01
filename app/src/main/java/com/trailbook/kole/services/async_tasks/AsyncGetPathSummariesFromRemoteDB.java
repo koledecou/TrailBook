@@ -5,7 +5,7 @@ import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
-import com.trailbook.kole.events.PathSummariesReceivedEvent;
+import com.trailbook.kole.events.PathSummariesReceivedFromCloudEvent;
 import com.trailbook.kole.services.database.TrailbookRemoteDatabase;
 import com.trailbook.kole.state_objects.BusProvider;
 
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 /**
  * Created by kole on 9/19/2014.
  */
-public class AsyncGetPathSummaries extends AsyncTask<String, Void, ArrayList<PathSummary>> {
+public class AsyncGetPathSummariesFromRemoteDB extends AsyncTask<String, Void, ArrayList<PathSummary>> {
 
     @Override
     protected ArrayList<PathSummary> doInBackground(String... strings) {
@@ -30,12 +30,9 @@ public class AsyncGetPathSummaries extends AsyncTask<String, Void, ArrayList<Pat
 
     @Override
     protected void onPostExecute(ArrayList<PathSummary> paths) {
-        if (paths == null)
-            return;
+        if (paths != null)
+            BusProvider.getInstance().post(new PathSummariesReceivedFromCloudEvent(paths));
 
-        for (PathSummary path : paths) {
-            BusProvider.getInstance().post(new PathSummariesReceivedEvent(paths));
-        }
         super.onPostExecute(paths);
     }
 }

@@ -1,4 +1,4 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.path_selector;
 
 
 
@@ -62,7 +62,7 @@ public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
                 Log.d(Constants.TRAILBOOK_TAG, "dismissing dialog");
-                sendActionToListener(DISMISS, null);
+                mListener.executeAction(ApplicationUtils.MENU_CONTEXT_DISMISS_ID, null);
             }
         };
         Log.d(Constants.TRAILBOOK_TAG, "showing no paths alert");
@@ -75,27 +75,12 @@ public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         PathListContent.PathSummaryItem summaryItem = PathListContent.ITEMS.get(info.position);
         String pathId = summaryItem.id;
-        switch (item.getItemId()) {
-            case MENU_CONTEXT_DELETE_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "deleting item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(DELETE, pathId);
-                mAdapter.remove(summaryItem);
-                return true;
-            case MENU_CONTEXT_UPLOAD_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "uploading item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(UPLOAD, pathId);
-                return true;
-            case MENU_CONTEXT_FOLLOW_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "following item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(FOLLOW, pathId);
-                return true;
-            case MENU_CONTEXT_TO_START_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "going to item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(TO_START, pathId);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        if (item.getItemId() == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
+            mAdapter.remove(summaryItem);
         }
+
+        mListener.processMenuAction(pathId, item);
+        return true;
     }
 
     @Override

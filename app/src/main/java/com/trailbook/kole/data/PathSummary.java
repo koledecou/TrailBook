@@ -18,7 +18,6 @@ public class PathSummary {
     int downVotes=0;
     ArrayList<String> noteIds;
     ArrayList<String> segmentIds;
-    ArrayList<String> climbIds;
 
     //TODO: add objects for associated climbs, books, summary images, etc...
 
@@ -61,7 +60,7 @@ public class PathSummary {
     public ArrayList<String> getSegmentIdList() {
         return segmentIds;
     }
-    public ArrayList<String> getNoteIdList() {
+    public ArrayList<String> getObjectIdList() {
         return noteIds;
     }
 
@@ -71,9 +70,9 @@ public class PathSummary {
             updateTimeStamp();
         }
     }
-    public void addNote(String noteId) {
-        if (!noteIds.contains(noteId)) {
-            noteIds.add(noteId);
+    public void addPao(String paoId) {
+        if (!noteIds.contains(paoId)) {
+            noteIds.add(paoId);
             updateTimeStamp();
         }
     }
@@ -121,5 +120,9 @@ public class PathSummary {
 
     public String getOwnerId() {
         return ownerID;
+    }
+
+    public void removePao(String paoId) {
+        noteIds.remove(paoId);
     }
 }

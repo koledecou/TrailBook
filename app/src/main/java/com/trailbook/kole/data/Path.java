@@ -8,12 +8,11 @@ import java.util.ArrayList;
 public class Path {
     public PathSummary summary;
     public ArrayList<PathSegment> segments;
-    public ArrayList<PointAttachedObject<Note>> notes;
-    public ArrayList<PointAttachedObject<Climb>> climbs;
+    public ArrayList<PointAttachedObject> paObjects;
 
-    public Path(PathSummary summary, ArrayList<PathSegment> segments, ArrayList<PointAttachedObject<Note>> notes) {
+    public Path(PathSummary summary, ArrayList<PathSegment> segments, ArrayList<PointAttachedObject> paObjects) {
         this.segments = segments;
         this.summary = summary;
-        this.notes = notes;
+        this.paObjects = paObjects;
     }
 }

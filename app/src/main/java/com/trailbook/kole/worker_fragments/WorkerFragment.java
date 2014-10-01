@@ -8,7 +8,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
@@ -16,8 +15,10 @@ import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.helpers.DownloadImageTask;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
+import com.trailbook.kole.services.async_tasks.AsyncCloudDeletePath;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathFromRemoteDB;
-import com.trailbook.kole.services.async_tasks.AsyncGetPathSummaries;
+import com.trailbook.kole.services.async_tasks.AsyncGetPathSummariesFromLocalDevice;
+import com.trailbook.kole.services.async_tasks.AsyncGetPathSummariesFromRemoteDB;
 import com.trailbook.kole.services.async_tasks.AsyncUploadMultipartEntities;
 import com.trailbook.kole.services.async_tasks.AsyncUploadPath;
 import com.trailbook.kole.services.web.TrailbookPathServices;
@@ -102,14 +103,18 @@ public class WorkerFragment extends Fragment {
         super.onDetach();
     }
 
-    public void startGetPathSummaries(LatLng center, long radius) {
-        AsyncGetPathSummaries asyncGetPathSummaries = new AsyncGetPathSummaries();
+    public void startGetPathSummariesRemote(LatLng center, long radius) {
+        AsyncGetPathSummariesFromRemoteDB asyncGetPathSummaries = new AsyncGetPathSummariesFromRemoteDB();
         asyncGetPathSummaries.execute();
         TrailBookState.resetLastRefreshedFromCloudTimeStamp();
     }
 
-    private void startGetImage(Note note) {
-        String imageFileName = note.getImageFileName();
+    public void startGetPathSummariesLocal() {
+        AsyncGetPathSummariesFromLocalDevice asyncGetPathSummaries = new AsyncGetPathSummariesFromLocalDevice();
+        asyncGetPathSummaries.execute();
+    }
+
+    private void startGetImage(String imageFileName) {
         File deviceImageFile = TrailbookFileUtilities.getInternalImageFile(imageFileName);
 
         Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading to: " + deviceImageFile);
@@ -125,8 +130,8 @@ public class WorkerFragment extends Fragment {
 
     public void startPathUploadMongo(PathSummary summary) {
         ArrayList<PathSegment> segments2 = PathManager.getInstance().getSegmentsForPath(summary.getId());
-        ArrayList<PointAttachedObject<Note>> notes = PathManager.getInstance().getPointNotesForPath(summary.getId());
-        Path pathContainer = new Path(summary, segments2, notes);
+        ArrayList<PointAttachedObject> paObjects = PathManager.getInstance().getPointObjectsForPath(summary.getId());
+        Path pathContainer = new Path(summary, segments2, paObjects);
 
         Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: uploading path " + summary.getName());
         AsyncUploadPath asyncUploadPath = new AsyncUploadPath();
@@ -136,16 +141,16 @@ public class WorkerFragment extends Fragment {
     }
 
     private void PostImages(PathSummary summary) {
-        ArrayList<PointAttachedObject<Note>> paoNotes = pathManager.getPointNotesForPath(summary.getId());
-        for (PointAttachedObject<Note> paoNote:paoNotes) {
-            PostImage(paoNote.getAttachment());
+        ArrayList<PointAttachedObject> paObjects = pathManager.getPointObjectsForPath(summary.getId());
+        for (PointAttachedObject pao:paObjects) {
+            PostImage(pao.getAttachment().getImageFileName());
         }
     }
 
-    private void PostImage(Note n) {
+    private void PostImage(String imageFileName) {
         ArrayList<MultipartEntity> entities = new ArrayList<MultipartEntity>();
-        if (n.getImageFileName() != null && n.getImageFileName().length()>0) {
-            MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForNoteImage(n);
+        if (imageFileName != null && imageFileName.length()>0) {
+            MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForPAOImage(imageFileName);
             if (entity != null)
                 entities.add(entity);
         }
@@ -167,11 +172,16 @@ public class WorkerFragment extends Fragment {
     @Subscribe
     public void onPathReceivedEvent(PathReceivedEvent event) {
         Path path = event.getPath();
-        ArrayList<PointAttachedObject<Note>> notes = path.notes;
-        for (PointAttachedObject<Note> paoNote:notes) {
-            String imageFileName = paoNote.getAttachment().getImageFileName();
+        ArrayList<PointAttachedObject> paObjects = path.paObjects;
+        for (PointAttachedObject pao:paObjects) {
+            String imageFileName = pao.getAttachment().getImageFileName();
             if (imageFileName != null && imageFileName.length()>0)
-                startGetImage(paoNote.getAttachment());
+                startGetImage(imageFileName);
         }
+    }
+
+    public void startPathDeleteMongo(String pathId) {
+        AsyncCloudDeletePath asyncCloudDeletePath = new AsyncCloudDeletePath();
+        asyncCloudDeletePath.execute(pathManager.getPathSummary(pathId));
     }
 }

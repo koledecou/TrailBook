@@ -3,7 +3,6 @@ package com.trailbook.kole.services.database;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -15,14 +14,13 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.util.JSON;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Note;
-import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
+import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -85,29 +83,32 @@ public class TrailbookRemoteDatabase {
         DBObject getPathSummaryQuery = new BasicDBObject("_id", pathId);
         DBObject pathObject = pathsCollection.findOne(getPathSummaryQuery);
         PathSummary pathSummary = getPathFromDBObject(pathObject);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: pathSummary is:" + pathObject);
         ArrayList<PathSegment> segments = getSegments(pathSummary.getSegmentIdList());
-        ArrayList<PointAttachedObject<Note>> paoNotes = getNotes(pathSummary.getNoteIdList());
-        return new Path(pathSummary, segments, paoNotes);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: got segments:" + segments);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: object ids:" + pathSummary.getObjectIdList());
+        ArrayList<PointAttachedObject> paoObjects = getPointAttachedObjects(pathSummary.getObjectIdList());
+        return new Path(pathSummary, segments, paoObjects);
     }
 
-    private ArrayList<PointAttachedObject<Note>> getNotes(ArrayList<String> noteIdList) {
-        ArrayList<PointAttachedObject<Note>> paoNotes = new ArrayList<PointAttachedObject<Note>>();
-        for (String noteId:noteIdList) {
-            PointAttachedObject<Note> paoNote = getNote(noteId);
-            if (paoNote != null)
-                paoNotes.add(paoNote);
+    private ArrayList<PointAttachedObject> getPointAttachedObjects(ArrayList<String> paoIdList) {
+        ArrayList<PointAttachedObject> paoObjects = new ArrayList<PointAttachedObject>();
+        for (String paoId:paoIdList) {
+            PointAttachedObject pao = getPointAttachedObject(paoId);
+            if (pao != null)
+                paoObjects.add(pao);
         }
-        return paoNotes;
+        return paoObjects;
     }
 
-    private PointAttachedObject<Note> getNote(String noteId) {
+    private PointAttachedObject getPointAttachedObject(String paoId) {
         if (!connect())
             return null;
 
-        DBCollection notesCollection = db.getCollection(DBConstants.noteCollectionName);
-        DBObject getNoteQuery = new BasicDBObject("_id", noteId);
-        DBObject noteObject = notesCollection.findOne(getNoteQuery);
-        return getPAONoteFromDBObject(noteObject);
+        DBCollection paoCollection = db.getCollection(DBConstants.noteCollectionName);
+        DBObject getPaoQuery = new BasicDBObject("_id", paoId);
+        DBObject paObject = paoCollection.findOne(getPaoQuery);
+        return getPointAttachedObjectFromDBObject(paObject);
     }
 
     private ArrayList<PathSegment> getSegments(ArrayList<String> segmentIdList) {
@@ -158,7 +159,7 @@ public class TrailbookRemoteDatabase {
         try {
             uploadPath(pathContainer.summary);
             uploadSegments(pathContainer.segments);
-            uploadNotes(pathContainer.notes);
+            uploadNotes(pathContainer.paObjects);
             return true;
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Mongo: failed to insert/update path " + pathContainer.summary.getName(), e);
@@ -197,11 +198,11 @@ public class TrailbookRemoteDatabase {
         }
     }
 
-    private void uploadNote(PointAttachedObject<Note> note) {
+    private void uploadNote(PointAttachedObject note) {
         if (!connect())
             throw new ConnectFailedException();
 
-        String jsonNote = TrailbookPathUtilities.getNoteJSONString(note);
+        String jsonNote = NoteFactory.getJsonFromPointAttachedObject(note);
         DBCollection pathsCollection = db.getCollection(DBConstants.noteCollectionName);
         Log.d(Constants.TRAILBOOK_TAG, "Mongo: inserting note: " + jsonNote);
         DBObject updateNoteObject = (DBObject) JSON.parse(jsonNote);
@@ -209,8 +210,8 @@ public class TrailbookRemoteDatabase {
         pathsCollection.update(existingNoteQuery, updateNoteObject, true, false, WriteConcern.ACKNOWLEDGED);
     }
 
-    private void uploadNotes(ArrayList<PointAttachedObject<Note>> notes) {
-        for (PointAttachedObject<Note> note:notes) {
+    private void uploadNotes(ArrayList<PointAttachedObject> notes) {
+        for (PointAttachedObject note:notes) {
             uploadNote(note);
         }
     }
@@ -220,7 +221,7 @@ public class TrailbookRemoteDatabase {
             PathSummary path = gson.fromJson(pathObject.toString(), PathSummary.class);
             Log.d(Constants.TRAILBOOK_TAG, "Mongo: got path:" + path.getName());
             Log.d(Constants.TRAILBOOK_TAG, "Mongo: path segments:" + path.getSegmentIdList());
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: path notes:" + path.getNoteIdList());
+            Log.d(Constants.TRAILBOOK_TAG, "Mongo: path notes:" + path.getObjectIdList());
             return path;
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting path", e);
@@ -240,16 +241,47 @@ public class TrailbookRemoteDatabase {
         }
     }
 
-    private PointAttachedObject<Note> getPAONoteFromDBObject(DBObject paoNoteObject) {
+    private PointAttachedObject getPointAttachedObjectFromDBObject(DBObject paoNoteObject) {
         try {
-            Type poaNoteType = new TypeToken<PointAttachedObject<Note>>(){}.getType();
-            PointAttachedObject<Note> paoNote = gson.fromJson(paoNoteObject.toString(), poaNoteType);
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got paoNote:" + paoNote.getLocation() + " content:" + paoNote.getAttachment().getNoteContent() + " image: " + paoNote.getAttachment().getImageFileName());
+            PointAttachedObject paoNote = NoteFactory.getPointAttachedObjectFromJSONString(paoNoteObject.toString());
+            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got paoNote:" + paoNote.getLocation() + " content:" + paoNote.getAttachment().getShortContent() + " image: " + paoNote.getAttachment().getImageFileName());
             return paoNote;
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting paoNote", e);
             return null;
         }
+    }
+
+    public void cloudDeletePath(PathSummary summary) {
+        connect();
+        deleteNotes(summary.getObjectIdList());
+        deleteSegments(summary.getSegmentIdList());
+        deletePath(summary.getId());
+    }
+
+    private void deleteNotes(ArrayList<String> objectIdList) {
+        for (String paoId:objectIdList) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": deleting pao " + paoId);
+            DBCollection paoCollection = db.getCollection(DBConstants.noteCollectionName);
+            DBObject getPAOQuery = new BasicDBObject("_id", paoId);
+            paoCollection.remove(getPAOQuery);
+        }
+    }
+
+    private void deleteSegments(ArrayList<String> segmentIdList) {
+        for (String segmentId:segmentIdList) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": deleting segment " + segmentId);
+            DBCollection paoCollection = db.getCollection(DBConstants.segmentCollectionName);
+            DBObject getSegmentQuery = new BasicDBObject("_id", segmentId);
+            paoCollection.remove(getSegmentQuery);
+        }
+    }
+
+    private void deletePath(String pathId) {
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": deleting path " + pathId);
+        DBCollection paoCollection = db.getCollection(DBConstants.pathCollectionName);
+        DBObject getPathQuery = new BasicDBObject("_id", pathId);
+        paoCollection.remove(getPathQuery);
     }
 
     private class ConnectFailedException extends RuntimeException {

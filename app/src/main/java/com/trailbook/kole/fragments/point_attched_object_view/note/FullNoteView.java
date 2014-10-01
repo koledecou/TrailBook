@@ -1,4 +1,4 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.point_attched_object_view.note;
 
 import android.content.Context;
 import android.util.AttributeSet;

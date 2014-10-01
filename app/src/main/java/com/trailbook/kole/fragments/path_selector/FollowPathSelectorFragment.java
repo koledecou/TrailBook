@@ -1,4 +1,4 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.path_selector;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.AdapterView;
 
 import com.trailbook.kole.fragments.list_content.PathListContent;
+import com.trailbook.kole.helpers.ApplicationUtils;
 
 import java.util.ArrayList;
 
@@ -35,6 +36,6 @@ public class FollowPathSelectorFragment extends PathSelectorFragment {
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         PathListContent.PathSummaryItem summaryItem = PathListContent.ITEMS.get(position);
         String pathId = summaryItem.id;
-        sendActionToListener(FOLLOW, pathId);
+        mListener.executeAction(ApplicationUtils.MENU_CONTEXT_FOLLOW_ID, pathId);
     }
 }

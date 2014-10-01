@@ -10,7 +10,6 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Note;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 import org.apache.commons.io.FileUtils;
@@ -82,13 +81,7 @@ public class TrailbookFileUtilities {
         return new File(fullDirectory, fileName);
     }
 
-    public static File getInternalSegmentNotesFile(String segmentId) {
-        String fullDirectory = getInternalSegmentDirectory(segmentId);
-        String fileName = segmentId + "_notes.tb";
-        return new File(fullDirectory, fileName);
-    }
-
-    public static File getInternalNoteFile(String noteId) {
+    public static File getInternalPAOFile(String noteId) {
         String fullDirectory = getInternalNoteDirectory();
         String fileName = noteId + "_note.tb";
         return new File(fullDirectory, fileName);
@@ -220,9 +213,9 @@ public class TrailbookFileUtilities {
         return uploadPicturesURL;
     }
 
-    public static MultipartEntity getMultipartEntityForNoteImage(Note n) {
+    public static MultipartEntity getMultipartEntityForPAOImage(String imageFileName) {
         try {
-            File imageFile = getInternalImageFile(n.getImageFileName());
+            File imageFile = getInternalImageFile(imageFileName);
             MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 
 /*deleteme            entity.addPart("segmentId", new StringBody(n.getParentSegmentId()));

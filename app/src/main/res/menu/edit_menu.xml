@@ -16,7 +16,8 @@
                 android:title="@string/qn_straight"
                 android:showAsAction="withText|ifRoom" />
         </menu>
-     </item>
+    </item>
+
     <item android:id="@+id/action_bar_create_object"
         android:title="@string/create_note"
         android:icon="@drawable/ic_action_add_note"
@@ -30,7 +31,4 @@
                 android:showAsAction="withText|ifRoom" />
         </menu>
     </item>
-    <item android:id="@+id/action_bar_stop_leading"
-        android:title="@string/stop"
-        android:showAsAction="withText|ifRoom" />
 </menu>

@@ -1,19 +1,16 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.dialogs;
 
 
 
 import android.app.DialogFragment;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+
 import com.trailbook.kole.activities.R;
 
 public class CreatePathDialogFragment extends DialogFragment implements View.OnClickListener {

@@ -33,18 +33,20 @@ import com.squareup.otto.Subscribe;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
-import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.MapObjectAddedEvent;
+import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
+import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
+import com.trailbook.kole.fragments.point_attched_object_view.PointAttachedObjectView;
 import com.trailbook.kole.helpers.MapUtilities;
+import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.PreferenceUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 import com.trailbook.kole.state_objects.BusProvider;
@@ -75,6 +77,11 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     private SharedPreferences savedStatePrefs;
     private LatLng mSelectedLocation = null;
+    private boolean mMapLoaded = false;
+
+    public boolean isMapLoaded() {
+        return mMapLoaded;
+    }
 
     public enum MarkerType {START,END,NOTE,UNKNOWN}
 
@@ -91,7 +98,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private BidiMap<String, Marker> mEndMarkers;
     private BidiMap<String, Polyline> mPathPolylines;
     private SlidingUpPanelLayout slidingPanel;
-    private BidiMap<String,Marker> mNoteMarkers;
+    private BidiMap<String,Marker> mPaoMarkers;
     private Marker mSelectedPointMarker;
 
     /**
@@ -165,6 +172,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Override
     public void onMapLoaded() {
+        mMapLoaded = true;
         drawLoadedPaths();
         processQueuedEvents();
         if (TrailBookState.getMode() == TrailBookState.MODE_EDIT && mSelectedLocation != null)
@@ -175,7 +183,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private void createMapObjects() {
         mStartMarkers = new DualHashBidiMap<String, Marker>();
         mEndMarkers = new DualHashBidiMap<String, Marker>();
-        mNoteMarkers = new DualHashBidiMap<String, Marker>();
+        mPaoMarkers = new DualHashBidiMap<String, Marker>();
         mPathPolylines = new DualHashBidiMap<String, Polyline>();
     }
 
@@ -215,6 +223,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void drawLoadedPaths() {
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": drawLoadedPaths()");
         ArrayList<PathSummary> summaries = mPathManager.getDownloadedPathSummaries();
         for (PathSummary summary:summaries) {
             addPathSummaryToMap(summary);
@@ -234,6 +243,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void removeSelectedMarker() {
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": removing selected marker");
         if (mSelectedPointMarker != null) {
             mSelectedPointMarker.remove();
         }
@@ -252,9 +262,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
         saveCenterPoint(editor);
         saveZoomLevel(editor);
-
-        if (mSelectedLocation != null)
-            saveSelectedLocation(editor);
+        saveSelectedLocation(editor);
 
         editor.commit();
     }
@@ -293,8 +301,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     public void showOnlyPath(String pathId) {
         hideAllPaths();
         setVisibilityForAllNoteMarkers(false);
-        ArrayList<PointAttachedObject<Note>> pointNotes = mPathManager.getPointNotesForPath(pathId);
-        showPointNotes(pointNotes);
+        ArrayList<PointAttachedObject> paObjects = mPathManager.getPointObjectsForPath(pathId);
+        showPointObjects(paObjects);
         showLinesForPath(pathId);
         showStartPointForPath(pathId);
         showEndPointForPath(pathId);
@@ -336,14 +344,14 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         setVisibilityForAllStartMarkers(false);
         setVisibilityForAllEndMarkers(false);
         setVisibilityForAllLines(false);
-        removeSelectedMarker();
+        if (TrailBookState.getMode() != TrailBookState.MODE_EDIT)
+            removeSelectedMarker();
     }
 
     public void hideNonActivePathsIfNeeded() {
         if (TrailBookState.getMode() == TrailBookState.MODE_LEAD
                 || TrailBookState.getMode() == TrailBookState.MODE_EDIT
                 || TrailBookState.getMode() == TrailBookState.MODE_FOLLOW) {
-            hideAllPaths();
             showOnlyPath(TrailBookState.getActivePathId());
         }
     }
@@ -379,13 +387,13 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void setVisibilityForAllNoteMarkers(boolean show) {
-        if (mNoteMarkers == null)
+        if (mPaoMarkers == null)
             return;
 
-        Set<Marker> noteMarkers = mNoteMarkers.values();
+        Set<Marker> noteMarkers = mPaoMarkers.values();
         ArrayList<String> removedNoteIds = new ArrayList<String>();
         for (Marker m:noteMarkers) {
-            String noteId = mNoteMarkers.getKey(m);
+            String noteId = mPaoMarkers.getKey(m);
             removedNoteIds.add(noteId);
             m.setVisible(show);
         }
@@ -424,17 +432,14 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     public boolean onMarkerClick(Marker marker) {
         MarkerType markerType = getMarkerType(marker);
         if (markerType == MarkerType.START) {
-//            collapseSlidingPanelIfExpanded();
             String pathId = mStartMarkers.getKey(marker);
             return showPathSummary(pathId);
         } else if (markerType == MarkerType.END) {
-//            collapseSlidingPanelIfExpanded();
             String pathId = mEndMarkers.getKey(marker);
             return showPathSummary(pathId);
         }  else if (markerType == MarkerType.NOTE) {
-//            collapseSlidingPanelIfExpanded();
-            String noteId = mNoteMarkers.getKey(marker);
-            return showNote(noteId);
+            String paoId = mPaoMarkers.getKey(marker);
+            return showPAObject(paoId);
         }
         return false;
     }
@@ -442,20 +447,20 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     @Override
     public void onClick(View view) {
         Log.d(Constants.TRAILBOOK_TAG, "View clicked:" + view.getId() + ", " + view.getTag());
-        if (view.getId() == R.id.nv_small_note_layout || view.getId() == R.id.vn_button_expand) {
+        if (view.getId() == R.id.nv_small_note_layout || view.getId() == R.id.vc_small_climb_layout || view.getId() == R.id.vn_button_expand) {
             Log.d(Constants.TRAILBOOK_TAG, "Note clicked");
             collapseSlidingPanelIfExpanded();
 
-            ((TrailBookActivity)getActivity()).showFullNote(((NoteView)view).getNoteId());
+            ((TrailBookActivity)getActivity()).showFullObject(((PointAttachedObjectView) view).getPaoId());
         }
     }
 
-    private boolean showNote(String noteId) {
-        if (noteId == null) {
+    private boolean showPAObject(String paoId) {
+        if (paoId == null) {
             Log.d(Constants.TRAILBOOK_TAG, "Null Path ID");
             return true;
         }
-        noteId = noteId.substring(0,noteId.length());
+        paoId = paoId.substring(0,paoId.length());
 
         if (slidingPanel != null) {
 /*
@@ -464,9 +469,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             slidingPanel.requestLayout();
 */
             expandSlidingPanelIfCollapsed();
-            NoteView nv = getNoteView(noteId);
-            nv.setOnClickListener(this);
-            addViewToSlidingUpPanel(nv);
+            PointAttachedObjectView v = NoteFactory.getPaoSmallView(PathManager.getInstance().getPointAttachedObject(paoId));
+            v.setOnClickListener(this);
+            addViewToSlidingUpPanel(v);
         }
         return false;
     }
@@ -483,12 +488,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         return dm.heightPixels;
     }
 
-    private NoteView getNoteView(String noteId) {
-        NoteView nv = new SmallNoteView(getActivity());
-        nv.setNoteId(noteId);
-        return nv;
-    }
-
     private boolean showPathSummary(String pathId) {
         if (pathId == null) {
             Log.d(Constants.TRAILBOOK_TAG, "Null Path ID");
@@ -496,10 +495,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
 
         if (slidingPanel != null) {
-/*            int height = getFullWindowHeight();
-            slidingPanel.setPanelHeight(height/4);
-            slidingPanel.requestLayout();*/
-
             PathDetailsView pdv = getPathDetailsView(pathId);
             addViewToSlidingUpPanel(pdv);
             expandSlidingPanelIfCollapsed();
@@ -533,7 +528,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (id != null) {
             return MarkerType.END;
         }
-        id = mNoteMarkers.getKey(marker);
+        id = mPaoMarkers.getKey(marker);
         if (id != null) {
             return MarkerType.NOTE;
         }
@@ -608,8 +603,15 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
     }
 
+    private void removePaoFromMap(String paoId) {
+        Marker paoMarker = mPaoMarkers.get(paoId);
+        if (paoMarker != null) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": removing pao " + paoId);
+            paoMarker.remove();
+        }
+    }
+
     private void removeSegmentFromMap(PathSegment segment) {
-//deleteme        removePointNotes(segment.getPointNotes());
         removePoints(segment);
     }
 
@@ -627,20 +629,20 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             addPoints(segment, getPolylineOptions(segment));
     }
 
-    private void showPointNotes(ArrayList<PointAttachedObject<Note>> pointNotes) {
-        for (PointAttachedObject<Note> paoNote:pointNotes) {
-            if (paoNote != null)
-                showPointNote(paoNote);
+    private void showPointObjects(ArrayList<PointAttachedObject> pointObjects) {
+        for (PointAttachedObject pointObject:pointObjects) {
+            if (pointObject != null)
+                showPointObject(pointObject);
         }
     }
 
-    private void showPointNote(PointAttachedObject<Note> paoNote) {
-        String noteId = paoNote.getId();
-        Marker m = mNoteMarkers.get(noteId);
+    private void showPointObject(PointAttachedObject pointObject) {
+        String id = pointObject.getId();
+        Marker m = mPaoMarkers.get(id);
         if (m != null)
             m.setVisible(true);
         else
-            addPointNote(paoNote, R.drawable.ic_map_note_unselected);
+            addPointOjbect(pointObject, NoteFactory.getUnelectedIconId(pointObject.getAttachment().getType()));
     }
 
     private PolylineOptions getPolylineOptions(PathSegment segment) {
@@ -651,18 +653,16 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         return o;
     }
 
-    private void addPointNote(PointAttachedObject<Note> paoNote, int iconId) {
-        String noteId = paoNote.getId();
-        Marker currentMarker = mNoteMarkers.get(noteId);
+    private void addPointOjbect(PointAttachedObject paoObject, int iconId) {
+        String objectId = paoObject.getId();
+        Marker currentMarker = mPaoMarkers.get(objectId);
         if (currentMarker == null){
             Log.d(Constants.TRAILBOOK_TAG, getClass().getName() + ": adding new marker");
-            Marker noteMarker = mMap.addMarker(getNoteMarker(paoNote, iconId));
-            mNoteMarkers.put(noteId, noteMarker);
+            Marker marker = mMap.addMarker(getMarker(paoObject, iconId));
+            mPaoMarkers.put(objectId, marker);
         } else {
             Log.d(Constants.TRAILBOOK_TAG, getClass().getName() + "updating existing marker");
             currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(scale(iconId)));
-//            currentMarker.remove();
-//            mNoteMarkers.remove(noteId);
         }
     }
 
@@ -670,12 +670,12 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         return mSelectedLocation;
     }
 
-    private MarkerOptions getNoteMarker(PointAttachedObject<Note> paoNote, int iconId) {
-        String content = paoNote.getAttachment().getNoteContent();
+    private MarkerOptions getMarker(PointAttachedObject paObject, int iconId) {
+        String content = paObject.getAttachment().toString();
         MarkerOptions options =  new MarkerOptions()
-                .position(paoNote.getLocation())
+                .position(paObject.getLocation())
                 .title(content)
-                .anchor(.5f,.5f)
+                .anchor(.5f, .5f)
                 .icon(BitmapDescriptorFactory.fromBitmap(scale(iconId)));
 
         return options;
@@ -799,16 +799,16 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             Location l = event.getLocation();
             String currentPath = TrailBookState.getActivePathId();
             Log.d(Constants.TRAILBOOK_TAG, "current path id: " + currentPath);
-            ArrayList<PointAttachedObject<Note>> paoNotes = mPathManager.getPointNotesForPath(currentPath);
-            if (paoNotes != null) {
-                for (PointAttachedObject<Note> paoNote : paoNotes) {
-                    double distanceToNote = TrailbookPathUtilities.getDistanceToNote(paoNote, l);
+            ArrayList<PointAttachedObject> paObjects = mPathManager.getPointObjectsForPath(currentPath);
+            if (paObjects != null) {
+                for (PointAttachedObject paObject : paObjects) {
+                    double distanceToNote = TrailbookPathUtilities.getDistanceToNote(paObject, l);
                     if (distanceToNote < PreferenceUtilities.getNoteAlertDistanceInMeters(getActivity())) {
-                        Log.d(Constants.TRAILBOOK_TAG, "adding selected note " + paoNote.getAttachment().getNoteContent());
-                        addPointNote(paoNote, R.drawable.ic_map_note_selected);
+                        Log.d(Constants.TRAILBOOK_TAG, "adding selected note " + paObject.getAttachment().toString());
+                        addPointOjbect(paObject, NoteFactory.getSelectedIconId(paObject.getAttachment().getType()));
                     } else {
-                        Log.d(Constants.TRAILBOOK_TAG, "adding unselected note" + paoNote.getAttachment().getNoteContent());
-                        addPointNote(paoNote, R.drawable.ic_map_note_unselected);
+                        Log.d(Constants.TRAILBOOK_TAG, "adding unselected note" + paObject.getAttachment().toString());
+                        addPointOjbect(paObject, NoteFactory.getUnelectedIconId(paObject.getAttachment().getType()));
                     }
                 }
             }
@@ -834,21 +834,36 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     }
 
-
     @Subscribe
-    public void onNoteAddedEvent(MapObjectAddedEvent event){
+    public void onPointAttachedObjectDeletedEvent(PointAttachedObjectDeletedEvent event) {
         if (mMap == null) {
             queueEventIfMapNotAvailable(event);
             return;
         }
 
         try {
-            PointAttachedObject<Note> paoNote = event.getPao();
+            String paoId = event.getPaoId();
+            removePaoFromMap(paoId);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onPointAttachedObjectDeletedEvent.  map may not have been initialized", e);
+        }
+
+    }
+
+    @Subscribe
+    public void onMapObjectAddedEvent(MapObjectAddedEvent event){
+        if (mMap == null) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            PointAttachedObject paObject = event.getPao();
             if ( (TrailBookState.getMode() == TrailBookState.MODE_FOLLOW
                     || TrailBookState.getMode() == TrailBookState.MODE_LEAD
                     || TrailBookState.getMode() == TrailBookState.MODE_EDIT) &&
-                    mPathManager.noteBelongsToPath(paoNote.getId(), TrailBookState.getActivePathId())) {
-                addPointNote(paoNote, R.drawable.ic_map_note_unselected);
+                    mPathManager.objectBelongsToPath(paObject.getId(), TrailBookState.getActivePathId())) {
+                addPointOjbect(paObject, NoteFactory.getUnelectedIconId(paObject.getAttachment().getType()));
             }
 
         } catch (Exception e) {
@@ -910,7 +925,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onModeChangedEvent(ModeChangedEvent event) {
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -957,7 +972,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             if (event instanceof SegmentDeletedEvent)
                 onSegmentDeletedEvent((SegmentDeletedEvent) event);
             else if (event instanceof MapObjectAddedEvent)
-                onNoteAddedEvent((MapObjectAddedEvent) event);
+                onMapObjectAddedEvent((MapObjectAddedEvent) event);
             else if (event instanceof PathSummaryAddedEvent)
                 onPathSummaryAddedEvent((PathSummaryAddedEvent) event);
             else if (event instanceof SegmentUpdatedEvent)
@@ -966,6 +981,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 onPathDeletedEvent((PathDeletedEvent) event);
             else if (event instanceof ModeChangedEvent)
                 onModeChangedEvent((ModeChangedEvent) event);
+            else if (event instanceof PointAttachedObjectDeletedEvent)
+                onPointAttachedObjectDeletedEvent((PointAttachedObjectDeletedEvent) event);
         }
     }
 }

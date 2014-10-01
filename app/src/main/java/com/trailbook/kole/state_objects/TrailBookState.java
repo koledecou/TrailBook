@@ -15,8 +15,14 @@ import com.google.gson.Gson;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
+import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
+import com.trailbook.kole.events.MapObjectAddedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
+import com.trailbook.kole.events.PathSummaryAddedEvent;
+import com.trailbook.kole.events.SegmentUpdatedEvent;
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.location_processors.BackgroundLocationService;
 import com.trailbook.kole.location_processors.LocationProcessor;
@@ -139,9 +145,26 @@ public class TrailBookState extends Application {
     }
 
     public void restoreActivePath() {
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: current path is " + mPathManager.getPathSummary(mCurrentPathId));
         if (mPathManager.getPathSummary(mCurrentPathId) == null) {
             Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: re-loading active path: " + mCurrentPathId);
-            mPathManager.loadPathFromDevice(this, mCurrentPathId);
+            //doing this sycronously because it is critical that we have the path in time.
+            Path path = mPathManager.loadPathFromDevice( mCurrentPathId);
+            postEventsForAddedPath(path);
+        }
+    }
+
+    private void postEventsForAddedPath(Path p) {
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: posting summary:" + p.summary.getName());
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: posting segments:" + p.segments.size());
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: posting paobjects:" + p.paObjects.size());
+        bus.post(new PathSummaryAddedEvent(p.summary));
+        for (PathSegment segment:p.segments) {
+            bus.post(new SegmentUpdatedEvent(segment));
+        }
+
+        for (PointAttachedObject pao:p.paObjects) {
+            bus.post(new MapObjectAddedEvent(pao));
         }
     }
 
@@ -296,8 +319,8 @@ public class TrailBookState extends Application {
 
     public void switchToEditMode(String pathId) {
         int oldMode = mMode;
-        mCurrentPathId=pathId;
-        mCurrentSegmentId=null;
+        setActivePathId(pathId);
+        setActiveSegmentId(null);
         stopLocationUpdates();
         if (locationProcessor != null) {
             setLocationProcessor(null);

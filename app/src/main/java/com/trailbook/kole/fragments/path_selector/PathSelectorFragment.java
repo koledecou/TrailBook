@@ -1,28 +1,26 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.path_selector;
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.fragments.list_content.PathListContent;
+import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * A fragment representing a list of Items.
@@ -34,19 +32,6 @@ import java.util.ArrayList;
  * interface.
  */
 public class PathSelectorFragment extends Fragment implements AbsListView.OnItemClickListener {
-
-    static final int MENU_CONTEXT_DELETE_ID = 1;
-    static final int MENU_CONTEXT_UPLOAD_ID = 2;
-    static final int MENU_CONTEXT_FOLLOW_ID = 3;
-    static final int MENU_CONTEXT_TO_START_ID = 4;
-    static final int MENU_CONTEXT_EDIT_ID = 5;
-
-    static final int DELETE_TEXT = R.string.delete;
-    static final int UPLOAD_TEXT = R.string.upload;
-    static final int FOLLOW_TEXT = R.string.follow;
-    static final int TO_START_TEXT = R.string.to_start;
-    static final int EDIT_TEXT = R.string.edit_lowercase;
-
     public static final String UPLOAD = "UPLOAD";
     public static final String DELETE = "DELETE";
     public static final String FOLLOW = "FOLLOW";
@@ -56,11 +41,17 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
 
     public static final String  PATH_ID_LIST_ARG="PATH_IDS";
 
-    private OnPathSelectorFragmentInteractionListener mListener;
+    OnPathSelectorFragmentInteractionListener mListener;
 
     private AbsListView mListView;
     public ArrayAdapter mAdapter;
     public ArrayList<String> mPathIds;
+
+    final private Comparator<PathListContent.PathSummaryItem> stringComparator = new Comparator<PathListContent.PathSummaryItem>() {
+        public int compare(PathListContent.PathSummaryItem s1, PathListContent.PathSummaryItem s2) {
+            return s1.pathName.toLowerCase().compareTo(s2.pathName.toLowerCase());
+        }
+    };
 
     public static PathSelectorFragment newInstance(ArrayList<String> pathIds) {
         PathSelectorFragment fragment = new PathSelectorFragment();
@@ -99,7 +90,8 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
 
         // Set the adapter
         mListView = (AbsListView) view.findViewById(R.id.psf_list);
-        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
+        mAdapter.sort(stringComparator);
+        mListView.setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
@@ -127,7 +119,7 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
             PathListContent.PathSummaryItem summaryItem = (PathListContent.PathSummaryItem) lv.getItemAtPosition(info.position);
 
             menu.setHeaderTitle(summaryItem.pathName);
-            addMenuItems(menu, summaryItem.id);
+            ApplicationUtils.addDownloadedPathMenuItems(menu, summaryItem.id);
         }
     }
 
@@ -138,44 +130,16 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         PathListContent.PathSummaryItem summaryItem = PathListContent.ITEMS.get(info.position);
         String pathId = summaryItem.id;
-        switch (item.getItemId()) {
-            case MENU_CONTEXT_DELETE_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "deleting item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(DELETE, pathId);
-                mAdapter.remove(summaryItem);
-                return true;
-            case MENU_CONTEXT_UPLOAD_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "uploading item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(UPLOAD, pathId);
-                return true;
-            case MENU_CONTEXT_FOLLOW_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "following item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(FOLLOW, pathId);
-                return true;
-            case MENU_CONTEXT_TO_START_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "going to item pos=" + info.position + " pathid=" + pathId);
-                sendActionToListener(TO_START, pathId);
-                return true;
-            case MENU_CONTEXT_EDIT_ID:
-                Log.d(Constants.TRAILBOOK_TAG, "edit item pos =" + info.position + " pathid="+pathId);
-                sendActionToListener(EDIT, pathId);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        if (item.getItemId() == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
+            mAdapter.remove(summaryItem);
         }
+        mListener.processMenuAction(pathId, item);
+        return true;
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         parent.showContextMenuForChild(view);
-    }
-
-    public void addMenuItems(Menu m, String pathId) {
-        m.add(Menu.NONE, MENU_CONTEXT_DELETE_ID, Menu.NONE, DELETE_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_UPLOAD_ID, Menu.NONE, UPLOAD_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_FOLLOW_ID, Menu.NONE, FOLLOW_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_TO_START_ID, Menu.NONE, TO_START_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_EDIT_ID, Menu.NONE, EDIT_TEXT);
     }
 
     public ArrayAdapter getArrayAdapter() {
@@ -196,14 +160,6 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
 
     }
 
-    public void sendActionToListener(String action, String pathId) {
-        if (null != mListener) {
-            // Notify the active callbacks interface (the activity, if the
-            // fragment is attached to one) that an item has been selected.
-            mListener.onPathSelectorFragmentResult(action, pathId);
-        }
-    }
-
     @Override
     public void onDetach() {
         super.onDetach();
@@ -211,7 +167,8 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
     }
 
     public interface OnPathSelectorFragmentInteractionListener {
-        public void onPathSelectorFragmentResult(String action, String pathId);
+        public void processMenuAction(String pathId, MenuItem actionItem);
+        public void executeAction(int action, String pathId);
     }
 
 }

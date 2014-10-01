@@ -1,4 +1,4 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.point_attched_object_view.note;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -12,16 +12,16 @@ public class SmallNoteView extends NoteView {
 
     public SmallNoteView(Context context) {
         super(context);
-        init( R.layout.view_note, R.id.nv_small_note_layout);
+        init( R.layout.view_note_small, R.id.nv_small_note_layout);
     }
 
     public SmallNoteView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init( R.layout.view_note, R.id.nv_small_note_layout);
+        init( R.layout.view_note_small, R.id.nv_small_note_layout);
     }
 
     public SmallNoteView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init( R.layout.view_note, R.id.nv_small_note_layout);
+        init( R.layout.view_note_small, R.id.nv_small_note_layout);
     }
 }

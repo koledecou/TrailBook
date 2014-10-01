@@ -45,7 +45,8 @@
                 android:id="@+id/vn_navigation_details"
                 android:layout_gravity="top|left"
                 android:minWidth="@dimen/small_note_view_min_text_panel_width"
-                android:paddingTop="@dimen/vn_image_top_pad" />
+                android:paddingTop="@dimen/vn_image_top_pad"
+                android:textColor="@color/Black" />
 
             <TextView
                 android:layout_width="fill_parent"
@@ -54,7 +55,8 @@
                 android:text="Leave the main trail at the big tree.  Go right down a rocky hillside. This is an example for testing only."
                 android:id="@+id/vn_text_content"
                 android:layout_gravity="top|left"
-                android:minWidth="@dimen/small_note_view_min_text_panel_width" />
+                android:minWidth="@dimen/small_note_view_min_text_panel_width"
+                android:textColor="@color/Black" />
 
         </LinearLayout>
     </RelativeLayout>

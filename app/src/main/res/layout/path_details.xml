@@ -5,14 +5,26 @@
     android:layout_height="@dimen/details_panel_height_path_details"
     android:id="@+id/summary_layout">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text=""
-        android:id="@+id/summary_name"
-        android:gravity="center_horizontal"
-        android:textStyle="bold" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/pdv_more"
+            android:src="@drawable/ic_path_menu" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text=""
+            android:id="@+id/summary_name"
+            android:gravity="center_horizontal"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
@@ -38,44 +50,45 @@
 
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:id="@+id/summary_button_layout"
         android:gravity="bottom"
         android:layout_gravity="bottom|center_horizontal">
-
+<!--
         <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Go to Start"
+            android:text="@string/go_to_start"
             android:id="@+id/pdv_nav_to_start" />
-
         <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Download"
-            android:id="@+id/pdv_download"
-            android:onClick="download" />
-        <Button
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Follow"
-        android:id="@+id/pdv_follow" />
+            android:text="@string/follow_button_text"
+            android:id="@+id/pdv_follow" />
         <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Zoom"
+            android:text="@string/zoom"
             android:id="@+id/pdv_zoom" />
         <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Resume"
-            android:id="@+id/pdv_resume" />
+            android:text="@string/download"
+            android:id="@+id/pdv_download"
+            android:onClick="download" />-->
+<!--        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/actions"
+            android:id="@+id/pdv_more"
+            android:layout_gravity="right" />-->
+
     </LinearLayout>
 
 </LinearLayout>

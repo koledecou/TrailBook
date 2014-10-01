@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:gravity="fill|top"
     android:orientation="vertical"
     android:id="@+id/nv_full_note_layout">
@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="2.6 miles SE of you"
-        android:id="@+id/vn_navigation_details" />
+        android:id="@+id/vn_navigation_details"
+        android:textColor="@color/Black" />
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -18,12 +19,14 @@
         android:text="Leave the main trail at the big tree.  Go right down a rocky hillside."
         android:id="@+id/vn_text_content"
         android:layout_gravity="top|left"
-        android:textAlignment="textStart" />
+        android:textAlignment="textStart"
+        android:textColor="@color/Black" />
     <ImageView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/vn_image"
         android:layout_gravity="top|center_horizontal"
-        android:padding="@dimen/small_note_view_image_pad" />
+        android:padding="@dimen/small_note_view_image_pad"
+        android:adjustViewBounds="true" />
 
 </LinearLayout>

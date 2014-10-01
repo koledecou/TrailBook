@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_bar_gallery"
+        android:title="@string/gallery"
+        android:icon="@drawable/ic_action_gallery"
+        android:showAsAction="withText|ifRoom" />
     <item android:id="@+id/action_bar_take_picture"
         android:title="@string/take_picture"
+        android:icon="@drawable/ic_action_camera"
         android:showAsAction="withText|ifRoom" />
 </menu>

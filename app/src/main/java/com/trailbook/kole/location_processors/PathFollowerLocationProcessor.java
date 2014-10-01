@@ -11,11 +11,10 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.trailbook.kole.activities.NoteNotificationReceiverActivity;
+import com.trailbook.kole.activities.ApproachingObjectNotificationReceiverActivity;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.PreferenceUtilities;
@@ -32,10 +31,10 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
     private static final int OFF_ROUTE_NOTIFICATION_ID = 1;
 
     private static final long ONE_MINUTE = 60000;
-    public static final String EXTRA_NOTE_ID = "EXTRA_NOTE_ID";
+    public static final String EXTRA_OBJECT_ID = "EXTRA_OBJECT_ID";
 
     private NotificationCompat.Builder mOffRouteNotifyBuilder;
-    private NotificationCompat.Builder mApproachingNoteNotificationBuilder;
+    private NotificationCompat.Builder mApproachingPointObjectNotificationBuilder;
 
     Location mCurrentLocation;
 
@@ -53,7 +52,7 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     private void createNotificationBuilders() {
         mOffRouteNotifyBuilder = createOffRouteNotifyBuilder();
-        mApproachingNoteNotificationBuilder = createApproachingNoteNotifyBuilder();
+        mApproachingPointObjectNotificationBuilder = createApproachingNoteNotifyBuilder();
         mListeningNotifyBuilder = createListeningNotifyBuilder();
     }
 
@@ -109,22 +108,21 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
             Log.e(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: error processing off route notification", e);
         }
         try {
-            processApproachingNoteNotifications(newLocation);
+            processApproachingObjectNotifications(newLocation);
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: error processing note notification", e);
         }
     }
 
-    public void processApproachingNoteNotifications(Location newLocation) {
-        ArrayList<PointAttachedObject<Note>> paoNotes = PathManager.getInstance().getPointNotesForPath(mPathId);
-        for (PointAttachedObject<Note> paoNote:paoNotes) {
-            Note note = paoNote.getAttachment();
-            double distanceToNote = TrailbookPathUtilities.getDistanceToNote(paoNote, newLocation);
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: distance to note " + paoNote.getId()+ " : " + distanceToNote);
+    public void processApproachingObjectNotifications(Location newLocation) {
+        ArrayList<PointAttachedObject> pointObjects = PathManager.getInstance().getPointObjectsForPath(mPathId);
+        for (PointAttachedObject paObject:pointObjects) {
+            double distanceToNote = TrailbookPathUtilities.getDistanceToNote(paObject, newLocation);
+            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: distance to note " + paObject.getId()+ " : " + distanceToNote);
             if (distanceToNote < PreferenceUtilities.getNoteAlertDistanceInMeters(mContext)) {
-                sendApproachingNoteNotification(paoNote.getId(), note, distanceToNote);
+                sendApproachingObjectNotification(paObject.getId(), paObject, distanceToNote);
             } else {
-                cancelNotification(getNotificationId(paoNote.getId()));
+                cancelNotification(getNotificationId(paObject.getId()));
             }
         }
     }
@@ -177,35 +175,36 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
                 mOffRouteNotifyBuilder.build());
     }
 
-    private void sendApproachingNoteNotification(String noteId, Note note, double distance) {
+    private void sendApproachingObjectNotification(String noteId, PointAttachedObject paObject, double distance) {
         int notificationId = getNotificationId(noteId);
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notificationid" + notificationId);
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: title: " + mContext.getString(R.string.note_notification_title));
+        //todo: change this for other types
         String notificationContent = String.format(mContext.getString(R.string.note_notification_title), PreferenceUtilities.getDistString(mContext, distance));
-        mApproachingNoteNotificationBuilder.setContentTitle(notificationContent);
-        mApproachingNoteNotificationBuilder.setContentText(note.getNoteContent());
-        mApproachingNoteNotificationBuilder.setContentIntent( getNoteNotificationPendingIntent(noteId, notificationId) );
+        mApproachingPointObjectNotificationBuilder.setContentTitle(notificationContent);
+        mApproachingPointObjectNotificationBuilder.setContentText(paObject.getAttachment().getNotificationString());
+        mApproachingPointObjectNotificationBuilder.setContentIntent(getApproachingObjectNotificationPendingIntent(noteId, notificationId));
         updateApproachingNoteRingtone();
-        Log.d(Constants.TRAILBOOK_TAG,  "PathFollowerLocationProcessor: notification text: " + PreferenceUtilities.getDistString(mContext, distance) + ": " + note.getNoteContent());
+        Log.d(Constants.TRAILBOOK_TAG,  "PathFollowerLocationProcessor: notification text: " + PreferenceUtilities.getDistString(mContext, distance) + ": " + paObject.toString());
 
         mNotificationManager.notify(
                 notificationId,
-                mApproachingNoteNotificationBuilder.build());
-        Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: sent approaching note notification.");
+                mApproachingPointObjectNotificationBuilder.build());
+        Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: sent approaching object notification.");
     }
 
-    private int getNotificationId(String noteID) {
+    private int getNotificationId(String objectID) {
         int id;
         //the last 9 digits should be safe to cast as an int
         try {
-            String noteIdTrunc;
-            if (noteID.length() > 9)
-                noteIdTrunc = noteID.substring(noteID.length() - 9, noteID.length());
+            String objectIdTrunc;
+            if (objectID.length() > 9)
+                objectIdTrunc = objectID.substring(objectID.length() - 9, objectID.length());
             else
-                noteIdTrunc = noteID.replace('-', '0');
+                objectIdTrunc = objectID.replace('-', '0');
 
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notification id for note " + noteID + ":" + noteIdTrunc);
-            id = Integer.parseInt(noteIdTrunc);
+            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notification id for note " + objectID + ":" + objectIdTrunc);
+            id = Integer.parseInt(objectIdTrunc);
         } catch (Exception e) {
             Log.d(Constants.TRAILBOOK_TAG, "error getting note id.", e);
             id = 10;
@@ -229,12 +228,12 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
     }
 
     private void updateApproachingNoteRingtone() {
-        mApproachingNoteNotificationBuilder.setSound(getApproachingNoteSoundURI());
+        mApproachingPointObjectNotificationBuilder.setSound(getApproachingNoteSoundURI());
     }
 
-    private PendingIntent getNoteNotificationPendingIntent(String noteId, int notificationId) {
-        Intent resultIntent = new Intent(mContext, NoteNotificationReceiverActivity.class);
-        resultIntent.putExtra(EXTRA_NOTE_ID, noteId);
+    private PendingIntent getApproachingObjectNotificationPendingIntent(String objectId, int notificationId) {
+        Intent resultIntent = new Intent(mContext, ApproachingObjectNotificationReceiverActivity.class);
+        resultIntent.putExtra(EXTRA_OBJECT_ID, objectId);
         resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TASK);
 

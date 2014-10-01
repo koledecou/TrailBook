@@ -56,7 +56,7 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
                 mPathManager.getSegment(mSegmentId) != null &&
                 mPathManager.getPathSummary(mPathId) != null) {
             mPathManager.addPointToSegment(mSegmentId, mPathId, newLocation);
-            mPathManager.savePath(mPathId, mContext);
+            mPathManager.savePath(mPathId);
         }
 
         mLastLocation = newLocation;

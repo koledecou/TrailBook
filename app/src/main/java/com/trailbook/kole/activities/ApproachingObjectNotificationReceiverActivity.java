@@ -1,39 +1,39 @@
 package com.trailbook.kole.activities;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.fragments.FullNoteView;
+import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.fragments.point_attched_object_view.PointAttachedObjectView;
+import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
+import com.trailbook.kole.state_objects.PathManager;
 
-public class NoteNotificationReceiverActivity extends Activity {
-
-    FullNoteView mNoteView;
-    String mNoteId;
+public class ApproachingObjectNotificationReceiverActivity extends Activity {
+    String mId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle extras = getIntent().getExtras();
         if(extras !=null) {
-            mNoteId = extras.getString(PathFollowerLocationProcessor.EXTRA_NOTE_ID);
-            Log.d(Constants.TRAILBOOK_TAG, "NoteNotificationReceiverActivity: NoteId=" + mNoteId);
+            mId = extras.getString(PathFollowerLocationProcessor.EXTRA_OBJECT_ID);
+            Log.d(Constants.TRAILBOOK_TAG, "NoteNotificationReceiverActivity: NoteId=" + mId);
         }
+        PointAttachedObject paObject = PathManager.getInstance().getPointAttachedObject(mId);
+//        setContentView(NoteFactory.getFullScreenFragmentLayoutId(paObject.getAttachment().getType()));
+        setContentView(R.layout.fragment_full_pao);
 
-        setContentView(R.layout.fragment_full_note);
-
-        mNoteView = (FullNoteView)findViewById(R.id.frag_note_view);
-        mNoteView.setNoteId(mNoteId);
+        LinearLayout layout = (LinearLayout)findViewById(R.id.full_pao_layout);
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": inflating R.layout.view_note_full");
+        PointAttachedObjectView view = NoteFactory.getFullScreenView(paObject);
+        view.setPaoId(mId);
+        layout.addView(view);
     }
 
     @Override

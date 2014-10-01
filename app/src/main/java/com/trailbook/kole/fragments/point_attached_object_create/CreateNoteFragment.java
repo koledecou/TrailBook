@@ -1,4 +1,4 @@
-package com.trailbook.kole.fragments;
+package com.trailbook.kole.fragments.point_attached_object_create;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -26,6 +26,7 @@ import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -38,20 +39,22 @@ import java.util.Date;
 public class CreateNoteFragment extends Fragment implements View.OnClickListener {
 
     private static final String ARG_PARAM1 = "note_id";
-    private static final String ARG_PARAM2 = "parent_id";
     
     private static final int CAMERA_PIC_REQUEST = 1;
     private static final int GALLERY_PIC_REQUEST = 2;
     private static final String NOTE_ID = "NOTE_ID";
     private static final String TEXT =  "TEXT";
     private static final String TEMP_IMAGE_FILE_URI = "TEMP_IMAGE_URI";
+    private static final String IMAGE_FILE_NAME = "IMAGE_FILE_NAME";
 
     private String mNoteId;
     private EditText mEditTextContent;
-    private CreateNoteFragmentListener mListener;
+    private CreatePointObjectListener mListener;
     private ImageView mImageView;
     private Button mOkButton;
     private Button mCancelButton;
+    private Button mDeleteButton;
+
     private String mImageFileName;
     private Uri mLastPictureUri;
 
@@ -86,7 +89,11 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             outState.putString(TEXT, mEditTextContent.getText().toString());
         if (mLastPictureUri != null) {
             outState.putString(TEMP_IMAGE_FILE_URI, mLastPictureUri.toString());
-            Log.d(Constants.TRAILBOOK_TAG, "saving uri:" + mLastPictureUri.toString());
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving uri:" + mLastPictureUri.toString());
+        }
+        if (mImageFileName != null) {
+            outState.putString(IMAGE_FILE_NAME, mImageFileName);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving image file name:" + mImageFileName);
         }
     }
 
@@ -96,30 +103,37 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         View view = inflater.inflate(R.layout.create_note, container, false);
         mEditTextContent = (EditText) view.findViewById(R.id.cn_note_content);
         mImageView = (ImageView) view.findViewById(R.id.cn_image);
+
         mOkButton = (Button)view.findViewById(R.id.cn_b_ok);
         mOkButton.setOnClickListener(this);
+
         mCancelButton = (Button)view.findViewById(R.id.cn_b_cancel);
         mCancelButton.setOnClickListener(this);
 
-        populateValuesFromNote(PathManager.getInstance().getNote(mNoteId));
+        mDeleteButton = (Button)view.findViewById(R.id.cn_b_delete);
+        mDeleteButton.setOnClickListener(this);
 
-        restoreInstance(savedInstanceState);
+        if (savedInstanceState == null) {
+            populateValuesFromNote(PathManager.getInstance().getPointAttachedObject(mNoteId));
+        } else {
+            restoreInstance(savedInstanceState);
+        }
+
         showSoftKeyboard();
         return view;
     }
 
-    private void populateValuesFromNote(PointAttachedObject<Note> note) {
-        if (note != null) {
-            String noteContent = note.getAttachment().getNoteContent();
+    private void populateValuesFromNote(PointAttachedObject paoNote) {
+        if (paoNote != null) {
+            Note note = (Note)paoNote.getAttachment();
+            String noteContent = note.getNoteContent();
             mEditTextContent.setText(noteContent);
-            mImageFileName = note.getAttachment().getImageFileName();
-            if (mImageFileName != null && mImageFileName.length()>0) {
-                File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir();
-                mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileName);
-            }
-
-            Log.d(Constants.TRAILBOOK_TAG, "CreateNoteFragment: imageuri from note is:" + mLastPictureUri);
-            mImageView.setImageURI(mLastPictureUri);
+            mImageFileName = paoNote.getAttachment().getImageFileName();
+            restoreImageView();
+        } else {
+            //if it's an existing object then you can delete it.
+            if (PathManager.getInstance().getPointAttachedObject(mNoteId) != null)
+                ApplicationUtils.disableButton(mDeleteButton);
         }
     }
 
@@ -135,13 +149,33 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                 Log.d(Constants.TRAILBOOK_TAG, "getting saved Uri:" + tempImageFileUri);
                 mLastPictureUri = Uri.parse(tempImageFileUri);
             }
+
+            mImageFileName = savedInstanceState.getString(IMAGE_FILE_NAME);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got saved image " + mImageFileName);
+            restoreImageView();
+/*            try {
+                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": trying last picture uri");
+                mImageView.setImageURI(mLastPictureUri);
+            } catch (Exception e) {
+                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": probably deleted.  get from image file name");
+                restoreImageView();
+            }*/
+        }
+    }
+
+    private void restoreImageView() {
+        if (mImageFileName != null && mImageFileName.length()>0) {
+            File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir();
+            mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileName);
+            Log.d(Constants.TRAILBOOK_TAG, "CreateNoteFragment: image uri is:" + mLastPictureUri);
+            mImageView.setImageURI(mLastPictureUri);
         }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
-            mListener.onNoteCreateCanceled();
+            mListener.onPointObjectCreateCanceled();
         }
     }
 
@@ -149,7 +183,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (CreateNoteFragmentListener) activity;
+            mListener = (CreatePointObjectListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
@@ -169,9 +203,20 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         if (id == R.id.action_bar_take_picture) {
             addPicture();
             return true;
+        } else if (id == R.id.action_bar_gallery) {
+            addPictureFromGallery();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void addPictureFromGallery() {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+
+            startActivityForResult(intent, GALLERY_PIC_REQUEST);
     }
 
     public void addPicture() {
@@ -201,9 +246,9 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                     return;
                 }
 
-                //TODO: refactor with Picasso
                 Bitmap bitmap;
                 try {
+                    //todo: refactor
                     String fileNameFullBitmap = imageUri.getPath();
                     ExifInterface exif=new ExifInterface(fileNameFullBitmap);
                     exif.getAttribute(ExifInterface.TAG_ORIENTATION);
@@ -224,7 +269,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             } else if (resultCode == getActivity().RESULT_CANCELED) {
                 // User cancelled the image capture
             } else {
-                // Image capture failed, advise user
+                // Image capture failed
             }
         } else if (requestCode == GALLERY_PIC_REQUEST) {
             if (resultCode == getActivity().RESULT_OK) {
@@ -232,11 +277,16 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
 
                 Bitmap bitmap = null;
                 try {
+                    //todo: refactor
+                    String fileNameFullBitmap = chosenImageUri.getPath();
+                    ExifInterface exif=new ExifInterface(fileNameFullBitmap);
+                    exif.getAttribute(ExifInterface.TAG_ORIENTATION);
                     bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(),
                             chosenImageUri);
-                    bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, 480);
+                    bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, Constants.IMAGE_CAPTURE_WIDTH);
                     mImageFileName = getImageFileName();
                     TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
+                    bitmap = TrailbookFileUtilities.getRotatedBitmap(bitmap, exif.getAttribute(ExifInterface.TAG_ORIENTATION));
                     mImageView.setImageBitmap(bitmap);
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
@@ -258,10 +308,11 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             Note newNote = new Note();
             newNote.setImageFileName(mImageFileName);
             newNote.setNoteContent(mEditTextContent.getText().toString());
-            mListener.onNoteCreated(mNoteId, newNote);
+            mListener.onPointObjectCreated(mNoteId, newNote);
         } else if (view.getId() == R.id.cn_b_cancel) {
-            //TODO: should delete any outstanding image files
-            mListener.onNoteCreateCanceled();
+            mListener.onPointObjectCreateCanceled();
+        } else if (view.getId() == R.id.cn_b_delete) {
+            mListener.onPaoDeleted(mNoteId);
         }
     }
 
@@ -276,10 +327,4 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Service.INPUT_METHOD_SERVICE);
         imm.showSoftInput(mEditTextContent, 0);
     }
-
-    public interface CreateNoteFragmentListener {
-        public void onNoteCreated(String noteId, Note newNote);
-        public void onNoteCreateCanceled();
-    }
-
 }
