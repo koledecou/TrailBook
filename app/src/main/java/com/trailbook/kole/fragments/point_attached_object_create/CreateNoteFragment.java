@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class CreateNoteFragment extends Fragment implements View.OnClickListener {
@@ -54,7 +55,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     private Button mCancelButton;
     private Button mDeleteButton;
 
-    private String mImageFileName;
+    private ArrayList<String> mImageFileNames;
     private Uri mLastPictureUri;
 
     public static CreateNoteFragment newInstance(String noteId) {
@@ -90,9 +91,9 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             outState.putString(TEMP_IMAGE_FILE_URI, mLastPictureUri.toString());
             Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving uri:" + mLastPictureUri.toString());
         }
-        if (mImageFileName != null) {
-            outState.putString(IMAGE_FILE_NAME, mImageFileName);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving image file name:" + mImageFileName);
+        if (mImageFileNames != null) {
+            outState.putStringArrayList(IMAGE_FILE_NAME, mImageFileNames);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving image file names:" + mImageFileNames);
         }
     }
 
@@ -127,7 +128,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
             Note note = (Note)paoNote.getAttachment();
             String noteContent = note.getNoteContent();
             mEditTextContent.setText(noteContent);
-            mImageFileName = paoNote.getAttachment().getImageFileName();
+            mImageFileNames = paoNote.getAttachment().getImageFileNames();
             restoreImageView();
         } else {
             //if it's an existing object then you can delete it.
@@ -149,8 +150,8 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                 mLastPictureUri = Uri.parse(tempImageFileUri);
             }
 
-            mImageFileName = savedInstanceState.getString(IMAGE_FILE_NAME);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got saved image " + mImageFileName);
+            mImageFileNames = savedInstanceState.getStringArrayList(IMAGE_FILE_NAME);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got saved image " + mImageFileNames);
             restoreImageView();
 /*            try {
                 Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": trying last picture uri");
@@ -163,9 +164,9 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     }
 
     private void restoreImageView() {
-        if (mImageFileName != null && mImageFileName.length()>0) {
+        if (mImageFileNames != null && mImageFileNames.size()>0) {
             File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir();
-            mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileName);
+            mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileNames.get(mImageFileNames.size()-1));
             Log.d(Constants.TRAILBOOK_TAG, "CreateNoteFragment: image uri is:" + mLastPictureUri);
             mImageView.setImageURI(mLastPictureUri);
         }
@@ -253,8 +254,9 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                     File tempFile = new File(imageUri.getPath());
                     FileUtils.forceDelete(tempFile);
 
-                    mImageFileName = getImageFileName();
-                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
+                    String newImageFileName = getImageFileName();
+                    mImageFileNames.add(newImageFileName);
+                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, newImageFileName);
                     mImageView.setImageBitmap(bitmap);
                     mImageView.invalidate();
                 } catch (Exception e) {
@@ -274,8 +276,9 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                 Bitmap bitmap = null;
                 try {
                     bitmap = ImageUtil.getRotatedBitmapFromGallery(getActivity(), chosenImageUri, Constants.IMAGE_CAPTURE_WIDTH);
-                    mImageFileName = getImageFileName();
-                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
+                    String newImageFileName = getImageFileName();
+                    mImageFileNames.add(newImageFileName);
+                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, newImageFileName);
                     mImageView.setImageBitmap(bitmap);
                     mImageView.invalidate();
                 } catch (Exception e) {
@@ -296,7 +299,7 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
         hideSoftKeyboard();
         if (view.getId() == R.id.cn_b_ok) {
             Note newNote = new Note();
-            newNote.setImageFileName(mImageFileName);
+            newNote.addImageFiles(mImageFileNames);
             newNote.setNoteContent(mEditTextContent.getText().toString());
             mListener.onPointObjectCreated(mNoteId, newNote);
         } else if (view.getId() == R.id.cn_b_cancel) {

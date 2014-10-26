@@ -21,9 +21,11 @@ import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.state_objects.TrailBookState;
 
+import java.util.ArrayList;
+
 public class NoteView extends PointAttachedObjectView {
     String mContent = "This is a sample path";
-    String mImageFileName = null;
+    ArrayList<String> mImageFileNames = null;
     TextView mTextViewContent;
     TextView mTextViewLocationInfo;
     ImageView mImageView;
@@ -49,10 +51,10 @@ public class NoteView extends PointAttachedObjectView {
         if (mTextViewContent != null)
             mTextViewContent.setText(mContent);
 
-        mImageFileName = note.getImageFileName();
-        if (mImageFileName != null && mImageFileName.length()>0) {
-            Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileName);
-            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileName)).into(mImageView);
+        mImageFileNames = note.getImageFileNames();
+        if (mImageFileNames != null && mImageFileNames.size()>0) {
+            Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileNames);
+            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileNames.get(0))).into(mImageView);
         }
     }
 

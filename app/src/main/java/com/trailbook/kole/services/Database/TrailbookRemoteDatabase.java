@@ -244,7 +244,8 @@ public class TrailbookRemoteDatabase {
     private PointAttachedObject getPointAttachedObjectFromDBObject(DBObject paoNoteObject) {
         try {
             PointAttachedObject paoNote = NoteFactory.getPointAttachedObjectFromJSONString(paoNoteObject.toString());
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got paoNote:" + paoNote.getLocation() + " content:" + paoNote.getAttachment().getShortContent() + " image: " + paoNote.getAttachment().getImageFileName());
+            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got paoNote:" + paoNote.getLocation() + " content:" + paoNote.getAttachment().getShortContent() +
+                    " images: " + paoNote.getAttachment().getImageFileNames());
             return paoNote;
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting paoNote", e);

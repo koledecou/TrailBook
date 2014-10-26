@@ -27,12 +27,14 @@
             android:key="off_route_alert"
             android:ringtoneType="notification"
             android:showDefault="true"
+            android:defaultValue="content://settings/system/notification_sound"
             android:title="@string/off_route_alert"
             android:dependency="enable_offroute_alert"/>
     </PreferenceCategory>
     <PreferenceCategory  android:key="note_alert_cat"
         android:title="@string/note_alert_cat">
         <CheckBoxPreference android:key="enable_prox_2"
+            android:defaultValue="true"
             android:summary="@string/enable_prox_alert_summary_2"
             android:title="@string/enable_prox_alert_2"/>
         <EditTextPreference android:defaultValue="60"

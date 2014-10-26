@@ -21,8 +21,10 @@ import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.state_objects.TrailBookState;
 
+import java.util.ArrayList;
+
 public class ClimbView extends PointAttachedObjectView {
-    String mImageFileName = null;
+    ArrayList<String> mImageFileNames = null;
 
     TextView mTextViewLocationInfo;
     ImageView mImageView;
@@ -51,10 +53,10 @@ public class ClimbView extends PointAttachedObjectView {
         mTextViewGrade.setText(climb.getGrade().grade);
         mTextViewDescription.setText(climb.getDescription());
 
-        mImageFileName = climb.getImageFileName();
-        if (mImageFileName != null && mImageFileName.length()>0) {
-            Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileName);
-            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileName)).into(mImageView);
+        mImageFileNames = climb.getImageFileNames();
+        if (mImageFileNames != null && mImageFileNames.size()>0) {
+            Log.d(Constants.TRAILBOOK_TAG, "loading image :" + mImageFileNames);
+            Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileNames.get(0))).into(mImageView);
         }
     }
 

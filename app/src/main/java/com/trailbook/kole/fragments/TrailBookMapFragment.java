@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,6 +42,8 @@ import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.MapObjectAddedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
+import com.trailbook.kole.events.PathReceivedEvent;
+import com.trailbook.kole.events.PathSummariesReceivedFromCloudEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.RefreshMessageEvent;
@@ -643,6 +646,14 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
     }
 
+    private void updateEndMarkerToLocal(String pathId) {
+        Marker endMarker = mEndMarkers.get(pathId);
+        if (endMarker != null) {
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark);
+            endMarker.setIcon(icon);
+        }
+    }
+
     private void removePaoFromMap(String paoId) {
         Marker paoMarker = mPaoMarkers.get(paoId);
         if (paoMarker != null) {
@@ -763,7 +774,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void addPathSummaryToMap(PathSummary summary) {
-        //TODO: check if start or end has changed.
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "adding summary to map " + summary.getName());
         addEndMarkerToMap(summary);
     }
 
@@ -836,8 +847,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event) {
-        if (mMap == null)
+        if (mMap == null || !isMapLoaded()) {
             return; //don't want to queue location changed events because they are frequent and transient.
+        }
 
         try {
             if (mPathManager == null || TrailBookState.getMode() != TrailBookState.MODE_FOLLOW)
@@ -867,7 +879,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onSegmentDeletedEvent(SegmentDeletedEvent event) {
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -883,7 +895,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onPointAttachedObjectDeletedEvent(PointAttachedObjectDeletedEvent event) {
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -899,7 +911,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onMapObjectAddedEvent(MapObjectAddedEvent event){
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -920,7 +932,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onPathSummaryAddedEvent(PathSummaryAddedEvent event){
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -935,7 +947,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onSegmentUpdatedEvent(SegmentUpdatedEvent event){
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -950,7 +962,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     @Subscribe
     public void onPathDeletedEvent(PathDeletedEvent event) {
-        if (mMap == null) {
+        if (mMap == null || !isMapLoaded()) {
             queueEventIfMapNotAvailable(event);
             return;
         }
@@ -961,6 +973,23 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 removeEndMarker(id);
             }
             removeStartMarker(id);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Exception onPathDeletedEvent.  map may not have been initialized", e);
+        }
+    }
+
+    @Subscribe
+    public void onPathReceivedEvent(PathReceivedEvent event) {
+        if (mMap == null || !isMapLoaded()) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        try {
+            PathSummary summary = event.getPath().summary;
+            String id = summary.getId();
+            updateEndMarkerToLocal(id);
+            Toast.makeText(getActivity(), "Download Completed", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Exception onPathDeletedEvent.  map may not have been initialized", e);
         }
@@ -997,6 +1026,21 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         this.displayMessage();
     }
 
+    @Subscribe
+    public void onPathSummariesReceivedFromCloudEvent(PathSummariesReceivedFromCloudEvent event) {
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ":onPathSummariesReceivedFromCloudEvent");
+        if (mMap == null || !isMapLoaded()) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ":queueing onPathSummariesReceivedFromCloudEvent");
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        ArrayList<PathSummary> summaries = event.getPathSummaries();
+        for (PathSummary summary : summaries) {
+            addPathSummaryToMap(summary);
+        }
+    }
+
     private void prepareMapForEditMode() {
         showOnlyPath(TrailBookState.getActivePathId());
         setVisibilityForAllEndMarkers(false);
@@ -1019,11 +1063,14 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void queueEventIfMapNotAvailable(Object event) {
-        if (mMap == null)
+        if (mMap == null || !isMapLoaded()) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ":queueing event " + event);
             mEventQueue.add(event);
+        }
     }
 
     private void processQueuedEvents() {
+        Log.d(Constants.TRAILBOOK_TAG, "processing missed events: " + mEventQueue.size());
         while (!mEventQueue.isEmpty()){
             Object event = mEventQueue.remove();
             Log.d(Constants.TRAILBOOK_TAG, "processing missed event: " + event);
@@ -1043,6 +1090,10 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 onPointAttachedObjectDeletedEvent((PointAttachedObjectDeletedEvent) event);
             else if (event instanceof RefreshMessageEvent)
                 onRefreshMessageEvent((RefreshMessageEvent) event);
+            else if (event instanceof PathSummariesReceivedFromCloudEvent)
+                onPathSummariesReceivedFromCloudEvent((PathSummariesReceivedFromCloudEvent) event);
+            else if (event instanceof PathReceivedEvent)
+                onPathReceivedEvent((PathReceivedEvent) event);
         }
     }
 }

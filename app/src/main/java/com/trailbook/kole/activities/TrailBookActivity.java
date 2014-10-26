@@ -131,6 +131,7 @@ public class TrailBookActivity extends Activity
         setUpWorkFragmentIfNeeded();
 
         TrailBookState.restoreState();
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": activity onCreate() mode:" + TrailBookState.getMode());
         if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
             TrailBookState.getInstance().resumeLeadingActivePath(true);
         } else if (TrailBookState.getMode()== TrailBookState.MODE_FOLLOW) {
@@ -140,6 +141,8 @@ public class TrailBookActivity extends Activity
             refreshPaths(false);
         } else if (TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
             TrailBookState.getInstance().restoreActivePath();
+        } else {
+            refreshPaths(true);
         }
     }
 
@@ -784,6 +787,7 @@ public class TrailBookActivity extends Activity
 
     private void refreshFromCloudIfConnectedToNetwork() {
         if (isNetworkConnected()) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": refreshing from cloud");
             mWorkFragment.startGetPathSummariesRemote(null, 0);
         } else {
             toastNoNetwork();

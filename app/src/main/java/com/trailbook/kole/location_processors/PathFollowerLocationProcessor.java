@@ -5,7 +5,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.media.RingtoneManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
@@ -21,6 +20,7 @@ import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.PreferenceUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -109,7 +109,9 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
             alertUri = Uri.parse(ringTone);
         } catch (Exception e) {
             Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: Exception getting ring tone!", e);
-            alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            alertUri = Uri.parse("android.resource://"
+                    + TrailBookState.getInstance().getPackageName() + "/" + R.raw.knock);
+            //alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         }
         return alertUri;
     }

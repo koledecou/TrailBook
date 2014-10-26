@@ -35,6 +35,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class CreateClimbFragment extends Fragment implements View.OnClickListener {
@@ -66,7 +67,7 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
     private EditText mEditTextRackDescription;
     private Spinner mSpinnerGradingSystem;
 
-    private String mImageFileName;
+    private ArrayList<String> mImageFileNames;
     private Uri mLastPictureUri;
 
     public static CreateClimbFragment newInstance(String paoId) {
@@ -99,9 +100,9 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
             outState.putString(TEMP_IMAGE_FILE_URI, mLastPictureUri.toString());
             Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving uri:" + mLastPictureUri.toString());
         }
-        if (mImageFileName != null) {
-            outState.putString(IMAGE_FILE_NAME, mImageFileName);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving image file name:" + mImageFileName);
+        if (mImageFileNames != null) {
+            outState.putStringArrayList(IMAGE_FILE_NAME, mImageFileNames);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving image file name:" + mImageFileNames);
         }
         if (mEditTextGrade != null) {
             outState.putString(GRADE, mEditTextGrade.getText().toString());
@@ -161,7 +162,7 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
         if (paoClimb != null) {
             Climb climb = (Climb)paoClimb.getAttachment();
             mEditTextName.setText(climb.name);
-            mImageFileName = paoClimb.getAttachment().getImageFileName();
+            mImageFileNames = paoClimb.getAttachment().getImageFileNames();
             mEditTextGrade.setText(climb.grade.grade);
             mEditTextDescription.setText(climb.description);
             mEditTextRackDescription.setText(climb.rackDescription);
@@ -192,16 +193,16 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
                 mLastPictureUri = Uri.parse(tempImageFileUri);
             }
 
-            mImageFileName = savedInstanceState.getString(IMAGE_FILE_NAME);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got saved image " + mImageFileName);
+            mImageFileNames = savedInstanceState.getStringArrayList(IMAGE_FILE_NAME);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got saved image " + mImageFileNames);
             restoreImageView();
         }
     }
 
     private void restoreImageView() {
-        if (mImageFileName != null && mImageFileName.length()>0) {
+        if (mImageFileNames != null && mImageFileNames.size()>0) {
             File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir();
-            mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileName);
+            mLastPictureUri = Uri.parse(imageFileDir + File.separator + mImageFileNames.get(mImageFileNames.size()-1));
             Log.d(Constants.TRAILBOOK_TAG, "CreateNoteFragment: image uri is:" + mLastPictureUri);
             mImageView.setImageURI(mLastPictureUri);
         }
@@ -287,8 +288,9 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
                     File tempFile = new File(imageUri.getPath());
                     FileUtils.forceDelete(tempFile);
 
-                    mImageFileName = getImageFileName();
-                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
+                    String newImageFileName = getImageFileName();
+                    mImageFileNames.add(newImageFileName);
+                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, newImageFileName);
                     mImageView.setImageBitmap(bitmap);
                     mImageView.invalidate();
                 } catch (Exception e) {
@@ -307,8 +309,9 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
 
                 try {
                     bitmap = ImageUtil.getRotatedBitmapFromGallery(getActivity(), chosenImageUri, Constants.IMAGE_CAPTURE_WIDTH);
-                    mImageFileName = getImageFileName();
-                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
+                    String newImageFileName = getImageFileName();
+                    mImageFileNames.add(newImageFileName);
+                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, newImageFileName);
                     mImageView.setImageBitmap(bitmap);
                     mImageView.invalidate();
                 }  catch (Exception e) {
@@ -330,7 +333,7 @@ public class CreateClimbFragment extends Fragment implements View.OnClickListene
         hideSoftKeyboard();
         if (view.getId() == R.id.cc_b_ok) {
             Climb newClimb = new Climb();
-            newClimb.addImageFile(mImageFileName);
+            newClimb.addImageFiles(mImageFileNames);
             newClimb.setName(mEditTextName.getText().toString());
             newClimb.setDescription(mEditTextDescription.getText().toString());
             Grade grade = new Grade();

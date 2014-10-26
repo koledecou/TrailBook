@@ -57,6 +57,10 @@ public class Climb implements Attachment {
         imageFileNames.add(fileName);
     }
 
+    public void addImageFiles(ArrayList<String> fileNames) {
+        imageFileNames.addAll(fileNames);
+    }
+
     public String toString() {
         return name;
     }
@@ -75,9 +79,9 @@ public class Climb implements Attachment {
     }
 
     @Override
-    public String getImageFileName() {
+    public ArrayList<String> getImageFileNames() {
         if (imageFileNames.size()>0)
-            return imageFileNames.get(0);
+            return imageFileNames;
         else
             return null;
     }

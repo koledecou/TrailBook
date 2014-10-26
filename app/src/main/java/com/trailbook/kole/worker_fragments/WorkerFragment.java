@@ -143,9 +143,16 @@ public class WorkerFragment extends Fragment {
     }
 
     private void PostImages(PathSummary summary) {
+        Log.d(Constants.TRAILBOOK_TAG,"WorkerFragment: posting images.");
         ArrayList<PointAttachedObject> paObjects = pathManager.getPointObjectsForPath(summary.getId());
         for (PointAttachedObject pao:paObjects) {
-            PostImage(pao.getAttachment().getImageFileName());
+            ArrayList<String> imageFileNames = pao.getAttachment().getImageFileNames();
+            Log.d(Constants.TRAILBOOK_TAG,"WorkerFragment: posting images " + imageFileNames);
+            if (imageFileNames != null) {
+                for (String imageFileName : imageFileNames) {
+                    PostImage(imageFileName);
+                }
+            }
         }
     }
 
@@ -176,9 +183,12 @@ public class WorkerFragment extends Fragment {
         Path path = event.getPath();
         ArrayList<PointAttachedObject> paObjects = path.paObjects;
         for (PointAttachedObject pao:paObjects) {
-            String imageFileName = pao.getAttachment().getImageFileName();
-            if (imageFileName != null && imageFileName.length()>0)
-                startGetImage(imageFileName);
+            ArrayList<String> imageFileNames = pao.getAttachment().getImageFileNames();
+            if (imageFileNames != null && imageFileNames.size()>0) {
+                for (String imageFileName:imageFileNames) {
+                    startGetImage(imageFileName);
+                }
+            }
         }
     }
 

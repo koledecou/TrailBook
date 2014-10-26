@@ -14,7 +14,6 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
@@ -31,17 +30,17 @@ import com.trailbook.kole.location_processors.PathLeaderLocationProcessor;
 import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 
 import org.acra.ACRA;
-import org.acra.ReportingInteractionMode;
-import org.acra.annotation.ReportsCrashes;
 
 /**
  * Created by kole on 9/8/2014.
  */
+/*
 
 @ReportsCrashes(formKey = "", // will not be used
         mailTo = "kole.decou@gmail.com",
         mode = ReportingInteractionMode.TOAST,
         resToastText = R.string.crash_toast_text)
+*/
 
 public class TrailBookState extends Application {
     public static final int MODE_SEARCH = 1;
