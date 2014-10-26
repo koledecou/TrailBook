@@ -30,8 +30,10 @@ public class AsyncGetPathSummariesFromRemoteDB extends AsyncTask<String, Void, A
 
     @Override
     protected void onPostExecute(ArrayList<PathSummary> paths) {
-        if (paths != null)
+        if (paths != null) {
+            Log.d(Constants.TRAILBOOK_TAG, "AsyncGetPathSummaries: got " + paths.size() + " summaries.");
             BusProvider.getInstance().post(new PathSummariesReceivedFromCloudEvent(paths));
+        }
 
         super.onPostExecute(paths);
     }

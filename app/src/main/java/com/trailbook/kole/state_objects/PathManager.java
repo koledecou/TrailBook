@@ -5,6 +5,7 @@ import android.location.Location;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.otto.Bus;
@@ -86,7 +87,7 @@ public class PathManager {
             //todo: get last updated date and let user refresh if it's out of date.
             if (!isStoredLocally(summary.getId())) {
                 addPathSummary(summary);
-                savePathSummaryToTempFolder(summary);
+                savePathSummaryToCloudCache(summary);
             } else {
                 Log.d(Constants.TRAILBOOK_TAG, "PathManager: path " + summary.getName() + " is local, not adding from cloud.");
             }
@@ -162,7 +163,10 @@ public class PathManager {
     }
 
     public PathSummary getPathSummary(String pathId) {
-        return mPaths.get(pathId)==null?null:mPaths.get(pathId);
+        if (pathId == null)
+            return null;
+        else
+            return mPaths.get(pathId);
     }
 
     public void addPath(Path p) {
@@ -239,7 +243,7 @@ public class PathManager {
         savePathSummary(summary, localPathSummaryFile);
     }
 
-    public void savePathSummaryToTempFolder(PathSummary summary) {
+    public void savePathSummaryToCloudCache(PathSummary summary) {
         File tempPathSummaryFile = TrailbookFileUtilities.getCachedPathSummaryFile(summary.getId());
         savePathSummary(summary, tempPathSummaryFile);
     }
@@ -675,5 +679,30 @@ public class PathManager {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": error deleting cached path " + pathId, e);
         }
+    }
+
+    public ArrayList<String> getPathsWithinBounds(LatLngBounds bounds) {
+        ArrayList<String> summariesWithinBounds = new ArrayList<String>();
+        for (PathSummary summary:mPaths.values()) {
+            if (bounds.contains(summary.getEnd()) ) {
+                summariesWithinBounds.add(summary.getId());
+            }
+        }
+        return summariesWithinBounds;
+    }
+
+    public PathSegment getMainSegmentForPath(String pathId) {
+        ArrayList<PathSegment> segments = getSegmentsForPath(pathId);
+        if (segments != null && segments.size()>0)
+            return segments.get(segments.size()-1);
+        else
+            return null;
+    }
+
+    public String addNewSegmentToPath(String pathId) {
+        String segmentId = makeNewSegment();
+        PathSummary summary = getPathSummary(pathId);
+        summary.addSegment(segmentId);
+        return segmentId;
     }
 }

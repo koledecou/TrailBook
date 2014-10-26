@@ -138,6 +138,8 @@ public class WorkerFragment extends Fragment {
         asyncUploadPath.execute(pathContainer);
 
         PostImages(summary);
+
+        pathManager.savePathSummaryToCloudCache(summary);
     }
 
     private void PostImages(PathSummary summary) {

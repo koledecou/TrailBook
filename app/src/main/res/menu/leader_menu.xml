@@ -31,6 +31,6 @@
         </menu>
     </item>
     <item android:id="@+id/action_bar_stop_leading"
-        android:title="@string/stop"
+        android:title="@string/done"
         android:showAsAction="withText|ifRoom" />
 </menu>

@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+    }
     compileSdkVersion 19
     buildToolsVersion '20.0.0'
     packagingOptions {
@@ -18,6 +20,10 @@ android {
         release {
             runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+            jniDebugBuild true
         }
     }
     productFlavors {
@@ -46,6 +52,7 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.2.1'
     compile 'com.sothree.slidinguppanel:library:+'
     compile 'org.mongodb:mongo-java-driver:2.12.3'
+    compile 'ch.acra:acra:4.5.0'
 }
 
 

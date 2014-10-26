@@ -37,11 +37,12 @@ public class ApplicationUtils {
     public static final int UPLOAD_TEXT = R.string.upload;
     public static final int FOLLOW_TEXT = R.string.follow;
     public static final int TO_START_TEXT = R.string.to_start;
-    public static final int EDIT_TEXT = R.string.edit_lowercase;
+    public static final int EDIT_TEXT = R.string.edit;
     public static final int RESUME_TEXT = R.string.resume;
     public static final int ZOOM_TEXT = R.string.zoom;
     public static final int DOWNLOAD_TEXT = R.string.download;
     public static final int DELETE_FROM_CLOUD_TEXT = R.string.delete_from_cloud;
+    public static final int REFRESH_TEXT = R.string.refresh;
 
     public static void showAlert(Context context,
                                  DialogInterface.OnClickListener clickListenerOK,
@@ -98,7 +99,9 @@ public class ApplicationUtils {
     public static void addPathActionMenuItems(Menu menu, String id) {
         if (PathManager.getInstance().isStoredLocally(id)) {
             addDownloadedPathMenuItems(menu, id);
-        } else {
+        }
+
+        if (PathManager.getInstance().isPathInCloudCache(id)){
             addCloudPathMenuItems(menu,id);
         }
     }
@@ -107,17 +110,30 @@ public class ApplicationUtils {
         m.add(Menu.NONE, MENU_CONTEXT_FOLLOW_ID, Menu.NONE, FOLLOW_TEXT);
         m.add(Menu.NONE, MENU_CONTEXT_TO_START_ID, Menu.NONE, TO_START_TEXT);
         m.add(Menu.NONE, MENU_CONTEXT_DELETE_ID, Menu.NONE, DELETE_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_UPLOAD_ID, Menu.NONE, UPLOAD_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_EDIT_ID, Menu.NONE, EDIT_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_RESUME_ID, Menu.NONE, RESUME_TEXT);
+        if (TrailbookPathUtilities.hasEditPermissions(id)) {
+            m.add(Menu.NONE, MENU_CONTEXT_EDIT_ID, Menu.NONE, EDIT_TEXT);
+            m.add(Menu.NONE, MENU_CONTEXT_RESUME_ID, Menu.NONE, RESUME_TEXT);
+            m.add(Menu.NONE, MENU_CONTEXT_UPLOAD_ID, Menu.NONE, UPLOAD_TEXT);
+        }
+
         m.add(Menu.NONE, MENU_CONTEXT_ZOOM_ID, Menu.NONE, ZOOM_TEXT);
     }
 
     public static void addCloudPathMenuItems(Menu m, String id) {
-        m.add(Menu.NONE, MENU_CONTEXT_DOWNLOAD_ID, Menu.NONE, DOWNLOAD_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_ZOOM_ID, Menu.NONE, ZOOM_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_TO_START_ID, Menu.NONE, TO_START_TEXT);
-        m.add(Menu.NONE, MENU_CONTEXT_DELETE_FROM_CLOUD_ID, Menu.NONE, DELETE_FROM_CLOUD_TEXT);
+        if (PathManager.getInstance().isStoredLocally(id))
+            m.add(Menu.NONE, MENU_CONTEXT_DOWNLOAD_ID, Menu.NONE, REFRESH_TEXT);
+        else
+            m.add(Menu.NONE, MENU_CONTEXT_DOWNLOAD_ID, Menu.NONE, DOWNLOAD_TEXT);
+
+        if (m.findItem(MENU_CONTEXT_ZOOM_ID) == null) {
+            m.add(Menu.NONE, MENU_CONTEXT_ZOOM_ID, Menu.NONE, ZOOM_TEXT);
+        }
+        if (m.findItem(MENU_CONTEXT_TO_START_ID) == null) {
+            m.add(Menu.NONE, MENU_CONTEXT_TO_START_ID, Menu.NONE, TO_START_TEXT);
+        }
+        if (TrailbookPathUtilities.hasEditPermissions(id)) {
+            m.add(Menu.NONE, MENU_CONTEXT_DELETE_FROM_CLOUD_ID, Menu.NONE, DELETE_FROM_CLOUD_TEXT);
+        }
     }
 
     public static void showActionsPopupForPath(Context c, View v, PopupMenu.OnMenuItemClickListener listener, String pathId) {

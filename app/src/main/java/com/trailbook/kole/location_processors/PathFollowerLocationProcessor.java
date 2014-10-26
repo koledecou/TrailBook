@@ -10,12 +10,13 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.View;
+import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.ApproachingObjectNotificationReceiverActivity;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.PreferenceUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
@@ -53,13 +54,27 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
     private void createNotificationBuilders() {
         mOffRouteNotifyBuilder = createOffRouteNotifyBuilder();
         mApproachingPointObjectNotificationBuilder = createApproachingNoteNotifyBuilder();
-        mListeningNotifyBuilder = createListeningNotifyBuilder();
+//        mListeningNotifyBuilder = createListeningNotifyBuilder();
+        RemoteViews followerNotificationView = NotificationUtils.getFollowingNotificationRemoteView(mContext);
+        String title = String.format(mContext.getString(R.string.following_trail_title), PathManager.getInstance().getPathSummary(mPathId).getName());
+        String content = mContext.getString(R.string.following_trail_notification_content);
+        mListeningNotifyBuilder = NotificationUtils.createListeningNotifyBuilder(mContext, title, content, mPathId, followerNotificationView);
+//        TrailBookState.setListeningNotifyBuilder(mListeningNotifyBuilder);
     }
 
+/*
     private NotificationCompat.Builder createListeningNotifyBuilder() {
         PathSummary p = PathManager.getInstance().getPathSummary(mPathId);
         String title = String.format(mContext.getString(R.string.following_trail_title), p.getName());
-        return super.createListeningNotifyBuilder(title, mContext.getString(R.string.following_trail_notification_content));
+
+        return super.createListeningNotifyBuilder(title, mContext.getString(R.string.following_trail_notification_content), getNotificationRemoteView());
+    }
+*/
+
+    protected RemoteViews getNotificationRemoteView() {
+        RemoteViews followingNotificationView = new RemoteViews(mContext.getPackageName(), R.layout.active_path_notification);
+        followingNotificationView.setViewVisibility(R.id.fn_button_pause, View.GONE);
+        return followingNotificationView;
     }
 
     private NotificationCompat.Builder createApproachingNoteNotifyBuilder() {

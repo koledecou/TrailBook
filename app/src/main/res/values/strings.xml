@@ -72,8 +72,8 @@
     <string name="miles">miles</string>
     <string name="meters">meters</string>
     <string name="kilometers">kilometers</string>
-    <string name="delete">delete</string>
-    <string name="upload">upload</string>
+    <string name="delete">Delete from Device</string>
+    <string name="upload">Upload to Cloud</string>
     <string name="stop">Stop</string>
     <string name="create_quick_note">Quick Note</string>
     <string name="qn_left">Turn Left</string>
@@ -84,13 +84,13 @@
     <string name="dist_bearing_string">\u0025s \u0025s of you.</string>
     <string name="action_list">List</string>
     <string name="action_filter">Filter</string>
-    <string name="follow">follow</string>
+    <string name="follow">Follow</string>
     <string name="map_category_title">Map Settings</string>
     <string name="waiting_for_location_title">Error: No Location</string>
     <string name="waiting_for_location_message">No location</string>
     <string name="OK">OK</string>
     <string name="waiting_for_location">Waiting for location</string>
-    <string name="to_start">go to start</string>
+    <string name="to_start">Go to Start</string>
     <string name="info_no_paths_downloaded_message">To follow a trail, you must first download it locally.  Use the map to search for your trail.</string>
     <string name="info_no_paths_downloaded_title">No Paths to Follow</string>
     <string name="action_refresh">Refresh</string>
@@ -135,4 +135,16 @@
     <string name="resume">Resume Leading</string>
     <string name="delete_from_cloud">Delete from Cloud</string>
     <string name="actions">actions...</string>
+    <string name="info_no_paths_within_view_title">No Paths in View</string>
+    <string name="no_paths_within_view_message">Widen the zoom to find paths.</string>
+    <string name="refresh">Refresh from Cloud</string>
+    <string name="editing_message">Editing \u0025s</string>
+    <string name="leading_message">Leading  \u0025s</string>
+    <string name="following_message">Following  \u0025s</string>
+    <string name="done">Done</string>
+    <string name="leading_trail_notification_content">Trailbook is recording your location</string>
+    <string name="paused_title">Paused</string>
+    <string name="paused_content">Trailbook is not recording your location</string>
+    <string name="location_updates_paused">PAUSED</string>
+    <string name="crash_toast_text">Splat!  Trail Book just decked!</string>
 </resources>

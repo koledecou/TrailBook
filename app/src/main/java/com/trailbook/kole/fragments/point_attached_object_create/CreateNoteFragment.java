@@ -6,8 +6,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -27,6 +25,7 @@ import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.ApplicationUtils;
+import com.trailbook.kole.helpers.ImageUtil;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -212,11 +211,11 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
     }
 
     public void addPictureFromGallery() {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("image/*");
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
 
-            startActivityForResult(intent, GALLERY_PIC_REQUEST);
+        startActivityForResult(intent, GALLERY_PIC_REQUEST);
     }
 
     public void addPicture() {
@@ -250,22 +249,19 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
                 try {
                     //todo: refactor
                     String fileNameFullBitmap = imageUri.getPath();
-                    ExifInterface exif=new ExifInterface(fileNameFullBitmap);
-                    exif.getAttribute(ExifInterface.TAG_ORIENTATION);
-                    bitmap = BitmapFactory.decodeFile(fileNameFullBitmap);
-                    bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, Constants.IMAGE_CAPTURE_WIDTH);
-                    bitmap = TrailbookFileUtilities.getRotatedBitmap(bitmap, exif.getAttribute(ExifInterface.TAG_ORIENTATION));
+                    bitmap = ImageUtil.rotateBitmapFromCamera(fileNameFullBitmap, Constants.IMAGE_CAPTURE_WIDTH);
                     File tempFile = new File(imageUri.getPath());
                     FileUtils.forceDelete(tempFile);
+
+                    mImageFileName = getImageFileName();
+                    TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
+                    mImageView.setImageBitmap(bitmap);
+                    mImageView.invalidate();
                 } catch (Exception e) {
                     Log.e(Constants.TRAILBOOK_TAG, "Image capture failed.", e);
                     Toast.makeText(getActivity(), "Image Capture Failed - can't create bitmap", Toast.LENGTH_LONG).show();
                     return;
                 }
-
-                mImageFileName = getImageFileName();
-                TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
-                mImageView.setImageBitmap(bitmap);
             } else if (resultCode == getActivity().RESULT_CANCELED) {
                 // User cancelled the image capture
             } else {
@@ -277,17 +273,11 @@ public class CreateNoteFragment extends Fragment implements View.OnClickListener
 
                 Bitmap bitmap = null;
                 try {
-                    //todo: refactor
-                    String fileNameFullBitmap = chosenImageUri.getPath();
-                    ExifInterface exif=new ExifInterface(fileNameFullBitmap);
-                    exif.getAttribute(ExifInterface.TAG_ORIENTATION);
-                    bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(),
-                            chosenImageUri);
-                    bitmap = TrailbookFileUtilities.scaleBitmapToWidth(bitmap, Constants.IMAGE_CAPTURE_WIDTH);
+                    bitmap = ImageUtil.getRotatedBitmapFromGallery(getActivity(), chosenImageUri, Constants.IMAGE_CAPTURE_WIDTH);
                     mImageFileName = getImageFileName();
                     TrailbookFileUtilities.saveImage(getActivity(), bitmap, mImageFileName);
-                    bitmap = TrailbookFileUtilities.getRotatedBitmap(bitmap, exif.getAttribute(ExifInterface.TAG_ORIENTATION));
                     mImageView.setImageBitmap(bitmap);
+                    mImageView.invalidate();
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();

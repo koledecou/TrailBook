@@ -16,7 +16,7 @@ import com.trailbook.kole.activities.R;
 public class CreatePathDialogFragment extends DialogFragment implements View.OnClickListener {
 
     public interface CreatePathDialogListener {
-        public void processNewPathClick(String pathName);
+        public void onNewPathClick(String pathName);
     }
 
     private EditText mEditText;
@@ -72,7 +72,7 @@ public class CreatePathDialogFragment extends DialogFragment implements View.OnC
     public void onClick(View v) {
         if (v.getId() == R.id.cpd_b_ok) {
             String pathName = mEditText.getText().toString();
-            mListener.processNewPathClick(pathName);
+            mListener.onNewPathClick(pathName);
         }
 
         dismiss();

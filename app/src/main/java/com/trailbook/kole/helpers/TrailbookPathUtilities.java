@@ -15,6 +15,7 @@ import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -336,5 +337,42 @@ public class TrailbookPathUtilities {
         }
 
         return doc;
+    }
+
+    public static boolean hasEditPermissions(String pathId) {
+        PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
+        if (summary ==  null)
+            return false;
+
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookPathUtilities: has edit permissions " + summary.getOwnerId() + "," +TrailBookState.getCurrentUserId());
+        if (summary.getOwnerId() == null
+             || summary.getOwnerId().length() < 1
+             || summary.getOwnerId().equals(TrailBookState.getCurrentUserId())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static boolean isAccurateEnoughToStartLeading(Location location) {
+        if (location.hasAccuracy()) {
+            float accuracy = location.getAccuracy();
+            if (accuracy < Constants.MIN_ACCURACY_TO_START_LEADING) {
+                TrailBookState.incrementConsecutiveGoodLocations();
+                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: got good location: " + location.getAccuracy());
+                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: consecutive good locations: " + TrailBookState.getConsecutiveGoodLocations());
+                if (TrailBookState.getConsecutiveGoodLocations() >= Constants.MIN_CONNSECUTIVE_GOOD_LOCATIONS_TO_LEAD)
+                    return true;
+                else
+                    return false;
+            } else {
+                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: location not accurate enough: " + location.getAccuracy());
+                TrailBookState.resetConsecutiveGoodLocations();
+                return false;
+            }
+        } else {
+            Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: no accuracy on device");
+            return true;
+        }
     }
 }

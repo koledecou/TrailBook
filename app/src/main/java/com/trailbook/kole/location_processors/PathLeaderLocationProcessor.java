@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
@@ -17,7 +18,7 @@ import com.trailbook.kole.state_objects.PathManager;
  * Created by kole on 7/20/2014.
  */
 public class PathLeaderLocationProcessor extends LocationProcessor {
-    private static final float MIN_ACCURACY = 60; //don't record points that might be worse than 200 ft
+    private static final float MIN_ACCURACY = 50; //don't record points that might be worse than 160 ft
     PathManager mPathManager;
     String mSegmentId;
     String mPathId;
@@ -30,16 +31,12 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
         this.mSegmentId = segmentId;
         this.mPathId = pathId;
         mPathManager = PathManager.getInstance();
-        mListeningNotifyBuilder = createListeningNotifyBuilder();
+        RemoteViews leaderNotificationView = NotificationUtils.getLeadingNotificationRemoteView(context);
+        String title = String.format(mContext.getString(R.string.leading_trail_title), PathManager.getInstance().getPathSummary(mPathId).getName());
+        String content = mContext.getString(R.string.leading_trail_notification_content);
+        mListeningNotifyBuilder = NotificationUtils.createListeningNotifyBuilder(context, title, content, mPathId, leaderNotificationView);
 
         sendListeningNotification();
-    }
-
-    private NotificationCompat.Builder createListeningNotifyBuilder() {
-        PathSummary p = PathManager.getInstance().getPathSummary(mPathId);
-        String title = String.format(mContext.getString(R.string.leading_trail_title), p.getName());
-
-        return super.createListeningNotifyBuilder(title, mContext.getString(R.string.following_trail_notification_content));
     }
 
     @Override

@@ -31,4 +31,8 @@
                 android:showAsAction="withText|ifRoom" />
         </menu>
     </item>
+
+    <item android:id="@+id/action_bar_done_editing"
+        android:title="@string/done"
+        android:showAsAction="withText|ifRoom" />
 </menu>

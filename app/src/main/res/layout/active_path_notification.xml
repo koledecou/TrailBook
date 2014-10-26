@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:id="@+id/active_path_notificatin_layout">
 
     <TextView
         android:layout_width="wrap_content"
@@ -22,18 +23,39 @@
         android:layout_below="@+id/fn_text_title"
         android:layout_toRightOf="@+id/imageView2"
         android:layout_marginLeft="10dp"
-        android:layout_toLeftOf="@+id/fn_button_stop" />
+        android:layout_toLeftOf="@+id/fn_button_layout" />
 
-    <Button
-        style="?android:attr/buttonStyleSmall"
+    <LinearLayout
+        android:id="@+id/fn_button_layout"
+        android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Stop"
-        android:id="@+id/fn_button_stop"
-        android:layout_alignBottom="@+id/fn_text_content"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginRight="5dp" />
+        android:weightSum="1">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/fn_button_resume"
+            android:src="@android:drawable/ic_media_play"
+            android:layout_weight="6.29" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/fn_button_pause"
+            android:src="@android:drawable/ic_media_pause"
+            android:layout_weight="5.71" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/fn_button_stop"
+            android:layout_marginRight="5dp"
+            android:src="@drawable/ic_media_stop2"
+            android:adjustViewBounds="false"
+            android:baselineAlignBottom="false" />
+    </LinearLayout>
 
     <ImageView
         android:layout_width="wrap_content"

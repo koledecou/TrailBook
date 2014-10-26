@@ -17,4 +17,5 @@
     <dimen name="map_message_pad">25dp</dimen>
     <dimen name="vn_image_top_pad">15dp</dimen>
     <dimen name="small_note_expand_image_max_height">20dp</dimen>
+    <dimen name="notification_image_button">96dp</dimen>
 </resources>

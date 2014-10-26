@@ -119,7 +119,8 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
             PathListContent.PathSummaryItem summaryItem = (PathListContent.PathSummaryItem) lv.getItemAtPosition(info.position);
 
             menu.setHeaderTitle(summaryItem.pathName);
-            ApplicationUtils.addDownloadedPathMenuItems(menu, summaryItem.id);
+            ApplicationUtils.addPathActionMenuItems(menu, summaryItem.id);
+            //ApplicationUtils.addDownloadedPathMenuItems(menu, summaryItem.id);
         }
     }
 

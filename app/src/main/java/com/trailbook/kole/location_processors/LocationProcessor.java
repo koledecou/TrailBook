@@ -1,16 +1,11 @@
 package com.trailbook.kole.location_processors;
 
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.RemoteViews;
 
-import com.trailbook.kole.activities.R;
-import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 
 /**
@@ -18,7 +13,7 @@ import com.trailbook.kole.data.Constants;
  */
 public abstract class LocationProcessor {
     public static final int LISTENING_NOTIFICATION_ID = 2;
-    public static final String EXTRA_STOP = "EXTRA_STOP" ;
+
     NotificationManager mNotificationManager;
     NotificationCompat.Builder mListeningNotifyBuilder;
 
@@ -35,25 +30,36 @@ public abstract class LocationProcessor {
         mNotificationManager.cancelAll();
     }
 
-    NotificationCompat.Builder createListeningNotifyBuilder (String title, String content) {
-        RemoteViews followingNotificationView = new RemoteViews(mContext.getPackageName(), R.layout.following_notification);
+/*    NotificationCompat.Builder createListeningNotifyBuilder(String title, String content, RemoteViews notificationRemoteView) {
         Intent stopButtonIntent = new Intent(mContext, ReceiveStartStopLocationUpdatesCommand.class);
         stopButtonIntent.putExtra(EXTRA_STOP, true);
-        followingNotificationView.setOnClickPendingIntent(R.id.fn_button_stop, PendingIntent.getBroadcast(mContext, 0, stopButtonIntent, 0));
 
+        Intent pauseButtonIntent = new Intent(mContext, ReceiveStartStopLocationUpdatesCommand.class);
+        pauseButtonIntent.putExtra(EXTRA_PAUSE, true);
 
-        followingNotificationView.setTextViewText(R.id.fn_text_title, title);
-        followingNotificationView.setTextViewText(R.id.fn_text_content, content);
+        Intent resumeButtonIntent = new Intent(mContext, ReceiveStartStopLocationUpdatesCommand.class);
+        resumeButtonIntent.putExtra(EXTRA_RESUME, true);
+
+        notificationRemoteView.setOnClickPendingIntent(R.id.fn_button_stop, PendingIntent.getBroadcast(mContext, RC_STOP, stopButtonIntent, 0));
+        notificationRemoteView.setOnClickPendingIntent(R.id.fn_button_resume, PendingIntent.getBroadcast(mContext, RC_RESUME, resumeButtonIntent, 0));
+        notificationRemoteView.setOnClickPendingIntent(R.id.fn_button_pause, PendingIntent.getBroadcast(mContext, RC_PAUSE, pauseButtonIntent, 0));
+
+        notificationRemoteView.setTextViewText(R.id.fn_text_title, title);
+        notificationRemoteView.setTextViewText(R.id.fn_text_content, content);
 
         return new NotificationCompat.Builder(mContext)
                 .setSmallIcon(R.drawable.trail_book_logo)
-                .setContent(followingNotificationView)
+                .setContent(notificationRemoteView)
                 .setContentIntent(getListeningNotificationPendingIntent())
                 .setOngoing(true);
-    }
+    }*/
 
+/*    protected RemoteViews getNotificationRemoteView() {
+        RemoteViews notificationView = new RemoteViews(mContext.getPackageName(), R.layout.active_path_notification);
+        return notificationView;
+    }*/
 
-    private PendingIntent getListeningNotificationPendingIntent() {
+/*    private PendingIntent getListeningNotificationPendingIntent() {
         Intent resultIntent = new Intent(mContext, TrailBookActivity.class);
         resultIntent.setAction("android.intent.action.MAIN");
         resultIntent.addCategory("android.intent.category.LAUNCHER");
@@ -67,7 +73,7 @@ public abstract class LocationProcessor {
                 );
 
         return resultPendingIntent;
-    }
+    }*/
 
     public abstract void process(Location newLocation);
 }

@@ -20,15 +20,9 @@ public class PathSummary {
     ArrayList<String> segmentIds;
 
     //TODO: add objects for associated climbs, books, summary images, etc...
-
     String _id = "-1";
     GeoPoint startCoords = null;
     GeoPoint endCoords = null;
-
-/*    public PathSummary(String id, String ownerID) {
-        this.id=id;
-        this.ownerID = ownerID;
-    }*/
 
     public PathSummary(String id) {
         this._id=id;
@@ -99,6 +93,10 @@ public class PathSummary {
     public void setDescription(String desc) {
         this.description = desc;
         updateTimeStamp();
+    }
+
+    public void setOwnerID(String ownerID) {
+        this.ownerID = ownerID;
     }
 
     public String getName()                 { return name; }

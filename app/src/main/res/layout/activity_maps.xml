@@ -36,7 +36,8 @@
                     android:textAppearance="?android:attr/textAppearanceLarge"
                     android:text=""
                     android:id="@+id/map_tv_message"
-                    android:layout_gravity="bottom|center_horizontal" />
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@color/Cornsilk" />
             </FrameLayout>
             <LinearLayout
                 android:id="@+id/details_panel_container"

@@ -18,6 +18,7 @@ import android.widget.TextView;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -42,6 +43,7 @@ import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
+import com.trailbook.kole.events.RefreshMessageEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
 import com.trailbook.kole.fragments.point_attched_object_view.PointAttachedObjectView;
@@ -81,6 +83,13 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     public boolean isMapLoaded() {
         return mMapLoaded;
+    }
+
+    public LatLngBounds getBounds() {
+        if (mMap != null)
+            return mMap.getProjection().getVisibleRegion().latLngBounds;
+        else
+            return null;
     }
 
     public enum MarkerType {START,END,NOTE,UNKNOWN}
@@ -177,7 +186,40 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         processQueuedEvents();
         if (TrailBookState.getMode() == TrailBookState.MODE_EDIT && mSelectedLocation != null)
             putSelectedMarkerOnMap(mSelectedLocation);
+
+        displayMessage();
 //        Toast.makeText(TrailBookState.getInstance(), "TrailBookMapFragment.onMapLoaded()", Toast.LENGTH_SHORT).show();
+    }
+
+    private void displayMessage() {
+        TextView tvMapMessage = (TextView)(getActivity().findViewById(R.id.map_tv_message));
+        if (tvMapMessage == null) {
+            return;
+        }
+
+        if (TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
+            tvMapMessage.setVisibility(View.VISIBLE);
+            PathSummary summary = mPathManager.getPathSummary(TrailBookState.getActivePathId());
+            String message = String.format(getString(R.string.editing_message), summary.getName());
+            tvMapMessage.setText(message);
+        } else if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
+            String message;
+            if (TrailBookState.isListeningToLocationUpdates()) {
+                PathSummary summary = mPathManager.getPathSummary(TrailBookState.getActivePathId());
+                message = String.format(getString(R.string.leading_message), summary.getName());
+            } else {
+                message = getString(R.string.location_updates_paused);
+            }
+            tvMapMessage.setVisibility(View.VISIBLE);
+            tvMapMessage.setText(message);
+        } else if (TrailBookState.getMode() == TrailBookState.MODE_FOLLOW) {
+            tvMapMessage.setVisibility(View.VISIBLE);
+            PathSummary summary = mPathManager.getPathSummary(TrailBookState.getActivePathId());
+            String message = String.format(getString(R.string.following_message), summary.getName());
+            tvMapMessage.setText(message);
+        } else {
+            tvMapMessage.setVisibility(View.INVISIBLE);
+        }
     }
 
     private void createMapObjects() {
@@ -218,7 +260,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         hideMapMessage();
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment Mode:" + TrailBookState.getMode());
 
-//        Toast.makeText(TrailBookState.getInstance(), "TrailBookMapFragment.onCreate()", Toast.LENGTH_SHORT).show();
         return v;
     }
 
@@ -517,7 +558,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         return pv;
     }
 
-
     private MarkerType getMarkerType(Marker marker) {
         //TODO: refactor me
         String id = mStartMarkers.getKey(marker);
@@ -735,10 +775,17 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private MarkerOptions getNewEndMarker(PathSummary summary) {
+        BitmapDescriptor icon = null;
+        if (mPathManager.isStoredLocally(summary.getId())) {
+            icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark);
+        } else {
+            icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark_cloud);
+        }
+
         MarkerOptions options = new MarkerOptions()
                 .position(summary.getEnd())
                 .title(summary.getName())
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark));
+                .icon(icon);
         return options;
     }
 
@@ -937,6 +984,17 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         } else if (event.getNewMode() == TrailBookState.MODE_EDIT) {
             prepareMapForEditMode();
         }
+        displayMessage();
+    }
+
+    @Subscribe
+    public void onRefreshMessageEvent(RefreshMessageEvent event) {
+        if (mMap == null || !isMapLoaded()) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        this.displayMessage();
     }
 
     private void prepareMapForEditMode() {
@@ -983,6 +1041,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 onModeChangedEvent((ModeChangedEvent) event);
             else if (event instanceof PointAttachedObjectDeletedEvent)
                 onPointAttachedObjectDeletedEvent((PointAttachedObjectDeletedEvent) event);
+            else if (event instanceof RefreshMessageEvent)
+                onRefreshMessageEvent((RefreshMessageEvent) event);
         }
     }
 }

@@ -14,6 +14,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
@@ -29,9 +30,19 @@ import com.trailbook.kole.location_processors.LocationProcessor;
 import com.trailbook.kole.location_processors.PathLeaderLocationProcessor;
 import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 
+import org.acra.ACRA;
+import org.acra.ReportingInteractionMode;
+import org.acra.annotation.ReportsCrashes;
+
 /**
  * Created by kole on 9/8/2014.
  */
+
+@ReportsCrashes(formKey = "", // will not be used
+        mailTo = "kole.decou@gmail.com",
+        mode = ReportingInteractionMode.TOAST,
+        resToastText = R.string.crash_toast_text)
+
 public class TrailBookState extends Application {
     public static final int MODE_SEARCH = 1;
     public static final int MODE_LEAD = 2;
@@ -42,6 +53,7 @@ public class TrailBookState extends Application {
     private static final String SAVED_LOCATION = "SAVED_LOCATION";
     private static final String SAVED_ACTIVE_SEGMENT = "SAVED_ACTIVE_SEGMENT";
     private static final String SAVED_ACTIVE_PATH = "SAVED_ACTIVE_PATH";
+    private static final String SAVED_USER_ID = "SAVED_USER_ID";
     private static final String CLOUD_REFRESH_TS = "CLOUD_REFRESH_TS";
 
     private static int mMode = MODE_SEARCH;
@@ -50,9 +62,13 @@ public class TrailBookState extends Application {
     private static Location mCurrentLocation;
     private static PathManager mPathManager;
     private static SharedPreferences prefs;
-    private static long mLastRefreshedFromCloudTimeStamp;
+    private static long mLastRefreshedFromCloudTimeStamp = 0;
     private static LocationProcessor locationProcessor;
+    private static String mUserId;
+    private static int mConsecutiveGoodLocations = 0;
     private Bus bus;
+
+    private static boolean mIsListeningToLocationUpdates = false;
 
     private static TrailBookState INSTANCE;
 
@@ -68,6 +84,8 @@ public class TrailBookState extends Application {
         mPathManager = PathManager.getInstance();
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        ACRA.init(this);
     }
 
     public static TrailBookState getInstance(){
@@ -110,6 +128,16 @@ public class TrailBookState extends Application {
         editor.putInt(SAVED_MODE, mMode);
         editor.commit();
     }
+/*
+
+    public static NotificationCompat.Builder getListeningNotifyBuilder() {
+        return mListeningNotifyBuilder;
+    }
+
+    public static void setListeningNotifyBuilder(NotificationCompat.Builder listeningNotifyBuilder) {
+        mListeningNotifyBuilder = listeningNotifyBuilder;
+    }
+*/
 
     public static int getMode() {
         return mMode;
@@ -228,7 +256,13 @@ public class TrailBookState extends Application {
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored mode," + mMode);
     }
 
+    private static void restoreUserId() {
+        mUserId = prefs.getString(SAVED_USER_ID, "-1");
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored user id," + mUserId);
+    }
+
     public static void restoreState() {
+        restoreUserId();
         restoreActivePathId();
         restoreActiveSegmentId();
 
@@ -255,13 +289,14 @@ public class TrailBookState extends Application {
             // something really wrong here
             Log.e(Constants.TRAILBOOK_TAG, "Could not start service " + comp.toString());
         }
+        mIsListeningToLocationUpdates = true;
     }
 
     public void stopLocationUpdates() {
         disableLocationReceiver();
         ComponentName comp = new ComponentName(this.getPackageName(), BackgroundLocationService.class.getName());
         stopService(new Intent().setComponent(comp));
-        removeAllNotificaions();
+        mIsListeningToLocationUpdates = false;
     }
 
     public void enableLocationReceiver(){
@@ -287,7 +322,7 @@ public class TrailBookState extends Application {
         mCurrentPathId=null;
         mCurrentSegmentId=null;
         stopLocationUpdates();
-
+        removeAllNotificaions();
         if (locationProcessor != null) {
             setLocationProcessor(null);
         }
@@ -296,7 +331,7 @@ public class TrailBookState extends Application {
         bus.post(new ModeChangedEvent(oldMode, MODE_SEARCH));
     }
 
-    private void removeAllNotificaions() {
+    public void removeAllNotificaions() {
         NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
     }
@@ -322,6 +357,7 @@ public class TrailBookState extends Application {
         setActivePathId(pathId);
         setActiveSegmentId(null);
         stopLocationUpdates();
+        removeAllNotificaions();
         if (locationProcessor != null) {
             setLocationProcessor(null);
         }
@@ -338,6 +374,30 @@ public class TrailBookState extends Application {
     }
 
     public static String getCurrentUserId() {
-        return "-1";
+        return mUserId;
+    }
+
+    public void setUserId(String userId) {
+        mUserId = userId;
+        SharedPreferences.Editor editor = prefs.edit();
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": saving user id " + userId);
+        editor.putString(SAVED_USER_ID, userId);
+        editor.commit();
+    }
+
+    public static boolean isListeningToLocationUpdates() {
+        return mIsListeningToLocationUpdates;
+    }
+
+    public static void incrementConsecutiveGoodLocations() {
+        mConsecutiveGoodLocations++;
+    }
+
+    public static int getConsecutiveGoodLocations() {
+        return mConsecutiveGoodLocations;
+    }
+
+    public static void resetConsecutiveGoodLocations() {
+        mConsecutiveGoodLocations = 0;
     }
 }

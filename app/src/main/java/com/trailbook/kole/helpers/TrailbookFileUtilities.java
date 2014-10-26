@@ -1,12 +1,12 @@
 package com.trailbook.kole.helpers;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
@@ -110,6 +110,18 @@ public class TrailbookFileUtilities {
         return Uri.fromFile(getOutputMediaFile(fileName));
     }
 
+    public static int getOrientation(Context context, Uri photoUri) {
+    /* it's on the external media. */
+        Cursor cursor = context.getContentResolver().query(photoUri,
+                new String[] { MediaStore.Images.ImageColumns.ORIENTATION }, null, null, null);
+
+        if (cursor.getCount() != 1) {
+            return -1;
+        }
+
+        cursor.moveToFirst();
+        return cursor.getInt(0);
+    }
     /** Create a File for saving an image or video */
     public static File getOutputMediaFile(String fileName){
         // To be safe, you should check that the SDCard is mounted
@@ -120,68 +132,6 @@ public class TrailbookFileUtilities {
         dir.mkdirs();
         File file = new File(dir, fileName);
         return file;
-    }
-
-    public static Bitmap rotate(Bitmap bitmap, int degree) {
-        int w = bitmap.getWidth();
-        int h = bitmap.getHeight();
-
-        Matrix mtx = new Matrix();
-        mtx.postRotate(degree);
-
-        return Bitmap.createBitmap(bitmap, 0, 0, w, h, mtx, true);
-    }
-
-    public static Bitmap getRotatedBitmap(Uri uri) {
-        String fileName = uri.getPath();
-        return getRotatedBitmap(fileName);
-    }
-
-    public static Bitmap getRotatedBitmap(String fileName) {
-        Bitmap realImage = BitmapFactory.decodeFile(fileName);
-        try {
-            ExifInterface exif=new ExifInterface(fileName);
-
-            Log.d("nilai exif ", exif.getAttribute(ExifInterface.TAG_ORIENTATION));
-            if(exif.getAttribute(ExifInterface.TAG_ORIENTATION).equalsIgnoreCase("6")){
-
-                realImage=rotate(realImage, 90);
-            }else if(exif.getAttribute(ExifInterface.TAG_ORIENTATION).equalsIgnoreCase("8")){
-                realImage=rotate(realImage, 270);
-            }else if(exif.getAttribute(ExifInterface.TAG_ORIENTATION).equalsIgnoreCase("3")){
-                realImage=rotate(realImage, 180);
-            }
-
-            return realImage;
-        } catch (Exception e) {
-            return realImage;
-        }
-    }
-
-    public static Bitmap getRotatedBitmap(Bitmap image, String orientation) {
-        try {
-            if(orientation.equalsIgnoreCase("6")){
-                image=rotate(image, 90);
-            }else if(orientation.equalsIgnoreCase("8")){
-                image=rotate(image, 270);
-            }else if(orientation.equalsIgnoreCase("3")){
-                image=rotate(image, 180);
-            }
-
-            return image;
-        } catch (Exception e) {
-            return image;
-        }
-    }
-
-    public static Bitmap scaleBitmapToWidth(Bitmap bitmap, int newWidth) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-
-        double ratio = (double)height/(double)width;
-        int newHeight = (int)Math.round(newWidth*ratio);
-
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
 
     public static void saveImage(Context c, Bitmap bitmap, String fileName) {
