@@ -92,12 +92,32 @@
             android:linksClickable="false"
             android:layout_marginLeft="@dimen/map_message_pad" />
     </LinearLayout>
-    <ImageView
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/vn_image"
-        android:layout_gravity="top|center_horizontal"
-        android:padding="@dimen/small_note_view_image_pad"
-        android:adjustViewBounds="true" />
+        android:layout_height="fill_parent" >
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/vn_image"
+            android:layout_gravity="top|center_horizontal"
+            android:padding="@dimen/small_note_view_image_pad"
+            android:adjustViewBounds="true" />
+        <ImageView
+            android:id="@+id/swipe_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/swipe_left_3" />
+
+        <ImageView
+            android:id="@+id/swipe_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/swipe_right_3" />
+
+    </RelativeLayout>
 
 </LinearLayout>

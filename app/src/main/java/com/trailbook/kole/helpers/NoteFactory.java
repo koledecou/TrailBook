@@ -99,6 +99,7 @@ public class NoteFactory {
     }
 
     public static PointAttachedObjectView getFullScreenView(PointAttachedObject paObject) {
+        Log.d(Constants.TRAILBOOK_TAG, "NoteFactory: getting full screen view");
         if (paObject.getAttachment().getType().equals(NOTE)) {
             PointAttachedObjectView v = new FullNoteView(TrailBookState.getInstance());
             v.setPaoId(paObject.getId());

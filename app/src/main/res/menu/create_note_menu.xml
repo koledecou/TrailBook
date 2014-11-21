@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_bar_cut_image"
+        android:title="@string/cut"
+        android:icon="@drawable/ic_action_cut"
+        android:showAsAction="withText|ifRoom" />
     <item android:id="@+id/action_bar_gallery"
         android:title="@string/gallery"
         android:icon="@drawable/ic_action_gallery"

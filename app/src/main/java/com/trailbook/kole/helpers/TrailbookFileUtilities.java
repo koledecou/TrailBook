@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
  * Created by Fistik on 7/14/2014.
@@ -90,6 +91,16 @@ public class TrailbookFileUtilities {
     public static File getInternalImageFile(String imageFileName) {
         String fullDirectory = TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
         return new File(fullDirectory, imageFileName);
+    }
+
+    public static ArrayList<String> getInternalImageFiles(ArrayList<String> fileNames) {
+        ArrayList<String> imageFileUris = new ArrayList<String>();
+        for (String fileName:fileNames) {
+            File f = getInternalImageFile(fileName);
+            String uri = f.toURI().toString();
+            imageFileUris.add(uri);
+        }
+        return imageFileUris;
     }
 
     public static File getInternalImageFileDir() {
@@ -239,6 +250,7 @@ public class TrailbookFileUtilities {
         reader.close();
         return stringBuilder.toString();
     }
+
 
 
 }

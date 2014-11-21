@@ -51,10 +51,31 @@
         <requestFocus />
     </EditText>
 
+
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
     <ImageView
         android:id="@+id/cn_image"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:src="@android:drawable/screen_background_dark" />
+    <ImageView
+        android:id="@+id/swipe_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/swipe_left_3" />
+
+    <ImageView
+        android:id="@+id/swipe_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/swipe_right_3" />
+    </RelativeLayout>
 
 </LinearLayout>

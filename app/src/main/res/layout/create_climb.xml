@@ -17,11 +17,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Delete"
-            android:id="@+id/cc_b_delete" />
+            android:id="@+id/cn_b_delete" />
 
         <Button
             style="?android:attr/buttonStyleSmall"
-            android:id="@+id/cc_b_cancel"
+            android:id="@+id/cn_b_cancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cn_cancel"
@@ -31,7 +31,7 @@
 
         <Button
             style="?android:attr/buttonStyleSmall"
-            android:id="@+id/cc_b_ok"
+            android:id="@+id/cn_b_ok"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cn_ok"
@@ -146,10 +146,32 @@
             android:entries="@array/climb_type"
             android:layout_weight="1" />
     </LinearLayout>
-    <ImageView
-        android:id="@+id/cc_image"
+
+
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:src="@android:drawable/screen_background_dark" />
+        android:layout_height="fill_parent" >
+
+        <ImageView
+            android:id="@+id/cn_image"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@android:drawable/screen_background_dark" />
+        <ImageView
+            android:id="@+id/swipe_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/swipe_left_3" />
+
+        <ImageView
+            android:id="@+id/swipe_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/swipe_right_3" />
+    </RelativeLayout>
 
 </LinearLayout>

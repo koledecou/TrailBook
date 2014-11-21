@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 
 import com.trailbook.kole.activities.R;
+import com.trailbook.kole.data.PointAttachedObject;
 
 /**
  * Created by kole on 9/4/2014.
@@ -24,4 +25,16 @@ public class FullNoteView extends NoteView {
         super(context, attrs, defStyle);
         init( R.layout.view_note_full, -1);
     }
+
+    @Override
+    public void loadViews(){
+        super.loadViews();
+    }
+
+    @Override
+    public void populateFieldsFromObject(PointAttachedObject pao) {
+        super.populateFieldsFromObject(pao);
+    }
+
+
 }

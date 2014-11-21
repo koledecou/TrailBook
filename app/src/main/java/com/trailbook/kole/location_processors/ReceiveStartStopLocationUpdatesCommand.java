@@ -62,6 +62,7 @@ public class ReceiveStartStopLocationUpdatesCommand extends BroadcastReceiver {
             Log.d(Constants.TRAILBOOK_TAG, "ReceiveStartStopLocationUpdatesCommand: new adding new segment id " + newSegmentId );
             TrailBookState.setActiveSegmentId(newSegmentId);
             TrailBookState.getInstance().resumeLeadingActivePath(true);
+            //wait for location?
             String title = String.format(context.getString(R.string.leading_trail_title), PathManager.getInstance().getPathSummary(pathId).getName());
             String content = context.getString(R.string.leading_trail_notification_content);
             NotificationCompat.Builder builder = NotificationUtils.createListeningNotifyBuilder(context, title, content, pathId, remoteViews);

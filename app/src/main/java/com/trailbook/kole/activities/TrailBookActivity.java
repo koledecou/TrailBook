@@ -99,8 +99,8 @@ public class TrailBookActivity extends Activity
     private SlidingUpPanelLayout mSlidingUpPanel;
     private Fragment mPathSelectorFragment;
     private Fragment mContent;
-    private ProgressDialog mWaitingForLocationDialog;
     private TrailBookLocationReceiver mLocationReceiver;
+    private ProgressDialog mWaitingForLocationDialog;
     private  String mActionPath = null;
 
     @Override
@@ -771,7 +771,7 @@ public class TrailBookActivity extends Activity
 
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event){
-        if (mWaitingForLocationDialog == null) //the dialog has already been dismissed.
+        if (!isWaitingForGoodLocation()) //the dialog has already been dismissed.
             return;
 
         if (TrailbookPathUtilities.isAccurateEnoughToStartLeading(event.getLocation()))
@@ -804,19 +804,7 @@ public class TrailBookActivity extends Activity
         }
     }
 
-    private void waitForLocation() {
-        mWaitingForLocationDialog = new ProgressDialog(this);
-        mWaitingForLocationDialog.setMessage(getString(R.string.waiting_for_location));
-        mWaitingForLocationDialog.setCancelable(false);
-        mWaitingForLocationDialog.show();
-    }
 
-    private void cancelWaitForLocationDialog() {
-        if (mWaitingForLocationDialog != null) {
-            mWaitingForLocationDialog.dismiss();
-            mWaitingForLocationDialog = null;
-        }
-    }
 
     private void showNoPathsAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
@@ -916,5 +904,31 @@ public class TrailBookActivity extends Activity
             }
         };
         ApplicationUtils.showAlert(this, affirmCloudDeleteListener, "Delete From Cloud?", "This action is not reversible.", "Delete", "Cancel");
+    }
+
+    public void waitForLocation() {
+        TrailBookState.resetConsecutiveGoodLocations();
+        mWaitingForLocationDialog = new ProgressDialog(this);
+        mWaitingForLocationDialog.setMessage(getString(R.string.waiting_for_location));
+        mWaitingForLocationDialog.setCancelable(false);
+        mWaitingForLocationDialog.show();
+    }
+
+    public void cancelWaitForLocationDialog() {
+        try {
+            if (mWaitingForLocationDialog != null) {
+                mWaitingForLocationDialog.dismiss();
+                mWaitingForLocationDialog = null;
+            }
+        } catch (Exception e) {
+            Log.d(Constants.TRAILBOOK_TAG, "Exception closing dialog:", e);
+        }
+    }
+
+    public boolean isWaitingForGoodLocation() {
+        if (mWaitingForLocationDialog == null)
+            return false;
+        else
+            return true;
     }
 }

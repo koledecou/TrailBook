@@ -32,7 +32,7 @@ public class ApproachingObjectNotificationReceiverActivity extends Activity {
         LinearLayout layout = (LinearLayout)findViewById(R.id.full_pao_layout);
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": inflating R.layout.view_note_full");
         PointAttachedObjectView view = NoteFactory.getFullScreenView(paObject);
-        view.setPaoId(mId);
+        //view.setPaoId(mId);
         layout.addView(view);
     }
 
