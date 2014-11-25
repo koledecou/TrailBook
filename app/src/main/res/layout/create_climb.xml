@@ -90,7 +90,9 @@
             android:layout_height="wrap_content"
             android:entries="@array/grading_systems"
             android:id="@+id/cc_spinner_grade_system" />
+
     </LinearLayout>
+
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
@@ -109,7 +111,37 @@
                 android:imeOptions="actionDone"
                 android:layout_gravity="top|left">
             </EditText>
+
     </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Pitches"
+            android:id="@+id/cc_tv_pitch_count" />
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/cc_et_pitch_count"
+            android:width="@dimen/pitch_count_edit_width" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Pitch Descriptions"
+            android:id="@+id/cc_b_add_pitch_descriptions" />
+    </LinearLayout>
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="fill_parent"

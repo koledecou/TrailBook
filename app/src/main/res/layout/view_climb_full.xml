@@ -1,123 +1,271 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="fill|top"
-    android:orientation="vertical"
-    android:id="@+id/nv_full_note_layout">
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="2.6 miles SE of you"
-        android:id="@+id/vn_navigation_details"
-        android:textColor="@color/Black" />
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/linearLayout">
+    android:layout_height="match_parent">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="fill|top"
+        android:orientation="vertical"
+        android:id="@+id/nv_full_note_layout">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Name"
-            android:id="@+id/vc_name_label"
-            android:layout_gravity="top|left"
-            android:textColor="@color/Black" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Damfino Spire"
-            android:id="@+id/vc_name"
-            android:layout_gravity="top|left"
-            android:minWidth="@dimen/small_note_view_min_text_panel_width"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="2.6 miles SE of you"
+            android:id="@+id/vn_navigation_details"
             android:textColor="@color/Black"
-            android:linksClickable="false"
-            android:layout_marginLeft="@dimen/map_message_pad" />
-    </LinearLayout>
+            android:layout_gravity="right" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Grade"
-            android:id="@+id/vc_text_grade_label"
-            android:layout_gravity="top|left"
-            android:textColor="@color/Black" />
+            android:id="@+id/linearLayout"
+            android:weightSum="1">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Damfino Spire"
+                android:id="@+id/vc_name"
+                android:textColor="@color/FireBrick"
+                android:linksClickable="false"
+                android:layout_weight="0"
+                android:textAlignment="textStart"
+                android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="5.10"
-            android:id="@+id/vc_grade"
-            android:layout_gravity="top|left"
-            android:minWidth="@dimen/small_note_view_min_text_panel_width"
-            android:textColor="@color/Black"
-            android:linksClickable="false"
-            android:layout_marginLeft="@dimen/map_message_pad" />
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="5.10"
+                android:id="@+id/vc_grade"
+                android:layout_gravity="top|left"
+                android:textColor="@color/Black"
+                android:linksClickable="false"
+                android:textAlignment="viewStart"
+                android:paddingLeft="@dimen/left_pad" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="3"
+                android:textColor="@color/Black"
+                android:id="@+id/vc_pitch_count"
+                android:paddingLeft="@dimen/left_pad"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/pitch_count_label"
+                android:textColor="@color/Black"
+                android:id="@+id/vc_pitch_count_label"
+                android:paddingLeft="@dimen/left_pad" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="traditional"
+                android:textColor="@color/Black"
+                android:id="@+id/vc_climb_category"
+                android:layout_weight="0"
+                android:paddingLeft="@dimen/left_pad"
+                android:textStyle="italic" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Description"
-            android:id="@+id/vc_text_description_label"
-            android:layout_gravity="top|left"
-            android:textColor="@color/Black" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Pitch 1 starts in a good hand crack.  Traverse right at the end of the hand crack and climb bad rock to the belay.  Pitch 2 is a beautiful offwidth.  Pitch 3 is an easy fun chimney to the summit."
-            android:id="@+id/vc_description"
-            android:layout_gravity="top|left"
-            android:minWidth="@dimen/small_note_view_min_text_panel_width"
-            android:textColor="@color/Black"
-            android:linksClickable="false"
-            android:layout_marginLeft="@dimen/map_message_pad" />
-    </LinearLayout>
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" >
-        <ImageView
+            android:paddingBottom="@dimen/bottom_pad">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="One of the classic Sedona offwidth climbs, marred by a dirty first pitch."
+                android:id="@+id/vc_description"
+                android:layout_gravity="top|left"
+                android:minWidth="@dimen/small_note_view_min_text_panel_width"
+                android:textColor="@color/Black"
+                android:linksClickable="false"
+                android:gravity="left" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:id="@+id/vn_image"
-            android:layout_gravity="top|center_horizontal"
-            android:padding="@dimen/small_note_view_image_pad"
-            android:adjustViewBounds="true" />
-        <ImageView
-            android:id="@+id/swipe_left"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/swipe_left_3" />
+            android:id="@+id/vc_pitch_description_container">
 
-        <ImageView
-            android:id="@+id/swipe_right"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/swipe_right_3" />
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/linearLayout1">
 
-    </RelativeLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Pitch 1"
+                    android:textColor="@color/Black"
+                    android:id="@+id/vc_pitch_label"
+                    android:textStyle="bold" />
 
-</LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/Black"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text='thin hands 5.10- to choss to ledge with "bad bolts"'
+                    android:id="@+id/vc_pitch_description"
+                    android:paddingLeft="@dimen/left_pad" />
+
+            </LinearLayout>
+
+            <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/linearLayout2" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/Black"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Pitch 2"
+                android:id="@+id/textView2"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/vc_pitch_description_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/Black"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/sample_pitch2"
+                android:paddingLeft="@dimen/left_pad" />
+        </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/linearLayout3" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/Black"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Pitch 3"
+                    android:id="@+id/textView3"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/vc_pitch_description_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/Black"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="@string/sample_pitch3"
+                    android:paddingLeft="@dimen/left_pad" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/linearLayout4" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/Black"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Descent"
+                    android:id="@+id/textView4"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/vc_descent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/Black"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="@string/sample_descent"
+                    android:paddingLeft="@dimen/left_pad" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="@string/rack_label"
+                android:id="@+id/vc_rack_label"
+                android:textColor="@color/Black"
+                android:textStyle="bold|italic" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/Black"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/sample_rack"
+                android:id="@+id/vc_rack"
+                android:paddingLeft="@dimen/left_pad" />
+        </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+            <ImageView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:id="@+id/vn_image"
+                android:layout_gravity="top|center_horizontal"
+                android:paddingLeft="@dimen/small_note_view_image_pad"
+                android:src="@drawable/sample1" />
+            <ImageView
+                android:id="@+id/swipe_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/swipe_left_3" />
+
+            <ImageView
+                android:id="@+id/swipe_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/swipe_right_3" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+</ScrollView>

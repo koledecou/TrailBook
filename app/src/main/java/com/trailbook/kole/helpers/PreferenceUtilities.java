@@ -17,15 +17,22 @@ import java.text.DecimalFormat;
 public class PreferenceUtilities {
     public static int getStrayFromPathTriggerDistanceInMeters(Context c) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
+        int triggerDist = getStrayFromPathTriggerDistance(c);
+
+        if ((prefs.getString("unit_of_measure_pref", "US")).equalsIgnoreCase("US")){
+            triggerDist = (int) Math.round(feetToMeters(triggerDist));
+        }
+        return triggerDist;
+    }
+
+    public static int getStrayFromPathTriggerDistance(Context c) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
         if (!prefs.getBoolean("enable_offroute_alert", true)) {
             return Integer.MAX_VALUE;
         }
         String sTriggerDist = prefs.getString("off_route_distance_pref", "75");
         int triggerDist = Integer.valueOf(sTriggerDist);
 
-        if ((prefs.getString("unit_of_measure_pref", "US")).equalsIgnoreCase("US")){
-            triggerDist = (int) Math.round(feetToMeters(triggerDist));
-        }
         return triggerDist;
     }
 
@@ -91,7 +98,17 @@ public class PreferenceUtilities {
         return (double)meters / 0.3048d;
     }
 
-    public static double getNoteAlertDistanceInMeters(Context c) {
+    public static int getNoteAlertDistanceInMeters(Context c) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
+        int triggerDist = getNoteAlertDistance(c);
+        if (isUSUnitsPreferred(c)){
+            triggerDist = (int) Math.round(feetToMeters(triggerDist));
+        }
+        Log.d(Constants.TRAILBOOK_TAG, "PreferenceUtilities: note alert distance: "+ triggerDist);
+        return triggerDist;
+    }
+
+    public static int getNoteAlertDistance(Context c) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
         if (!prefs.getBoolean("enable_prox_2", true)) {
             return Integer.MIN_VALUE;
@@ -99,11 +116,17 @@ public class PreferenceUtilities {
         String sTriggerDist = prefs.getString("triggerRadiusClose", "100");
         int triggerDist = Integer.valueOf(sTriggerDist);
 
-        if ((prefs.getString("unit_of_measure_pref", "US")).equalsIgnoreCase("US")){
-            triggerDist = (int) Math.round(feetToMeters(triggerDist));
-        }
         Log.d(Constants.TRAILBOOK_TAG, "PreferenceUtilities: note alert distance: "+ triggerDist);
         return triggerDist;
+    }
+
+    public static boolean isUSUnitsPreferred(Context c) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
+        if ((prefs.getString("unit_of_measure_pref", "US")).equalsIgnoreCase("US")){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static String getDistanceAndBearingString(Context context, float distance, float bearing) {

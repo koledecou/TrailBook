@@ -13,6 +13,8 @@ public class Climb implements Attachment {
     public String description;
     public String rackDescription;
     public String climbType;
+    public ArrayList<String> pitchDescriptions;
+    public int pitchCount = 1;
 
     public ArrayList<String> imageFileNames;
 
@@ -38,6 +40,29 @@ public class Climb implements Attachment {
 
     public String getDescription() {
         return description;
+    }
+
+    public void addPitchDescription(String description) {
+        if (pitchDescriptions == null)
+            pitchDescriptions = new ArrayList<String>();
+
+        pitchDescriptions.add(description);
+    }
+
+    public void setPitchDescriptions(ArrayList<String> pitchDescriptions) {
+        this.pitchDescriptions = pitchDescriptions;
+    }
+
+    public ArrayList<String> getPitchDescriptions() {
+        return pitchDescriptions;
+    }
+
+    public void setPitchCount(int pitchCount) {
+        this.pitchCount = pitchCount;
+    }
+
+    public int getPitchCount() {
+        return this.pitchCount;
     }
 
     public void setDescription(String description) {

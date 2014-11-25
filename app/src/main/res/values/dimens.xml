@@ -18,4 +18,7 @@
     <dimen name="vn_image_top_pad">15dp</dimen>
     <dimen name="small_note_expand_image_max_height">20dp</dimen>
     <dimen name="notification_image_button">96dp</dimen>
+    <dimen name="left_pad">10dp</dimen>
+    <dimen name="bottom_pad">10dp</dimen>
+    <dimen name="pitch_count_edit_width">60dp</dimen>
 </resources>

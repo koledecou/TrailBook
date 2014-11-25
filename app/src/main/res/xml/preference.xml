@@ -2,8 +2,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <PreferenceCategory android:title="@string/general_settings"
         android:key="general_settings_cat">
-        <EditTextPreference android:title="@string/upload_user_name"
-            android:key="user_name"/>
+        <Preference android:title="User Id"
+            android:key="SAVED_USER_ID_DISPLAY"
+            android:summary="not set"/>
         <ListPreference android:key="unit_of_measure_pref"
             android:summary="@string/uom_summary"
             android:title="@string/uom"

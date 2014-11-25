@@ -28,7 +28,7 @@
     <string name="take_picture">Take Picture</string>
     <string name="general_settings">General Settings</string>
     <string name="notification_settings">Notification Settings</string>
-    <string name="upload_user_name">User Name</string>
+    <string name="upload_user_name">User Id</string>
     <string name="upload_user_name_summary">User name to default for path upload.</string>
     <string name="uom">Unit Of Measure</string>
     <string name="uom_summary">Unit of measure for display.</string>
@@ -36,16 +36,16 @@
     <string name="enable_prox_alert_summary_1">Sound an alert when in the general vicinity of a note.</string>
     <string name="ringtone_1">Ringtone to sound when in the general vicinity of a note.</string>
     <string name="ringtone_title_1">Select Ringtone Vicinity</string>
-    <string name="enable_prox_alert_2">Approaching Note Notification</string>
+    <string name="enable_prox_alert_2">Enable Approaching Note Alert</string>
     <string name="enable_prox_alert_summary_2">Sound an alert when getting close to a note</string>
     <string name="ringtone_2">Ringtone to sound when close to a note.</string>
-    <string name="ringtone_title_2">Alert Sound</string>
+    <string name="ringtone_title_2">Approaching Note Ringtone</string>
     <string name="auto_play">Auto Play</string>
     <string name="auto_play_summary">Auto play audio notes when approaching.</string>
     <string name="auto_play_radius">Auto Play Radius</string>
     <string name="auto_play_radius_summary">Distance at which to auto play audio notes (ft/meters).</string>
     <string name="enable_offroute_alert">Enable Off Route Alert</string>
-    <string name="off_route_alert">Select Ringtone</string>
+    <string name="off_route_alert">Off Route Ringtone</string>
     <string name="off_route_ringtone_summary">Ringtone to sound when off route.</string>
     <string name="off_route_distance">Off Route Trigger Distance</string>
     <string name="off_route_distance_summary">Distance off route at which to sound an alert (ft/meters).</string>
@@ -66,7 +66,7 @@
     <string name="proximity_far_cat">General Proximity Radius Alert Settings</string>
     <string name="proximity_close_cat">Close Proximity Radius Alert Settings</string>
     <string name="off_route_cat">Off Route Notification Settings</string>
-    <string name="alertDistance">Notification Trigger Distance</string>
+    <string name="alertDistance">Approaching Note Trigger Distance</string>
     <string name="note_alert_cat">Approaching Note Notification Settings</string>
     <string name="feet">feet</string>
     <string name="miles">miles</string>
@@ -148,4 +148,15 @@
     <string name="location_updates_paused">PAUSED</string>
     <string name="crash_toast_text">Splat!  Trail Book just decked!</string>
     <string name="cut">Cut</string>
+    <string name="pitch_count_label">Pitches</string>
+    <string name="rack_label">Rack</string>
+    <string name="sample_rack">single set small stuff to #3 camalot then triple old sized  #4, triple old sized #4.5 and single old sized #5.  2 ropes for descent</string>
+    <string name="sample_pitch2">5.10+ Enduro OW chickenwing/hand stack or lieback 150ft or so to some truly bad rusty button head bolts at the notch.</string>
+    <string name="sample_pitch3">5.5 climb choss to tunnel thru to easy climbing to a spectacular summit.</string>
+    <string name="sample_descent">From summit, locate anchors to descend to the base of the chimney with 1 rope.  2 rope rappel from fixed sling/nut anchor to the top of pitch 1.  2 ropes to ground</string>
+    <string name="add_pitch_description_dialog_title">Add Pitch Descriptions</string>
+    <string name="uom_items_us">US (feet/miles)</string>
+    <string name="uom_items_metric">Metric (m/km)</string>
+    <string name="no_account">Sign in with Google</string>
+    <string name="not_enabled">not enabled</string>
 </resources>

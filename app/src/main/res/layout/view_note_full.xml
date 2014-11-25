@@ -6,12 +6,13 @@
     android:orientation="vertical"
     android:id="@+id/nv_full_note_layout">
     <TextView
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="2.6 miles SE of you"
         android:id="@+id/vn_navigation_details"
-        android:textColor="@color/Black" />
+        android:textColor="@color/Black"
+        android:layout_gravity="right" />
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -20,14 +21,15 @@
         android:id="@+id/vn_text_content"
         android:layout_gravity="top|left"
         android:textAlignment="textStart"
-        android:textColor="@color/Black" />
+        android:textColor="@color/Black"
+        android:paddingTop="@dimen/bottom_pad" />
 
     <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" >
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
         <ImageView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:id="@+id/vn_image"
             android:layout_gravity="top|center_horizontal"
             android:padding="@dimen/small_note_view_image_pad"

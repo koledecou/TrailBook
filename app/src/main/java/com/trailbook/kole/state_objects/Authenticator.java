@@ -99,7 +99,8 @@ public class Authenticator  implements GoogleApiClient.ConnectionCallbacks, Goog
     public void onGotAccount(String userName) {
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got user name:" + userName);
         TrailBookState.getInstance().setUserId(userName);
-        mActionOnAccountReceived.execute();
+        if (mActionOnAccountReceived != null)
+            mActionOnAccountReceived.execute();
     }
 
     public void setActionOnAccountReceived(Action action) {

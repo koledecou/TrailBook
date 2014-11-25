@@ -30,6 +30,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.activities.utils.Action;
+import com.trailbook.kole.activities.utils.LoginUtil;
 import com.trailbook.kole.activities.utils.PathUploaderAction;
 import com.trailbook.kole.data.Attachment;
 import com.trailbook.kole.data.Constants;
@@ -39,6 +40,7 @@ import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
+import com.trailbook.kole.events.RefreshMessageEvent;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.fragments.PathDetailsActionListener;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
@@ -240,7 +242,7 @@ public class TrailBookActivity extends Activity
                 Action uploadAction = new PathUploaderAction(mWorkFragment, mPathManager.getPathSummary(pathId));
                 String userId = TrailBookState.getCurrentUserId();
                 if (userId == null || userId == "-1") {
-                    authenticateForAction(uploadAction);
+                    LoginUtil.authenticateForAction(this, uploadAction);
                     //we don't actually need to connect.
                     //Authenticator.getInstance().connect();
                 } else {
@@ -282,13 +284,6 @@ public class TrailBookActivity extends Activity
             TrailBookState.setActiveSegmentId(newSegmentId);
             startLeading(pathId, newSegmentId);
         }
-    }
-
-    private void authenticateForAction(Action uploadAction) {
-        Log.d(Constants.TRAILBOOK_TAG, className + ": getting account");
-        Authenticator.getInstance().initializeAuthentication(this);
-        Authenticator.getInstance().pickUserAccount();
-        Authenticator.getInstance().setActionOnAccountReceived(uploadAction);
     }
 
     @Override
@@ -597,6 +592,7 @@ public class TrailBookActivity extends Activity
         TrailBookState.setActiveSegmentId( null);
         TrailBookState.setLocationProcessor(new PathFollowerLocationProcessor(pathId, this));
         TrailBookState.getInstance().startLocationUpdates();
+        bus.post(new RefreshMessageEvent());
     }
 
     @Override

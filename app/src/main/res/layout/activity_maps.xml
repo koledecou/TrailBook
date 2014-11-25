@@ -31,13 +31,13 @@
                     android:layout_height="match_parent" />
 
                 <TextView
+                    style="@style/MapMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceLarge"
                     android:text=""
                     android:id="@+id/map_tv_message"
                     android:layout_gravity="bottom|center_horizontal"
-                    android:background="@color/Cornsilk" />
+                    android:paddingBottom="@dimen/bottom_pad" />
             </FrameLayout>
             <LinearLayout
                 android:id="@+id/details_panel_container"

@@ -51,8 +51,11 @@ public class FullObjectViewFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_full_pao, container, false);
         LinearLayout layout = (LinearLayout)view.findViewById(R.id.full_pao_layout);
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": inflating R.layout.view_note_full");
-        mPaoView = NoteFactory.getFullScreenView(PathManager.getInstance().getPointAttachedObject(mPaoId));
-        layout.addView(mPaoView);
+        PointAttachedObject pao = PathManager.getInstance().getPointAttachedObject(mPaoId);
+        if (pao != null) {
+            mPaoView = NoteFactory.getFullScreenView(pao);
+            layout.addView(mPaoView);
+        }
 
         return view;
     }
