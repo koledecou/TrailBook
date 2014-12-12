@@ -19,6 +19,7 @@ import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.data.User;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.MapObjectAddedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
@@ -52,6 +53,8 @@ public class TrailBookState extends Application {
     private static final String SAVED_ACTIVE_PATH = "SAVED_ACTIVE_PATH";
     private static final String SAVED_USER_ID = "SAVED_USER_ID";
     private static final String CLOUD_REFRESH_TS = "CLOUD_REFRESH_TS";
+    private static final String SAVED_USER_NAME = "SAVED_USER_NAME" ;
+    private static final String SAVED_PROFILE_PIC_URL = "SAVED_USER_PROFILE_PIC";
 
     private static int mMode = MODE_SEARCH;
     private static String mCurrentPathId;
@@ -61,7 +64,7 @@ public class TrailBookState extends Application {
     private static SharedPreferences prefs;
     private static long mLastRefreshedFromCloudTimeStamp = 0;
     private static LocationProcessor locationProcessor;
-    private static String mUserId;
+    private static User mUser;
     private static int mConsecutiveGoodLocations = 0;
     private Bus bus;
 
@@ -253,13 +256,16 @@ public class TrailBookState extends Application {
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored mode," + mMode);
     }
 
-    private static void restoreUserId() {
-        mUserId = prefs.getString(SAVED_USER_ID, "-1");
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored user id," + mUserId);
+    private static void restoreUser() {
+        mUser = new User();
+        mUser.userId = prefs.getString(SAVED_USER_ID, "-1");
+        mUser.userName = prefs.getString(SAVED_USER_NAME, "");
+        mUser.profilePhotoUrl = prefs.getString(SAVED_PROFILE_PIC_URL, "");
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored user id," + mUser.userId);
     }
 
     public static void restoreState() {
-        restoreUserId();
+        restoreUser();
         restoreActivePathId();
         restoreActiveSegmentId();
 
@@ -370,15 +376,17 @@ public class TrailBookState extends Application {
         switchToLeadMode(mCurrentPathId, mCurrentSegmentId);
     }
 
-    public static String getCurrentUserId() {
-        return mUserId;
+    public static User getCurrentUser() {
+        return mUser;
     }
 
-    public void setUserId(String userId) {
-        mUserId = userId;
+    public void setUser(User user) {
+        mUser = user;
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": saving user id " + userId);
-        editor.putString(SAVED_USER_ID, userId);
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": saving user id " + mUser.userId);
+        editor.putString(SAVED_USER_ID, mUser.userId);
+        editor.putString(SAVED_USER_NAME, mUser.userName);
+        editor.putString(SAVED_PROFILE_PIC_URL, mUser.profilePhotoUrl);
         editor.commit();
     }
 

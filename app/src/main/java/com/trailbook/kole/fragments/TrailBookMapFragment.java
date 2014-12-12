@@ -135,6 +135,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     @Override
     public void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setUpMapIfNeeded();
 //        Toast.makeText(TrailBookState.getInstance(), "TrailBookMapFragment.onCreate()", Toast.LENGTH_SHORT).show();
 //        slidingPanel.setSlidingEnabled(true);
     }
@@ -150,6 +151,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     @Override
     public void onResume() {
         super.onResume();
+        setUpMapIfNeeded();
         setMapTypeToUserPreference();
     }
 
@@ -257,8 +259,12 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         Bundle savedState = getArguments();
         if (savedState != null)
             restoreState(savedState);
-
+        Log.d(Constants.TRAILBOOK_TAG, "getting map");
         mMap = this.getMap();
+        if (mMap == null) {
+            Log.e(Constants.TRAILBOOK_TAG, "error getting map");
+            //todo: create no google maps dialog
+        }
         setUpMapIfNeeded();
         hideMapMessage();
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment Mode:" + TrailBookState.getMode());

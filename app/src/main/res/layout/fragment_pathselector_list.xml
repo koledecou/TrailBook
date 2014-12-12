@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.trailbook.kole.fragments.path_selector.PathSelectorFragment">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:background="#f4f4f4" >
 
-    <ListView
-        android:id="@+id/psf_list"
-        android:layout_width="match_parent"
+    <ExpandableListView
+        android:id="@+id/lvExp"
         android:layout_height="match_parent"
-        android:choiceMode="singleChoice" />
+        android:layout_width="match_parent"/>
 
-</FrameLayout>
+</LinearLayout>

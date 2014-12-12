@@ -157,6 +157,10 @@
     <string name="add_pitch_description_dialog_title">Add Pitch Descriptions</string>
     <string name="uom_items_us">US (feet/miles)</string>
     <string name="uom_items_metric">Metric (m/km)</string>
-    <string name="no_account">Sign in with Google</string>
+    <string name="no_account">Choose Account</string>
     <string name="not_enabled">not enabled</string>
+    <string name="comment">Comment</string>
+    <string name="add_comment_dialog_title">Comment on Path</string>
+    <string name="ccd_upload_comment">Add Comment</string>
+    <string name="set_user_title">Configure User</string>
 </resources>

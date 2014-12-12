@@ -64,6 +64,20 @@ public class TrailbookFileUtilities {
         return getInternalSegmentDirectory() + File.separator + segmentId;
     }
 
+    public static String getInternalCommentsDirectory() {
+        return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.commentsDir;
+    }
+
+    public static String getInternalCommentsDirectory(String pathId) {
+        return getInternalCommentsDirectory() + File.separator + pathId;
+    }
+
+    public static File getInternalCommentFile(String pathId, String commentId) {
+        String fullDirectory = getInternalCommentsDirectory(pathId);
+        String fileName = pathId + "_" + commentId + "_comment.tb";
+        return new File(fullDirectory, fileName);
+    }
+
     public static File getInternalPathSummaryFile(String pathId) {
         String fullDirectory = getInternalPathDirectory(pathId);
         String fileName = pathId + "_summary.tb";
@@ -250,7 +264,4 @@ public class TrailbookFileUtilities {
         reader.close();
         return stringBuilder.toString();
     }
-
-
-
 }

@@ -6,7 +6,6 @@ import android.app.Fragment;
 import android.content.DialogInterface;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
@@ -83,8 +82,8 @@ public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
         return true;
     }
 
-    @Override
+/*    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         parent.showContextMenuForChild(view);
-    }
+    }*/
 }

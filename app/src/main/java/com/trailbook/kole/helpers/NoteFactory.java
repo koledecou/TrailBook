@@ -24,6 +24,7 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 public class NoteFactory {
     public static final String NOTE = "Note";
     public static final String CLIMB = "Climb";
+    public static final String COMMENT = "Comment";
     private static final BidiMap<String, String> classNameMap;
     private static final String DEFAULT_CLASS_NAME = "com.trailbook.kole.data.Note";
     private static final String DEFAULT_SHORT_NAME = "Note";
@@ -33,6 +34,7 @@ public class NoteFactory {
         classNameMap = new DualHashBidiMap<String, String>();
         classNameMap.put("Note", "com.trailbook.kole.data.Note");
         classNameMap.put("Climb", "com.trailbook.kole.data.Climb");
+        classNameMap.put("Comment", "com.trailbook.kole.data.TrailBookComment");
     }
 
     public static String mapClassToShortName(String className) {

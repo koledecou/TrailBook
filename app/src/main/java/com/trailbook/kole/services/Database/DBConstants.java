@@ -6,6 +6,8 @@ package com.trailbook.kole.services.database;
 public class DBConstants {
     public static final String pathCollectionName = "paths";
     public static final String segmentCollectionName = "segments";
+    public static String generalCommentsCollectionName = "generalComments";
+    public static String attachedCommentsCollectionName = "pointAttachedComments";
     public static String noteCollectionName = "pointObjects";
 
     public static final String username = "trailbook";

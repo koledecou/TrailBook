@@ -10,8 +10,11 @@ import com.google.android.gms.common.AccountPicker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 import com.trailbook.kole.activities.utils.Action;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.User;
+import com.trailbook.kole.events.UserUpdatedEvent;
 
 /**
  * Created by kole on 10/4/2014.
@@ -45,13 +48,25 @@ public class Authenticator  implements GoogleApiClient.ConnectionCallbacks, Goog
         mActivity.startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
     }
 
-    public String getUserName () {
-        return TrailBookState.getInstance().getCurrentUserId();
-    }
-
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": connected." + bundle);
+        setUserDetails();
+    }
+
+    private void setUserDetails() {
+        if (mGoogleApiClient.isConnected() && Plus.PeopleApi.getCurrentPerson(mGoogleApiClient) != null) {
+            Person currentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
+            String personName = currentPerson.getDisplayName();
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": user name is " + personName);
+            Person.Image personPhoto = currentPerson.getImage();
+            User user = TrailBookState.getCurrentUser();
+            if (personPhoto != null)
+                user.profilePhotoUrl=personPhoto.getUrl();
+
+            user.userName=personName;
+            TrailBookState.getInstance().setUser(user);
+        }
     }
 
     @Override
@@ -96,9 +111,19 @@ public class Authenticator  implements GoogleApiClient.ConnectionCallbacks, Goog
         }
     }
 
-    public void onGotAccount(String userName) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got user name:" + userName);
-        TrailBookState.getInstance().setUserId(userName);
+    public void onGotAccount(String userId) {
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got user: " + userId);
+/*        if (!mGoogleApiClient.isConnected())
+            connect();
+
+        setUserDetails();*/
+
+        User user = TrailBookState.getCurrentUser();
+        if (user == null) {
+            user = new User();
+        }
+        user.userId = userId;
+        BusProvider.getInstance().post(new UserUpdatedEvent(user));
         if (mActionOnAccountReceived != null)
             mActionOnAccountReceived.execute();
     }

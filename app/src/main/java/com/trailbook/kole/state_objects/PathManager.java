@@ -16,6 +16,7 @@ import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.events.MapObjectAddedEvent;
 import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
@@ -26,7 +27,7 @@ import com.trailbook.kole.events.PathUpdatedEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
 import com.trailbook.kole.helpers.NoteFactory;
-import com.trailbook.kole.helpers.PathDirectoryWalker;
+import com.trailbook.kole.helpers.TrailBookDirectoryWalker;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
@@ -47,6 +48,7 @@ public class PathManager {
     private static Hashtable<String,PathSummary> mPaths;
     private static Hashtable<String,PointAttachedObject> mPointAttachedObjects;
     private static Hashtable<String,PathSegment> mSegments;
+    private static Hashtable<String,TrailBookComment> mPathComments;
     private static Bus bus;
 
     private Gson gson = new Gson();
@@ -54,6 +56,7 @@ public class PathManager {
     private PathManager() {
         mPaths = new Hashtable<String, PathSummary>();
         mSegments = new Hashtable<String, PathSegment>();
+        mPathComments = new Hashtable<String, TrailBookComment>();
         mPointAttachedObjects = new Hashtable<String, PointAttachedObject>();
         bus = BusProvider.getInstance();
         bus.register(this);
@@ -124,6 +127,7 @@ public class PathManager {
         Path path = event.getPath();
         ArrayList<PointAttachedObject> paObjects = path.paObjects;
         ArrayList<PathSegment> segments = path.segments;
+        ArrayList<TrailBookComment> comments = path.comments;
 
         for (PointAttachedObject pao:paObjects) {
             Log.d(Constants.TRAILBOOK_TAG, "PathManager: received pao " + pao.getAttachment().toString());
@@ -136,6 +140,12 @@ public class PathManager {
             mSegments.put(segment.getId(), segment);
             saveSegment(segment);
             bus.post(new SegmentUpdatedEvent(segment));
+        }
+
+        for (TrailBookComment comment:comments) {
+            Log.d(Constants.TRAILBOOK_TAG, "PathManager: recieved comment " + comment.getShortContent());
+            mPathComments.put(comment.getId(), comment);
+            saveComment(comment);
         }
 
         savePath(path);
@@ -232,6 +242,18 @@ public class PathManager {
             }
         }
     }
+
+    public void saveComment (TrailBookComment comment) {
+        Log.d(Constants.TRAILBOOK_TAG, "Saving comment " + comment.getId());
+        String commentJsonString = TrailbookPathUtilities.getCommentJsonString(comment);
+        File commentsFile = TrailbookFileUtilities.getInternalCommentFile(comment.getPathId(), comment.getId());
+        try {
+            FileUtils.write(commentsFile, commentJsonString);
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error saving segment points", e);
+        }
+    }
+
 
     private void saveSegment (PathSegment segment) {
         Log.d(Constants.TRAILBOOK_TAG, "Saving segment " + segment.getId());
@@ -336,33 +358,37 @@ public class PathManager {
             }
         }
 
+        ArrayList<TrailBookComment> comments = loadCommentsForPath(summary.getId());
+
         String pathId = summary.getId();
-        Path path = new Path(summary, getSegmentsForPath(pathId), getPointObjectsForPath(pathId));
+        Path path = new Path(summary, getSegmentsForPath(pathId), getPointObjectsForPath(pathId), comments);
         return path;
     }
 
-/*    public void loadPathsFromDevice() {
-        Log.d(Constants.TRAILBOOK_TAG, "PathManager: loadPathsFromDevice()");
-        ArrayList<PathSummary> summaries = loadSummariesFromDevice(TrailbookFileUtilities.getInternalPathDirectory());
-        for (PathSummary summary:summaries) {
-            bus.post(new PathSummaryAddedEvent(summary));
-            loadPathFromSummary(summary);
-        }
-    }
+    public ArrayList<TrailBookComment> loadCommentsForPath(String pathId) {
+        ArrayList<TrailBookComment> comments = new ArrayList<TrailBookComment>();
+        String pathCommentDir = TrailbookFileUtilities.getInternalCommentsDirectory(pathId);
+        TrailBookDirectoryWalker walker = new TrailBookDirectoryWalker("_comment.tb");
 
-    public void loadCachedPathSummaries() {
-        Log.d(Constants.TRAILBOOK_TAG, "PathManager: loadCachedPathSummaries()");
-        ArrayList<PathSummary> summaries = loadSummariesFromDevice(TrailbookFileUtilities.getInternalCacheDirectory());
-        for (PathSummary summary:summaries) {
-            bus.post(new PathSummaryAddedEvent(summary));
+        ArrayList<String> commentsJsonStrings = walker.getFileContentsFromDevice(pathCommentDir);
+        for (String thisContent:commentsJsonStrings) {
+            try {
+                TrailBookComment comment = gson.fromJson(thisContent, TrailBookComment.class);
+                comments.add(comment);
+                addPathComment(comment);
+                Log.d(Constants.TRAILBOOK_TAG, "PathManager: loaded comment: " + comment.getShortContent());
+            }catch (Exception e) {
+                Log.e(Constants.TRAILBOOK_TAG, "Error loading path.", e);
+            }
         }
-    }*/
+        return comments;
+    }
 
     public ArrayList<PathSummary> loadSummariesFromDevice(String pathRootDir) {
         ArrayList<PathSummary> summaries = new ArrayList<PathSummary>();
-        PathDirectoryWalker walker = new PathDirectoryWalker("_summary.tb");
+        TrailBookDirectoryWalker walker = new TrailBookDirectoryWalker("_summary.tb");
 
-        ArrayList<String> pathSummaryFileContents = walker.getPathFileContentsFromDevice(pathRootDir);
+        ArrayList<String> pathSummaryFileContents = walker.getFileContentsFromDevice(pathRootDir);
         for (String thisContent:pathSummaryFileContents) {
             try {
                 PathSummary summary = getSummaryFromString(thisContent);
@@ -704,5 +730,25 @@ public class PathManager {
         PathSummary summary = getPathSummary(pathId);
         summary.addSegment(segmentId);
         return segmentId;
+    }
+
+    public ArrayList<String> getTags(String pathId) {
+        //for now just give the all one
+        ArrayList<String> tags = new ArrayList<String>();
+        tags.add("All Paths");
+        return  tags;
+    }
+
+    public ArrayList<TrailBookComment> getComments(String pathId) {
+        ArrayList<TrailBookComment> comments = new ArrayList<TrailBookComment>();
+        for (TrailBookComment comment:mPathComments.values()) {
+            if (comment.getPathId().equals(pathId))
+                comments.add(comment);
+        }
+        return comments;
+    }
+
+    public void addPathComment(TrailBookComment comment) {
+        mPathComments.put(comment.getId(), comment);
     }
 }

@@ -92,7 +92,11 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
         mImageFileNames = a.getImageFileNames();
         if (mImageFileNames != null && mImageFileNames.size()>0) {
             mCurrentImageIndex = 0;
+            mImageView.setVisibility(VISIBLE);
             loadCurrentImage();
+        } else {
+            Log.d(Constants.TRAILBOOK_TAG, "no images");
+            mImageView.setVisibility(GONE);
         }
         if (mNextArrowView != null && mPreviousArrowView != null)
             showOrHideSliderArrows(mPaObject.getAttachment().getImageFileNames());

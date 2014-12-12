@@ -20,7 +20,7 @@ public class PathUploaderAction implements Action {
     }
 
     public void execute() {
-        String userId = TrailBookState.getInstance().getCurrentUserId();
+        String userId = TrailBookState.getInstance().getCurrentUser().userId;
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got user id " + userId);
         summary.setOwnerID(userId);
         workerFragment.startPathUploadMongo(summary);

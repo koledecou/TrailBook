@@ -18,6 +18,7 @@ import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
@@ -88,7 +89,8 @@ public class TrailbookRemoteDatabase {
         Log.d(Constants.TRAILBOOK_TAG, "Mongo: got segments:" + segments);
         Log.d(Constants.TRAILBOOK_TAG, "Mongo: object ids:" + pathSummary.getObjectIdList());
         ArrayList<PointAttachedObject> paoObjects = getPointAttachedObjects(pathSummary.getObjectIdList());
-        return new Path(pathSummary, segments, paoObjects);
+        ArrayList<TrailBookComment> comments = getCommentsForPath(pathId);
+        return new Path(pathSummary, segments, paoObjects, comments);
     }
 
     private ArrayList<PointAttachedObject> getPointAttachedObjects(ArrayList<String> paoIdList) {
@@ -216,6 +218,18 @@ public class TrailbookRemoteDatabase {
         }
     }
 
+    private TrailBookComment getCommentFromDBObject(DBObject commentObject) {
+        try {
+            TrailBookComment comment = gson.fromJson(commentObject.toString(), TrailBookComment.class);
+            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment: " + comment.getShortContent());
+            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment: " + comment.getUser());
+            return comment;
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting comment", e);
+            return null;
+        }
+    }
+
     private PathSummary getPathFromDBObject(DBObject pathObject) {
         try {
             PathSummary path = gson.fromJson(pathObject.toString(), PathSummary.class);
@@ -283,6 +297,54 @@ public class TrailbookRemoteDatabase {
         DBCollection paoCollection = db.getCollection(DBConstants.pathCollectionName);
         DBObject getPathQuery = new BasicDBObject("_id", pathId);
         paoCollection.remove(getPathQuery);
+    }
+
+    public void uploadComment(TrailBookComment comment) {
+        if (!connect())
+            throw new ConnectFailedException();
+
+        String jsonComment = TrailbookPathUtilities.getCommentJsonString(comment);
+        DBCollection commentsCollection = db.getCollection(DBConstants.generalCommentsCollectionName);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: inserting comment: " + jsonComment);
+        DBObject updateCommentObject = (DBObject) JSON.parse(jsonComment);
+        DBObject existingCommentQuery = new BasicDBObject("_id", comment.getId());
+        commentsCollection.update(existingCommentQuery, updateCommentObject, true, false, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public void uploadAttachedComment(PointAttachedObject paoComment) {
+        if (!connect())
+            throw new ConnectFailedException();
+
+        String jsonComment = NoteFactory.getJsonFromPointAttachedObject(paoComment);
+        DBCollection pathsCollection = db.getCollection(DBConstants.attachedCommentsCollectionName);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: inserting note: " + jsonComment);
+        DBObject updateCommentObject = (DBObject) JSON.parse(jsonComment);
+        DBObject existingCommentQuery = new BasicDBObject("_id", paoComment.getId());
+        pathsCollection.update(existingCommentQuery, updateCommentObject, true, false, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public ArrayList<TrailBookComment> getCommentsForPath(String pathId) {
+        if (!connect())
+            return null;
+
+        ArrayList<TrailBookComment> comments = new ArrayList<TrailBookComment>();
+        DBCollection generalCommentsCollection = db.getCollection(DBConstants.generalCommentsCollectionName);
+        DBObject getCommentsQuery = new BasicDBObject("pathId", pathId);
+        DBCursor commentsCursor = generalCommentsCollection.find(getCommentsQuery);
+
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: number of comments is " + commentsCursor.size());
+        try {
+            while (commentsCursor.hasNext()) {
+                DBObject commentObject = commentsCursor.next();
+                Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment " + commentObject);
+                TrailBookComment comment = getCommentFromDBObject(commentObject);
+                comments.add(comment);
+            }
+        } finally {
+            commentsCursor.close();
+        }
+
+        return comments;
     }
 
     private class ConnectFailedException extends RuntimeException {

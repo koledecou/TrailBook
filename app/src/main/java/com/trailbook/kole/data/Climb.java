@@ -70,7 +70,6 @@ public class Climb implements Attachment {
     }
 
     public String getName() {
-
         return name;
     }
 

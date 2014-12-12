@@ -23,6 +23,7 @@ public class Constants {
     public static final String segmentsDir = "segments";
     public static final String imageDir = "images";
     public static final String notesDir = "notes";
+    public static final String commentsDir = "comments";
     public static final String TRAILBOOK_TAG = "trailbook";
     public static final long CLOUD_REFRESH_DEFAULT_TIME_DELTA = 5*60*1000;
 
@@ -32,6 +33,7 @@ public class Constants {
     public static final long FASTEST_INTERVAL = 1000 * FASTEST_INTERVAL_IN_SECONDS;
     public static final float MIN_ACCURACY_TO_START_LEADING = 50; //meters
     public static final int MIN_CONNSECUTIVE_GOOD_LOCATIONS_TO_LEAD = 10;
+    public static final String DEFAULT_USER_NAME = "Anonymous";
 
     public static int MEDIUM_DETAIL = 500;
     public static int FULL_DETAIL = -1;

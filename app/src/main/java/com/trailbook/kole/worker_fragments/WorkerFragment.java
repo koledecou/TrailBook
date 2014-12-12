@@ -8,10 +8,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
+import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.helpers.DownloadImageTask;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
@@ -19,6 +20,8 @@ import com.trailbook.kole.services.async_tasks.AsyncCloudDeletePath;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathFromRemoteDB;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathSummariesFromLocalDevice;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathSummariesFromRemoteDB;
+import com.trailbook.kole.services.async_tasks.AsyncUploadAttachedComment;
+import com.trailbook.kole.services.async_tasks.AsyncUploadComment;
 import com.trailbook.kole.services.async_tasks.AsyncUploadMultipartEntities;
 import com.trailbook.kole.services.async_tasks.AsyncUploadPath;
 import com.trailbook.kole.services.web.TrailbookPathServices;
@@ -195,5 +198,15 @@ public class WorkerFragment extends Fragment {
     public void startPathDeleteMongo(String pathId) {
         AsyncCloudDeletePath asyncCloudDeletePath = new AsyncCloudDeletePath();
         asyncCloudDeletePath.execute(pathManager.getPathSummary(pathId));
+    }
+
+    public void startCommentUploadMongo(TrailBookComment comment) {
+        AsyncUploadComment asyncUploadComment = new AsyncUploadComment();
+        asyncUploadComment.execute(comment);
+    }
+
+    public void startAttachedCommentUploadMongo(PointAttachedObject paoComment) {
+        AsyncUploadAttachedComment asyncUploadAttachedComment = new AsyncUploadAttachedComment();
+        asyncUploadAttachedComment.execute(paoComment);
     }
 }

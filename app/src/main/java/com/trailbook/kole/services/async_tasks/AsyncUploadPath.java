@@ -27,6 +27,7 @@ public class AsyncUploadPath extends AsyncTask<Path, Void, ArrayList<PathSummary
                     uploadedPaths.add(pathContainer.summary);
                 else
                     Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadPath: upload completed for path " + pathContainer.summary.getName());
+                    //todo: create failure notification
 //                Toast.makeText(TrailBookState.getInstance(), TrailBookState.getInstance().getString(R.string.upload_failed) + pathContainer.path.getName(), Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
@@ -39,7 +40,7 @@ public class AsyncUploadPath extends AsyncTask<Path, Void, ArrayList<PathSummary
     protected void onPostExecute(ArrayList<PathSummary> uploadedPaths) {
         for (PathSummary p : uploadedPaths) {
             Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadPath: upload completed for path " + p.getName());
-            //Toast.makeText(TrailBookState.getInstance(), TrailBookState.getInstance().getString(R.string.upload_completed) + p.getName(), Toast.LENGTH_SHORT).show();
+            //todo: success notification
         }
         super.onPostExecute(uploadedPaths);
     }

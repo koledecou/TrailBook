@@ -3,24 +3,28 @@ package com.trailbook.kole.fragments.path_selector;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.ExpandableListView;
 
 import com.trailbook.kole.activities.R;
+import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
+import com.trailbook.kole.fragments.list_content.ExpandableListAdapter;
 import com.trailbook.kole.fragments.list_content.PathListContent;
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * A fragment representing a list of Items.
@@ -31,7 +35,7 @@ import java.util.Comparator;
  * Activities containing this fragment MUST implement the OnFragmentInteractionListener
  * interface.
  */
-public class PathSelectorFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class PathSelectorFragment extends Fragment implements ExpandableListView.OnChildClickListener {
     public static final String UPLOAD = "UPLOAD";
     public static final String DELETE = "DELETE";
     public static final String FOLLOW = "FOLLOW";
@@ -42,6 +46,11 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
     public static final String  PATH_ID_LIST_ARG="PATH_IDS";
 
     OnPathSelectorFragmentInteractionListener mListener;
+
+    ExpandableListAdapter listAdapter;
+    ExpandableListView expListView;
+    List<String> listDataHeader;
+    HashMap<String, List<PathSummary>> listDataChild;
 
     private AbsListView mListView;
     public ArrayAdapter mAdapter;
@@ -75,6 +84,7 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
         super.onCreate(savedInstanceState);
 
         mPathIds = getPathIdsFromArg();
+
         mAdapter = getArrayAdapter();
     }
 
@@ -86,17 +96,15 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_pathselectorfragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_pathselector_list, container, false);
+        expListView = (ExpandableListView) view.findViewById(R.id.lvExp);
+        listAdapter = new ExpandableListAdapter(getActivity());
+        prepareListData();
 
-        // Set the adapter
-        mListView = (AbsListView) view.findViewById(R.id.psf_list);
-        mAdapter.sort(stringComparator);
-        mListView.setAdapter(mAdapter);
-
-        // Set OnItemClickListener so we can be notified on item clicks
-        mListView.setOnItemClickListener(this);
-        registerForContextMenu(mListView);
-
+        expListView.setAdapter(listAdapter);
+        expListView.setOnChildClickListener(this);
+        registerForContextMenu(expListView);
+        expListView.expandGroup(0);
         return view;
     }
 
@@ -113,35 +121,43 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        if (v.getId() == R.id.psf_list) {
-            ListView lv = (ListView) v;
-            AdapterView.AdapterContextMenuInfo info  = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            PathListContent.PathSummaryItem summaryItem = (PathListContent.PathSummaryItem) lv.getItemAtPosition(info.position);
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " creating context menu");
+        if (v.getId() == R.id.lvExp) {
+            ExpandableListView lv = (ExpandableListView) v;
+            ExpandableListView.ExpandableListContextMenuInfo info  = (ExpandableListView.ExpandableListContextMenuInfo) menuInfo;
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " packed position=" + info.packedPosition);
+            int groupPosition = ExpandableListView.getPackedPositionGroup(info.packedPosition);
+            int childPosition = ExpandableListView.getPackedPositionChild(info.packedPosition);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " group position=" + groupPosition);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " child position=" + childPosition);
+            PathSummary summary = (PathSummary) listAdapter.getChild(groupPosition, childPosition);
 
-            menu.setHeaderTitle(summaryItem.pathName);
-            ApplicationUtils.addPathActionMenuItems(menu, summaryItem.id);
+            menu.setHeaderTitle(summary.getName());
+            ApplicationUtils.addPathActionMenuItems(menu, summary.getId());
             //ApplicationUtils.addDownloadedPathMenuItems(menu, summaryItem.id);
         }
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        //todo: menu items depend on path status
+        ExpandableListView.ExpandableListContextMenuInfo info  = (ExpandableListView.ExpandableListContextMenuInfo) item.getMenuInfo();
+        int groupPosition = ExpandableListView.getPackedPositionGroup(info.packedPosition);
+        int childPosition = ExpandableListView.getPackedPositionChild(info.packedPosition);
+        PathSummary summary = (PathSummary) listAdapter.getChild(groupPosition, childPosition);
+        String pathId = summary.getId();
 
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        PathListContent.PathSummaryItem summaryItem = PathListContent.ITEMS.get(info.position);
-        String pathId = summaryItem.id;
         if (item.getItemId() == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
-            mAdapter.remove(summaryItem);
+            mPathIds.remove(pathId);
+            prepareListData();
         }
         mListener.processMenuAction(pathId, item);
         return true;
     }
 
-    @Override
+/*    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         parent.showContextMenuForChild(view);
-    }
+    }*/
 
     public ArrayAdapter getArrayAdapter() {
         addPathsToListContent();
@@ -158,13 +174,64 @@ public class PathSelectorFragment extends Fragment implements AbsListView.OnItem
             PathSummary summary = pathManager.getPathSummary(pathId);
             PathListContent.addItem(new PathListContent.PathSummaryItem(summary.getId(), summary.getName()));
         }
+    }
 
+    private void prepareListData() {
+        listDataHeader = new ArrayList<String>();
+        listDataChild = new HashMap<String, List<PathSummary>>();
+        addPaths();
+        listAdapter.setLists(listDataHeader, listDataChild);
+        listAdapter.notifyDataSetChanged();
+        listAdapter.notifyDataSetInvalidated();
+    }
+
+    private void addPaths() {
+        for (String pathId:mPathIds) {
+            ArrayList<String> tags = PathManager.getInstance().getTags(pathId);
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " adding tags to " + PathManager.getInstance().getPathSummary(pathId).getName() + ":" + tags);
+            for (String tag:tags) {
+                addPathToTag(pathId, tag);
+            }
+        }
+    }
+
+    private void addPathToTag(String pathId, String tag) {
+        PathSummary p = PathManager.getInstance().getPathSummary(pathId);
+        addTagHeaderIfNeeded(tag);
+        List<PathSummary> memberList = addTagMember(tag, p);
+        listDataChild.put(tag, memberList);
+    }
+
+    private void addTagHeaderIfNeeded(String tag) {
+        if (!listDataHeader.contains(tag)) {
+            listDataHeader.add(tag);
+        }
+    }
+
+    private List<PathSummary> addTagMember(String tag, PathSummary summary) {
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " adding tag " + tag + " to " + summary.getName());
+        List<PathSummary> tagMembers = listDataChild.get(tag);
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " before members " + tagMembers);
+        if (tagMembers == null) {
+            tagMembers = new ArrayList<PathSummary>();
+        }
+        tagMembers.add(summary);
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " after members " + tagMembers);
+        return tagMembers;
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View view, int groupPosition, int childPosition, long id) {
+        PathSummary summary = (PathSummary)listAdapter.getChild(groupPosition, childPosition);
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " child clicked: " + summary.getName());
+        parent.showContextMenuForChild(view);
+        return true;
     }
 
     public interface OnPathSelectorFragmentInteractionListener {

@@ -14,6 +14,7 @@ import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
 
@@ -119,6 +120,10 @@ public class TrailbookPathUtilities {
         return String.valueOf(date.getTime());
     }
 
+    public static String getNewCommentId() {
+        Date date = new Date();
+        return String.valueOf(date.getTime());
+    }
 
     public static String getNewPathId() {
         Date date = new Date();
@@ -140,6 +145,14 @@ public class TrailbookPathUtilities {
         return gson.toJson(note);
     }
 */
+
+    public static String getCommentJsonString(TrailBookComment comment) {
+        Gson gson = new GsonBuilder().create();
+        if (gson == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
+        }
+        return gson.toJson(comment);
+    }
 
     public static String getPathSummaryJSONString(PathSummary summary) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
@@ -344,10 +357,10 @@ public class TrailbookPathUtilities {
         if (summary ==  null)
             return false;
 
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookPathUtilities: has edit permissions " + summary.getOwnerId() + "," +TrailBookState.getCurrentUserId());
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookPathUtilities: has edit permissions " + summary.getOwnerId() + "," +TrailBookState.getCurrentUser().userId);
         if (summary.getOwnerId() == null
              || summary.getOwnerId().length() < 1
-             || summary.getOwnerId().equals(TrailBookState.getCurrentUserId())) {
+             || summary.getOwnerId().equals(TrailBookState.getCurrentUser().userId)) {
             return true;
         } else {
             return false;
@@ -375,4 +388,6 @@ public class TrailbookPathUtilities {
             return true;
         }
     }
+
+
 }
