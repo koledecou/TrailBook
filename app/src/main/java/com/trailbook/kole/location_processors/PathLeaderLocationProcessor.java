@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.R;
@@ -12,6 +13,7 @@ import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 /**
  * Created by kole on 7/20/2014.
@@ -46,16 +48,25 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
             if (mLastLocation.distanceTo(newLocation) < Constants.MIN_DISTANCE_BETWEEN_POINTS)
                 return;
         }
-//        Log.d(Constants.TRAILBOOK_TAG, "adding point to segment " + mSegmentId + " "  + newLocation.toString() );
-//        Log.d(Constants.TRAILBOOK_TAG, "PathLeaderLocationProcessor: accuracy is " + newLocation.getAccuracy());
-        if (!newLocation.hasAccuracy() || newLocation.getAccuracy() < MIN_ACCURACY &&
-                mPathManager.getSegment(mSegmentId) != null &&
-                mPathManager.getPathSummary(mPathId) != null) {
+        Log.d(Constants.TRAILBOOK_TAG, "adding point to segment " + mSegmentId + " " + newLocation.toString());
+        Log.d(Constants.TRAILBOOK_TAG, "PathLeaderLocationProcessor: accuracy is " + newLocation.getAccuracy());
+        if (isGoodStateToRecord(newLocation)) {
             mPathManager.addPointToSegment(mSegmentId, mPathId, newLocation);
             mPathManager.savePath(mPathId);
         }
 
         mLastLocation = newLocation;
+    }
+
+    private boolean isGoodStateToRecord(Location newLocation) {
+        if (!TrailBookState.alreadyGotEnoughGoodLocations())
+            return false;
+        if (mPathManager.getSegment(mSegmentId) == null ||  mPathManager.getPathSummary(mPathId) == null)
+            return false;
+        if (newLocation.hasAccuracy() && newLocation.getAccuracy() > MIN_ACCURACY)
+            return false;
+
+        return true;
     }
 
     private void sendListeningNotification() {

@@ -1,35 +1,31 @@
 package com.trailbook.kole.worker_fragments;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
-import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
-import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.helpers.DownloadImageTask;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.services.async_tasks.AsyncCloudDeletePath;
-import com.trailbook.kole.services.async_tasks.AsyncGetPathFromRemoteDB;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathSummariesFromLocalDevice;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathSummariesFromRemoteDB;
 import com.trailbook.kole.services.async_tasks.AsyncUploadAttachedComment;
 import com.trailbook.kole.services.async_tasks.AsyncUploadComment;
-import com.trailbook.kole.services.async_tasks.AsyncUploadMultipartEntities;
-import com.trailbook.kole.services.async_tasks.AsyncUploadPath;
+import com.trailbook.kole.services.download.DownloadPathService;
+import com.trailbook.kole.services.upload.UploadPathService;
 import com.trailbook.kole.services.web.TrailbookPathServices;
 import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
-
-import org.apache.http.entity.mime.MultipartEntity;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -137,50 +133,25 @@ public class WorkerFragment extends Fragment {
         Path pathContainer = new Path(summary, segments2, paObjects);
 
         Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: uploading path " + summary.getName());
-        AsyncUploadPath asyncUploadPath = new AsyncUploadPath();
-        asyncUploadPath.execute(pathContainer);
+        Intent intent = new Intent(getActivity(), UploadPathService.class);
+        intent.putExtra(UploadPathService.PATH_ID_KEY, summary.getId());
+        getActivity().startService(intent);
 
-        PostImages(summary);
-
+        //todo: do this on broadcast message recieved
         pathManager.savePathSummaryToCloudCache(summary);
     }
 
-    private void PostImages(PathSummary summary) {
-        Log.d(Constants.TRAILBOOK_TAG,"WorkerFragment: posting images.");
-        ArrayList<PointAttachedObject> paObjects = pathManager.getPointObjectsForPath(summary.getId());
-        for (PointAttachedObject pao:paObjects) {
-            ArrayList<String> imageFileNames = pao.getAttachment().getImageFileNames();
-            Log.d(Constants.TRAILBOOK_TAG,"WorkerFragment: posting images " + imageFileNames);
-            if (imageFileNames != null) {
-                for (String imageFileName : imageFileNames) {
-                    PostImage(imageFileName);
-                }
-            }
-        }
-    }
-
-    private void PostImage(String imageFileName) {
-        ArrayList<MultipartEntity> entities = new ArrayList<MultipartEntity>();
-        if (imageFileName != null && imageFileName.length()>0) {
-            MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForPAOImage(imageFileName);
-            if (entity != null)
-                entities.add(entity);
-        }
-        startImageUpload(entities);
-    }
-
-    private void startImageUpload(ArrayList<MultipartEntity> entities) {
-        AsyncUploadMultipartEntities uploadImageTask = new AsyncUploadMultipartEntities(TrailbookFileUtilities.getImageUploadUrl());
-        MultipartEntity[] entitiesArray = new MultipartEntity[entities.size()];
-        entities.toArray(entitiesArray);
-        uploadImageTask.execute(entitiesArray);
-    }
-
     public void startDownloadPath(String pathId) {
-        AsyncGetPathFromRemoteDB asyncGetPathFromRemoteDB = new AsyncGetPathFromRemoteDB();
-        asyncGetPathFromRemoteDB.execute(pathId);
+/*        DownloadPathService asyncGetPathFromRemoteDB = new DownloadPathService();
+        asyncGetPathFromRemoteDB.execute(pathId);*/
+
+        Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading path " + pathId);
+        Intent intent = new Intent(getActivity(), DownloadPathService.class);
+        intent.putExtra(DownloadPathService.PATH_ID_KEY, pathId);
+        getActivity().startService(intent);
     }
 
+/*
     @Subscribe
     public void onPathReceivedEvent(PathReceivedEvent event) {
         Path path = event.getPath();
@@ -194,6 +165,7 @@ public class WorkerFragment extends Fragment {
             }
         }
     }
+*/
 
     public void startPathDeleteMongo(String pathId) {
         AsyncCloudDeletePath asyncCloudDeletePath = new AsyncCloudDeletePath();

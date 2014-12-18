@@ -51,6 +51,12 @@
         <service
             android:name="com.trailbook.kole.location_processors.BackgroundLocationService"
             android:enabled="true" />
+        <service
+            android:name="com.trailbook.kole.services.upload.UploadPathService"
+            android:enabled="true" />
+        <service
+            android:name="com.trailbook.kole.services.download.DownloadPathService"
+            android:enabled="true" />
 
         <receiver android:name="com.trailbook.kole.location_processors.TrailBookLocationReceiver" />
 

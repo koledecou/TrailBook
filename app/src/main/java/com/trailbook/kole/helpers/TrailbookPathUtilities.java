@@ -366,28 +366,4 @@ public class TrailbookPathUtilities {
             return false;
         }
     }
-
-    public static boolean isAccurateEnoughToStartLeading(Location location) {
-        if (location.hasAccuracy()) {
-            float accuracy = location.getAccuracy();
-            if (accuracy < Constants.MIN_ACCURACY_TO_START_LEADING) {
-                TrailBookState.incrementConsecutiveGoodLocations();
-                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: got good location: " + location.getAccuracy());
-                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: consecutive good locations: " + TrailBookState.getConsecutiveGoodLocations());
-                if (TrailBookState.getConsecutiveGoodLocations() >= Constants.MIN_CONNSECUTIVE_GOOD_LOCATIONS_TO_LEAD)
-                    return true;
-                else
-                    return false;
-            } else {
-                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: location not accurate enough: " + location.getAccuracy());
-                TrailBookState.resetConsecutiveGoodLocations();
-                return false;
-            }
-        } else {
-            Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToStartLeading: no accuracy on device");
-            return true;
-        }
-    }
-
-
 }

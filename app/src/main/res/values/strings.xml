@@ -109,8 +109,8 @@
     <string name="no_network_title">No Network Connectivity</string>
     <string name="no_network_message">Network connectivity is required for this operation.  Please try again later.</string>
     <string name="no_network_toast">No network access.  Showing only your trails.</string>
-    <string name="upload_completed">Upload completed for path</string>
-    <string name="upload_failed">Upload failed for path</string>
+    <string name="upload_completed">Upload completed</string>
+    <string name="upload_failed">Upload failed</string>
     <string name="edit">Edit</string>
     <string name="edit_lowercase">edit</string>
     <string name="select_location_first">First select a point on the path.  Then add note.</string>
@@ -163,4 +163,6 @@
     <string name="add_comment_dialog_title">Comment on Path</string>
     <string name="ccd_upload_comment">Add Comment</string>
     <string name="set_user_title">Configure User</string>
+    <string name="path_uploading">Upload in Progress</string>
+    <string name="download_completed">Download completed</string>
 </resources>

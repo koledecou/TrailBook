@@ -55,6 +55,7 @@ public class TrailBookState extends Application {
     private static final String CLOUD_REFRESH_TS = "CLOUD_REFRESH_TS";
     private static final String SAVED_USER_NAME = "SAVED_USER_NAME" ;
     private static final String SAVED_PROFILE_PIC_URL = "SAVED_USER_PROFILE_PIC";
+    private static final String SAVED_GOOD_TO_SAVE_LOCATIONS = "SAVED_GOOD_TO_SAVE_LOCATIONS";
 
     private static int mMode = MODE_SEARCH;
     private static String mCurrentPathId;
@@ -66,6 +67,7 @@ public class TrailBookState extends Application {
     private static LocationProcessor locationProcessor;
     private static User mUser;
     private static int mConsecutiveGoodLocations = 0;
+    private static boolean mAlreadyGotEnoughGoodLocations = false;
     private Bus bus;
 
     private static boolean mIsListeningToLocationUpdates = false;
@@ -228,6 +230,8 @@ public class TrailBookState extends Application {
                 mCurrentLocation = gson.fromJson(jsonLastLocation, Location.class);
             }
         }
+
+        mAlreadyGotEnoughGoodLocations = prefs.getBoolean(SAVED_GOOD_TO_SAVE_LOCATIONS, false);
     }
 
     public static void setCurrentLocation(Location l) {
@@ -237,12 +241,39 @@ public class TrailBookState extends Application {
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event){
         mCurrentLocation = event.getLocation();
+        if (!mAlreadyGotEnoughGoodLocations) {
+            updateIsReadyToRecordLocationsState(event.getLocation());
+        }
 
         SharedPreferences.Editor editor = prefs.edit();
         String jsonLocation = getJsonLocation(mCurrentLocation);
         //Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving json location," + jsonLocation);
         editor.putString(SAVED_LOCATION, jsonLocation);
         editor.commit();
+    }
+
+    public void updateIsReadyToRecordLocationsState(Location location) {
+        if (TrailBookState.alreadyGotEnoughGoodLocations())
+            return;
+
+        if (location.hasAccuracy()) {
+            float accuracy = location.getAccuracy();
+            if (accuracy < Constants.MIN_ACCURACY_TO_START_LEADING) {
+                incrementConsecutiveGoodLocations();
+                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: got good location: " + location.getAccuracy());
+                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: consecutive good locations: " + TrailBookState.getConsecutiveGoodLocations());
+                if (TrailBookState.getConsecutiveGoodLocations() >= Constants.MIN_CONNSECUTIVE_GOOD_LOCATIONS_TO_LEAD) {
+                    setAlreadGotEnoughGoodLocations(true);
+                } else
+                    setAlreadGotEnoughGoodLocations(false);
+            } else {
+                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: location not accurate enough: " + location.getAccuracy());
+                TrailBookState.resetConsecutiveGoodLocations();
+            }
+        } else {
+            Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: no accuracy on device");
+            setAlreadGotEnoughGoodLocations(true);
+        }
     }
 
     private String getJsonLocation(Location l) {
@@ -300,6 +331,7 @@ public class TrailBookState extends Application {
         ComponentName comp = new ComponentName(this.getPackageName(), BackgroundLocationService.class.getName());
         stopService(new Intent().setComponent(comp));
         mIsListeningToLocationUpdates = false;
+        resetConsecutiveGoodLocations();
     }
 
     public void enableLocationReceiver(){
@@ -404,5 +436,19 @@ public class TrailBookState extends Application {
 
     public static void resetConsecutiveGoodLocations() {
         mConsecutiveGoodLocations = 0;
+        TrailBookState.getInstance().setAlreadGotEnoughGoodLocations(false);
+    }
+
+    public static boolean alreadyGotEnoughGoodLocations() {
+        return mAlreadyGotEnoughGoodLocations;
+    }
+
+    public void setAlreadGotEnoughGoodLocations(boolean gotEnough) {
+        this.mAlreadyGotEnoughGoodLocations = gotEnough;
+
+        SharedPreferences.Editor editor = prefs.edit();
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ":setAlreadGotEnoughGoodLocations " + gotEnough);
+        editor.putBoolean(SAVED_GOOD_TO_SAVE_LOCATIONS, gotEnough);
+        editor.commit();
     }
 }

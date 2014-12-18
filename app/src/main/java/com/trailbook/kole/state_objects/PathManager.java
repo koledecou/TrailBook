@@ -122,9 +122,7 @@ public class PathManager {
         return false;
     }
 
-    @Subscribe
-    public void onPathReceivedEvent(PathReceivedEvent event){
-        Path path = event.getPath();
+    public void onPathReceived(Path path){
         ArrayList<PointAttachedObject> paObjects = path.paObjects;
         ArrayList<PathSegment> segments = path.segments;
         ArrayList<TrailBookComment> comments = path.comments;
@@ -132,14 +130,12 @@ public class PathManager {
         for (PointAttachedObject pao:paObjects) {
             Log.d(Constants.TRAILBOOK_TAG, "PathManager: received pao " + pao.getAttachment().toString());
             mPointAttachedObjects.put(pao.getId(), pao);
-            bus.post(new MapObjectAddedEvent(pao));
         }
 
         for (PathSegment segment:segments) {
             Log.d(Constants.TRAILBOOK_TAG, "PathManager: received segment " + segment.getId());
             mSegments.put(segment.getId(), segment);
             saveSegment(segment);
-            bus.post(new SegmentUpdatedEvent(segment));
         }
 
         for (TrailBookComment comment:comments) {
@@ -149,6 +145,26 @@ public class PathManager {
         }
 
         savePath(path);
+    }
+
+    @Subscribe
+    public void onPathReceivedEvent(PathReceivedEvent event){
+        Path path = event.getPath();
+        postPathReceivedEvents(path);
+    }
+
+    private void postPathReceivedEvents(Path path) {
+        ArrayList<PointAttachedObject> paObjects = path.paObjects;
+        ArrayList<PathSegment> segments = path.segments;
+
+        for (PointAttachedObject pao:paObjects) {
+            bus.post(new MapObjectAddedEvent(pao));
+        }
+
+        for (PathSegment segment:segments) {
+            bus.post(new SegmentUpdatedEvent(segment));
+        }
+        bus.post(new PathUpdatedEvent(path.summary));
     }
 
     private void addPointsToSegment(ArrayList<LatLng> points, PathSegment thisSegment) {
@@ -170,6 +186,14 @@ public class PathManager {
 
     public PathSegment getSegment(String segmentId) {
         return mSegments!= null ? mSegments.get(segmentId) : null;
+    }
+
+    public Path getPath(String pathId) {
+        PathSummary summary = getPathSummary(pathId);
+        ArrayList<PathSegment> segments = getSegmentsForPath(pathId);
+        ArrayList<PointAttachedObject> paObjects = getPointObjectsForPath(pathId);
+        Path pathContainer = new Path(summary, segments, paObjects);
+        return pathContainer;
     }
 
     public PathSummary getPathSummary(String pathId) {
@@ -207,7 +231,6 @@ public class PathManager {
             savePathSummaryToLocalPaths(summary);
             saveSegments(segments);
             savePointObjects(paObjects);
-            bus.post(new PathUpdatedEvent(summary));
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + summary.getId(), e);
         }
