@@ -7,8 +7,6 @@ import com.trailbook.kole.data.geo.GeoLineString;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 
 /**
  * Created by kole on 8/18/2014.
@@ -57,5 +55,13 @@ public class PathSegment {
     public void setPoints(ArrayList<LatLng> newPoints) {
         removePoints();
         points.addAll(newPoints);
+    }
+
+    public void deletePoint(LatLng point) {
+        points.deletePoint(point);
+    }
+
+    public void movePoint(LatLng oldLoc, LatLng newLoc) {
+        points.movePoint(oldLoc, newLoc);
     }
 }

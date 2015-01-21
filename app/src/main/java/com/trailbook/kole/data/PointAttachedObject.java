@@ -45,4 +45,8 @@ public class PointAttachedObject {
         return _id;
     }
 
+    public void move(LatLng newLoc) {
+        double[] newCoords = new double[]{newLoc.longitude, newLoc.latitude};
+        point.setCoordinates(newCoords);
+    }
 }

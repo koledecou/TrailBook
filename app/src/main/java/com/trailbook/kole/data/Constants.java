@@ -18,6 +18,7 @@ public class Constants {
     public static final String uploadJson = "/uploadJson.py";
     public static final String uploadImage = "/uploadImage.py";
     public static final String deviceExternalDir = Environment.getExternalStorageDirectory().getPath();
+    public static final String tempDir = "temp";
     public static final String pathsRootDir = "paths";
     public static final String cachedPathsRootDir = "temp_cloud_paths";
     public static final String segmentsDir = "segments";
@@ -34,6 +35,9 @@ public class Constants {
     public static final float MIN_ACCURACY_TO_START_LEADING = 50; //meters
     public static final int MIN_CONNSECUTIVE_GOOD_LOCATIONS_TO_LEAD = 10;
     public static final String DEFAULT_USER_NAME = "Anonymous";
+    public static final String FILTER_PREFS_SHOW_MY_PATHS_KEY = "SHOW_MY_PATHS_KEY";
+    public static final String FILTER_PREFS_SHOW_OTHER_PATHS_KEY = "FILTER_PREFS_SHOW_OTHER_PATHS_KEY";
+    public static final String FILTER_PREFS_GROUPS_TO_SHOW_KEY = "FILTER_PREFS_GROUPS_TO_SHOW_KEY";
 
     public static int MEDIUM_DETAIL = 500;
     public static int FULL_DETAIL = -1;

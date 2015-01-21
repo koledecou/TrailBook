@@ -138,6 +138,7 @@
     <string name="info_no_paths_within_view_title">No Paths in View</string>
     <string name="no_paths_within_view_message">Widen the zoom to find paths.</string>
     <string name="refresh">Refresh from Cloud</string>
+    <string name="share">Email</string>
     <string name="editing_message">Editing \u0025s</string>
     <string name="leading_message">Leading  \u0025s</string>
     <string name="following_message">Following  \u0025s</string>
@@ -165,4 +166,21 @@
     <string name="set_user_title">Configure User</string>
     <string name="path_uploading">Upload in Progress</string>
     <string name="download_completed">Download completed</string>
+    <string name="title_paths_in_view">Paths in Current Map View</string>
+    <string name="title_downloaded_paths">Your Downloaded Paths</string>
+    <string name="delete_selection">Delete Point</string>
+    <string name="move_selection">Move Selection</string>
+    <string name="edit_point_help_text">1. Click a point on the path to select it.\n2. Use the options menu to add a note or climb to that point, or to delete the point (to remove a bad location from the GPS for example.\n3. To move a point long-click on the point and then drag it.\n4. To edit an existing note or climb, simply click on it and expand to edit.</string>
+    <string name="edit_point_help_title">How to edit a path</string>
+    <string name="help">Help</string>
+    <string name="parking">Parking</string>
+    <string name="mark_end">Mark End of Trail</string>
+    <string name="mark_start">Mark Start of Trail</string>
+    <string name="select_location_first_delete">You must first select a point on the trail before you can delete it.</string>
+    <string name="select_location_first_mark_start">First select the starting point on the trail.</string>
+    <string name="unlock_group">Unlock Group</string>
+    <string name="action_search">Search</string>
+    <string name="path_name">Path Name</string>
+    <string name="goes_to_climbs">Goes to Climbs (click to add):</string>
+    <string name="goes_to_crags">Goes to crags / cliffs / formations (click to add)</string>
 </resources>

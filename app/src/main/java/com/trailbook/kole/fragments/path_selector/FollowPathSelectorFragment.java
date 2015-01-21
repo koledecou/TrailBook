@@ -15,11 +15,12 @@ import java.util.ArrayList;
  */
 public class FollowPathSelectorFragment extends PathSelectorFragment {
 
-    public static FollowPathSelectorFragment newInstance(ArrayList<String> pathIds) {
+    public static FollowPathSelectorFragment newInstance(ArrayList<String> pathIds, String title) {
         FollowPathSelectorFragment fragment = new FollowPathSelectorFragment();
 
         Bundle args = new Bundle();
         args.putStringArrayList(PATH_ID_LIST_ARG, pathIds);
+        args.putString(TITLE_ARG, title);
         fragment.setArguments(args);
 
         return fragment;

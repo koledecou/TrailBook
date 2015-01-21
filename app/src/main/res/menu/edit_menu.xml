@@ -32,6 +32,22 @@
         </menu>
     </item>
 
+    <item android:id="@+id/action_bar_delete_selection"
+        android:title="@string/delete_selection"
+        android:showAsAction="never" />
+
+    <item android:id="@+id/action_bar_mark_start"
+        android:title="@string/mark_start"
+        android:showAsAction="never" />
+
+    <item android:id="@+id/action_bar_mark_end"
+        android:title="@string/mark_end"
+        android:showAsAction="never" />
+
+    <item android:id="@+id/action_bar_help"
+        android:title="@string/help"
+        android:showAsAction="never" />
+
     <item android:id="@+id/action_bar_done_editing"
         android:title="@string/done"
         android:showAsAction="withText|ifRoom" />

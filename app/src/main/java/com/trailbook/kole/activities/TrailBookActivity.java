@@ -49,7 +49,9 @@ import com.trailbook.kole.events.PathCommentAddedEvent;
 import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
 import com.trailbook.kole.events.RefreshMessageEvent;
+import com.trailbook.kole.events.ZoomRequestEvent;
 import com.trailbook.kole.fragments.DisplayCommentsFragment;
+import com.trailbook.kole.fragments.FilterGroupsFragment;
 import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.fragments.PathDetailsActionListener;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
@@ -68,6 +70,7 @@ import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
 import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
+import com.trailbook.kole.services.async_tasks.AsyncGetPathFromLocalDevice;
 import com.trailbook.kole.services.download.DownloadPathService;
 import com.trailbook.kole.services.upload.UploadPathService;
 import com.trailbook.kole.state_objects.Authenticator;
@@ -76,6 +79,7 @@ import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
 import com.trailbook.kole.worker_fragments.WorkerFragment;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class TrailBookActivity extends Activity
@@ -102,6 +106,8 @@ public class TrailBookActivity extends Activity
     private static final String SCOPE =  "https://www.googleapis.com/auth/plus.login";
     private static final String SHOW_PATH_COMMENTS_TAG = "SHOW_PATH_COMMENTS";
     public static final String NEW_PATH_DIALOG_ID = "new_path_dialog";
+    private static final String FILTER_DIALOG_TAG = "FILTER_DIALOG";
+    public static final String INITIAL_PATH_ID_KEY = "INITIAL_PATH_ID";
 
     private CharSequence mTitle; // Used to store the last screen title. For use in {@link #restoreActionBar()}.
     private TrailBookMapFragment mMapFragment;
@@ -148,6 +154,26 @@ public class TrailBookActivity extends Activity
         setUpPreferencesFragment();
         setUpWorkFragmentIfNeeded();
 
+        String launchedPathId = getLaunchPathId();
+        if (launchedPathId != null) {
+            TrailBookState.setMode(TrailBookState.MODE_SEARCH);
+            AsyncGetPathFromLocalDevice asyncGetPath = new AsyncGetPathFromLocalDevice();
+            asyncGetPath.execute(launchedPathId);
+            onZoomRequested(launchedPathId);
+        } else {
+            launchFromRestoredState();
+        }
+    }
+
+    private String getLaunchPathId() {
+        Intent i = getIntent();
+        if (i != null) {
+           return i.getStringExtra(INITIAL_PATH_ID_KEY);
+        }
+        return null;
+    }
+
+    private void launchFromRestoredState() {
         TrailBookState.restoreState();
         Log.d(Constants.TRAILBOOK_TAG, getLocalClassName() + ": activity onCreate() mode:" + TrailBookState.getMode());
         if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
@@ -176,20 +202,24 @@ public class TrailBookActivity extends Activity
 
     private void unRegisterBroadcastReceivers() {
         if (receiver != null)
-            unregisterReceiver(receiver);
+            try {
+                unregisterReceiver(receiver);
+            } catch (Exception e) {
+                //do nothing.  seems to be android bug
+            }
     }
 
     @Override
     public void onStop() {
         super.onStop();
         Authenticator.getInstance().disconnect();
+        unRegisterBroadcastReceivers();
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        unRegisterBroadcastReceivers();
+    public void onDestroy () {
         bus.unregister(this);
+        super.onDestroy();
     }
 
     @Override
@@ -293,6 +323,7 @@ public class TrailBookActivity extends Activity
         } else if (action == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
             Log.d(Constants.TRAILBOOK_TAG, className + " Deleting path:" + pathId);
             mPathManager.deletePath(pathId, this);
+            refreshFromCloudIfConnectedToNetwork();
         } else if (action == ApplicationUtils.MENU_CONTEXT_FOLLOW_ID ) {
             getFragmentManager().popBackStackImmediate();
             onFollowRequested(pathId);
@@ -302,6 +333,7 @@ public class TrailBookActivity extends Activity
         } else if (action == ApplicationUtils.MENU_CONTEXT_EDIT_ID) {
             getFragmentManager().popBackStackImmediate();
             TrailBookState.getInstance().switchToEditMode(pathId);
+            displayEditHelp();
         } else if (action == ApplicationUtils.MENU_CONTEXT_ZOOM_ID) {
             onZoomRequested(pathId);
         } else if (action == ApplicationUtils.MENU_CONTEXT_DOWNLOAD_ID) {
@@ -319,6 +351,11 @@ public class TrailBookActivity extends Activity
             String newSegmentId = mPathManager.addNewSegmentToPath(pathId);
             TrailBookState.setActiveSegmentId(newSegmentId);
             startLeading(pathId, newSegmentId);
+        } else if (action == ApplicationUtils.MENU_CONTEXT_SHARE_ID) {
+            Log.d(Constants.TRAILBOOK_TAG, className + ": sharing path " + pathId);
+            Path path = mPathManager.getPath(pathId);
+            File file = TrailbookFileUtilities.zipPathToTempFile(path);
+            ApplicationUtils.sendFileViaEmail(this, file);
         }
     }
 
@@ -438,22 +475,82 @@ public class TrailBookActivity extends Activity
             //todo: prompt for path details and ask to upload if network is available.
         } else if (id == R.id.action_filter) {
             Log.d(Constants.TRAILBOOK_TAG, className + " show filter dialog");
+            showFilterDialog();
         } else if (id == R.id.action_list) {
             Log.d(Constants.TRAILBOOK_TAG, className + " listing paths within the view");
             displayPathSelectorForPathsInMapView();
         } else if (id == R.id.action_refresh_map) {
             Log.d(Constants.TRAILBOOK_TAG, className + " refreshing paths the view");
             refreshPaths(true);
-        } else if (id == R.id.action_bar_add_comment) {
+        }/* else if (id == R.id.action_bar_add_comment) {
             showComments();
+        }*/ else if (id == R.id.action_bar_delete_selection) {
+            deleteSelection();
+        } else if (id == R.id.action_bar_help) {
+            displayEditHelp();
+        } else if (id == R.id.action_bar_mark_start) {
+            addSelectedPointToStartOfTrail();
+        } else if (id == R.id.action_bar_mark_end) {
+            addSelectedPointToEndOfTrail();
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    private void deleteSelection() {
+        LatLng selectedLocation = mMapFragment.getSelectedLocation();
+        if (selectedLocation != null) {
+            String pathId = TrailBookState.getActivePathId();
+            TrailbookPathUtilities.deletePointFromPath(pathId, selectedLocation);
+            mPathManager.savePath(pathId);
+            mMapFragment.removeSelectedMarker();
+            mMapFragment.refreshSegmentsForActivePath();
+
+            //todo: add to undo stack
+        } else {
+            Toast.makeText(this, getString(R.string.select_location_first_delete), Toast.LENGTH_LONG).show();
+            return;
+        }
+    }
+
+    private void addSelectedPointToStartOfTrail() {
+        LatLng selectedLocation = mMapFragment.getSelectedLocation();
+        if (selectedLocation != null) {
+            String pathId = TrailBookState.getActivePathId();
+            PathSummary summary = mPathManager.getPathSummary(pathId);
+            summary.setStart(selectedLocation);
+            mPathManager.savePath(pathId);
+            mMapFragment.removeSelectedMarker();
+            mMapFragment.showStartPointForPath(pathId);
+
+            //todo: add to undo stack
+        } else {
+            Toast.makeText(this, getString(R.string.select_location_first_mark_start), Toast.LENGTH_LONG).show();
+            return;
+        }
+    }
+
+    private void addSelectedPointToEndOfTrail() {
+        LatLng selectedLocation = mMapFragment.getSelectedLocation();
+        if (selectedLocation != null) {
+            String pathId = TrailBookState.getActivePathId();
+            PathSummary summary = mPathManager.getPathSummary(pathId);
+            summary.setEnd(selectedLocation);
+            mPathManager.savePath(pathId);
+            mMapFragment.removeSelectedMarker();
+            mMapFragment.showEndPointForPath(pathId);
+
+            //todo: add to undo stack
+        } else {
+            Toast.makeText(this, getString(R.string.select_location_first_mark_start), Toast.LENGTH_LONG).show();
+            return;
+        }
     }
 
     private void displayPathSelectorForPathsInMapView() {
         ArrayList<String> pathIds = PathManager.getInstance().getPathsWithinBounds(mMapFragment.getBounds());
         if (pathIds.size() > 0)
-            switchFragmentAndAddToBackstack(getPathSelectorFragmentForPaths(pathIds), PATH_SELECT_TAG);
+            switchFragmentAndAddToBackstack(getPathSelectorFragmentForPaths(pathIds, getString(R.string.title_paths_in_view)), PATH_SELECT_TAG);
         else
             showNoPathsWithinViewAlert();
     }
@@ -581,7 +678,7 @@ public class TrailBookActivity extends Activity
     private void showComments() {
         collapseSlidingPanel();
         FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("show_comments_fragment");
+        Fragment prev = getFragmentManager().findFragmentByTag(SHOW_PATH_COMMENTS_TAG);
         if (prev != null) {
             ft.remove(prev);
         }
@@ -589,6 +686,20 @@ public class TrailBookActivity extends Activity
 
         DisplayCommentsFragment newFragment = DisplayCommentsFragment.newInstance(TrailBookState.getActivePathId());
         switchFragmentAndAddToBackstack(newFragment, SHOW_PATH_COMMENTS_TAG);
+        invalidateOptionsMenu();
+    }
+
+    private void showFilterDialog() {
+        collapseSlidingPanel();
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        Fragment prev = getFragmentManager().findFragmentByTag(FILTER_DIALOG_TAG);
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+
+        FilterGroupsFragment newFragment = FilterGroupsFragment.newInstance();
+        switchFragmentAndAddToBackstack(newFragment, FILTER_DIALOG_TAG);
         invalidateOptionsMenu();
     }
 
@@ -651,7 +762,8 @@ public class TrailBookActivity extends Activity
     @Override
     public void onZoomRequested(String pathId) {
         collapseSlidingPanel();
-        mMapFragment.zoomToPath(pathId);
+        ZoomRequestEvent event = new ZoomRequestEvent(pathId);
+        bus.post(event);
     }
 
     @Override
@@ -672,7 +784,8 @@ public class TrailBookActivity extends Activity
     public void onMoreActionsSelected(String pathId, View v) {
 //        startLeading(pathId, mPathManager.getPathSummary(pathId).getLastSegment());
         mActionPath = pathId;
-        ApplicationUtils.showActionsPopupForPath(this, v, this, pathId);
+        //ApplicationUtils.showActionsPopupForPath(this, v, this, pathId);
+        openContextMenu(v);
     }
 
     private void startLeading(String pathId, String segmentId) {
@@ -757,16 +870,16 @@ public class TrailBookActivity extends Activity
     private PathSelectorFragment getPathSelectorFragmentForDownloadedPaths() {
         //return PathsOnDeviceSelectorFragment.newInstance();
         ArrayList<String> downloadedPathIds = mPathManager.getDownloadedPathIds();
-        return PathSelectorFragment.newInstance(downloadedPathIds);
+        return PathSelectorFragment.newInstance(downloadedPathIds, getString(R.string.title_downloaded_paths));
     }
 
-    private PathSelectorFragment getPathSelectorFragmentForPaths(ArrayList<String> pathIds) {
-        return PathSelectorFragment.newInstance(pathIds);
+    private PathSelectorFragment getPathSelectorFragmentForPaths(ArrayList<String> pathIds, String title) {
+        return PathSelectorFragment.newInstance(pathIds, title);
     }
 
     private FollowPathSelectorFragment getFollowPathSelectorFragment() {
         ArrayList<String> downloadedPathIds = mPathManager.getDownloadedPathIds();
-        return FollowPathSelectorFragment.newInstance(downloadedPathIds);
+        return FollowPathSelectorFragment.newInstance(downloadedPathIds, getString(R.string.title_downloaded_paths));
     }
 
     @Override
@@ -915,6 +1028,17 @@ public class TrailBookActivity extends Activity
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.parse_error), getString(R.string.parse_error_message), getString(R.string.OK), null);
     }
 
+    public void displayEditHelp() {
+        DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int id) {
+
+            }
+        };
+
+        ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.edit_point_help_title), getString(R.string.edit_point_help_text), getString(R.string.OK), null);
+
+    }
+
     private void showPathExistsAlert(String pathName) {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
@@ -943,8 +1067,9 @@ public class TrailBookActivity extends Activity
     public void deleteFromCloud(final String pathId) {
         DialogInterface.OnClickListener affirmCloudDeleteListener = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-            Log.d(Constants.TRAILBOOK_TAG, className + ": deleting path " + pathId);
-            mWorkFragment.startPathDeleteMongo(pathId);
+                Log.d(Constants.TRAILBOOK_TAG, className + ": deleting path " + pathId);
+                mWorkFragment.startPathDeleteMongo(pathId);
+                mPathManager.removeCloudCache(pathId);
             }
         };
         ApplicationUtils.showAlert(this, affirmCloudDeleteListener, "Delete From Cloud?", "This action is not reversible.", "Delete", "Cancel");

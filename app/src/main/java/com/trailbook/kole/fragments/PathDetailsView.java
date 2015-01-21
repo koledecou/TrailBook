@@ -21,7 +21,6 @@ import com.trailbook.kole.state_objects.PathManager;
 
 
 public class PathDetailsView extends LinearLayout implements View.OnClickListener {
-
     public void setActionListener(PathDetailsActionListener actionListener) {
         this.actionListener = actionListener;
     }
@@ -102,6 +101,7 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
 
         mMoreButton = (ImageButton)findViewById(R.id.pdv_more);
         mMoreButton.setOnClickListener(this);
+
     }
 
     private void buildButtonBar(ButtonActions actions) {
@@ -139,7 +139,15 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         }*/
         if (v.getId() == R.id.summary_layout || v.getId() == R.id.pdv_more) {
             //Toast.makeText(getContext(), "more actions for " + mName, Toast.LENGTH_LONG).show();
-            actionListener.onMoreActionsSelected(mPathId, this);
+            actionListener.onMoreActionsSelected(mPathId, v);
         }
+    }
+
+    public View getMoreButton() {
+        return mMoreButton;
+    }
+
+    public String getPathId() {
+        return mPathId;
     }
 }

@@ -9,7 +9,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -39,6 +41,7 @@ import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.events.FilterChangedEvent;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.events.MapObjectAddedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
@@ -50,7 +53,9 @@ import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.RefreshMessageEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
+import com.trailbook.kole.events.ZoomRequestEvent;
 import com.trailbook.kole.fragments.point_attched_object_view.PointAttachedObjectView;
+import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.helpers.MapUtilities;
 import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.PreferenceUtilities;
@@ -69,24 +74,28 @@ import java.util.Set;
 /**
  * Created by Fistik on 6/30/2014.
  */
-public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener, View.OnClickListener, GoogleMap.OnMapLoadedCallback {
+public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener, GoogleMap.OnMarkerDragListener, View.OnClickListener, GoogleMap.OnMapLoadedCallback, GoogleMap.OnMapLongClickListener {
     private static final String LOG_CLASS_NAME = "MyMapFragment";
     private static final float THICK = 10;
     private static final float MEDIUM = 6;
     private static final String SAVED_ZOOM_LEVEL = "ZOOM";
     private static final String SAVED_SELECTED_LOCATION = "SELECTED_LOC";
     private static final String SAVED_MAP_CENTER = "MAP_CENTER";
+    private static final String SAVED_MAP_LOADED_STATE = "MAP_LOADED";
 
     private static final float DEFAULT_ZOOM_LEVEL = 16;
     private static final LatLng DEFAULT_MAP_CENTER = new LatLng( 34.8326509,-111.7693473);
-
+    private PathDetailsView mDetailView;
 
     private SharedPreferences savedStatePrefs;
     private LatLng mSelectedLocation = null;
     private boolean mMapLoaded = false;
 
     public boolean isMapLoaded() {
-        return mMapLoaded;
+        if (mMap != null && mMapLoaded)
+            return true;
+        else
+            return false;
     }
 
     public LatLngBounds getBounds() {
@@ -96,7 +105,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             return null;
     }
 
-    public enum MarkerType {START,END,NOTE,UNKNOWN}
+    public enum MarkerType {START,END,NOTE,POINT,UNKNOWN}
 
     private Bus bus;
     private LinkedList mEventQueue;
@@ -183,11 +192,22 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (jsonSelectedLocation != null && TrailBookState.getMode()==TrailBookState.MODE_EDIT) {
             mSelectedLocation = gson.fromJson(jsonSelectedLocation, LatLng.class);
         }
+
+        mMapLoaded = savedStatePrefs.getBoolean(SAVED_MAP_LOADED_STATE, false);
+    }
+
+    public void refreshSegmentsForActivePath() {
+        String pathId = TrailBookState.getActivePathId();
+        ArrayList<PathSegment> segments = mPathManager.getSegmentsForPath(pathId);
+        for (PathSegment s:segments) {
+            addSegmentToMap(s);
+        }
     }
 
     @Override
     public void onMapLoaded() {
         mMapLoaded = true;
+
         drawLoadedPaths();
         processQueuedEvents();
         if (TrailBookState.getMode() == TrailBookState.MODE_EDIT && mSelectedLocation != null)
@@ -279,34 +299,59 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": drawLoadedPaths()");
         ArrayList<PathSummary> summaries = mPathManager.getDownloadedPathSummaries();
         for (PathSummary summary:summaries) {
-            addPathSummaryToMap(summary);
-            ArrayList<PathSegment> segments = mPathManager.getSegmentsForPath(summary.getId());
-            for (PathSegment segment:segments) {
-                addSegmentToMap(segment);
-            }
+            addPathToMap(summary);
         }
         hideNonActivePathsIfNeeded();
     }
 
+    private void addPathToMap(PathSummary summary) {
+        addPathSummaryToMap(summary);
+        ArrayList<PathSegment> segments = mPathManager.getSegmentsForPath(summary.getId());
+        for (PathSegment segment : segments) {
+            addSegmentToMap(segment);
+        }
+    }
+
+    private boolean shouldDisplayPath(PathSummary summary) {
+        if (TrailbookPathUtilities.isPathInFilter(summary, TrailbookPathUtilities.getFilters())) {
+            Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: showing " + summary.getName());
+            return true;
+        } else {
+            Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: not showing " + summary.getName());
+            return false;
+        }
+    }
+
     public void hideMapMessage() {
-        TextView tvMapMessage = (TextView)(getActivity().findViewById(R.id.map_tv_message));
-        if (tvMapMessage != null) {
-            tvMapMessage.setVisibility(View.INVISIBLE);
+        if (isAdded()) {
+            TextView tvMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_message));
+            if (tvMapMessage != null) {
+                tvMapMessage.setVisibility(View.INVISIBLE);
+            }
+
+            TextView tvTopMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_top_message));
+            if (tvTopMapMessage != null) {
+                tvTopMapMessage.setVisibility(View.INVISIBLE);
+            }
         }
     }
     
     public void hideProgressBar() {
-        ProgressBar progressBar = (ProgressBar)(getActivity().findViewById(R.id.progressBar));
-        if (progressBar != null) {
-            progressBar.setVisibility(View.INVISIBLE);
+        if (isAdded()) {
+            ProgressBar progressBar = (ProgressBar) (getActivity().findViewById(R.id.progressBar));
+            if (progressBar != null) {
+                progressBar.setVisibility(View.INVISIBLE);
+            }
         }
     }
 
     public void updateProgressBar(int percentComplete) {
-        ProgressBar progressBar = (ProgressBar)(getActivity().findViewById(R.id.progressBar));
-        if (progressBar != null) {
-            progressBar.setVisibility(View.VISIBLE);
-            progressBar.setProgress(percentComplete);
+        if (isAdded()) {
+            ProgressBar progressBar = (ProgressBar) (getActivity().findViewById(R.id.progressBar));
+            if (progressBar != null) {
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setProgress(percentComplete);
+            }
         }
     }
 
@@ -331,8 +376,13 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         saveCenterPoint(editor);
         saveZoomLevel(editor);
         saveSelectedLocation(editor);
+        saveMapLoaded(editor);
 
         editor.commit();
+    }
+
+    private void saveMapLoaded(SharedPreferences.Editor editor) {
+        editor.putBoolean(SAVED_MAP_LOADED_STATE, mMapLoaded);
     }
 
     private void saveZoomLevel(SharedPreferences.Editor editor) {
@@ -368,7 +418,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     public void showOnlyPath(String pathId) {
         hideAllPaths();
-        setVisibilityForAllNoteMarkers(false);
+
         ArrayList<PointAttachedObject> paObjects = mPathManager.getPointObjectsForPath(pathId);
         showPointObjects(paObjects);
         showLinesForPath(pathId);
@@ -376,20 +426,24 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         showEndPointForPath(pathId);
     }
 
-    private void showStartPointForPath(String pathId) {
+    public void showStartPointForPath(String pathId) {
         Marker m = mStartMarkers.get(pathId);
-        if (m != null)
-            m.setVisible(true);
-        else
-            addStartMarkerToMap(mPathManager.getPathSummary(pathId));
+        if (m != null) {
+            m.remove();
+            mStartMarkers.remove(pathId);
+        }
+
+        addStartMarkerToMap(mPathManager.getPathSummary(pathId));
     }
 
-    private void showEndPointForPath(String pathId) {
+    public void showEndPointForPath(String pathId) {
         Marker m = mEndMarkers.get(pathId);
-        if (m != null)
-            m.setVisible(true);
-        else
-            addEndMarkerToMap(mPathManager.getPathSummary(pathId));
+        if (m != null) {
+            m.remove();
+            mEndMarkers.remove(pathId);
+        }
+
+        addEndMarkerToMap(mPathManager.getPathSummary(pathId));
     }
 
     private void showLinesForPath(String pathId) {
@@ -412,6 +466,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         setVisibilityForAllStartMarkers(false);
         setVisibilityForAllEndMarkers(false);
         setVisibilityForAllLines(false);
+        setVisibilityForAllNoteMarkers(false);
         if (TrailBookState.getMode() != TrailBookState.MODE_EDIT)
             removeSelectedMarker();
     }
@@ -479,6 +534,11 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
     }
 
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        Log.d(Constants.TRAILBOOK_TAG, "Long Clicked map, " + latLng.latitude + "," + latLng.longitude);
+    }
+
     private void putSelectedMarkerOnMap(LatLng point) {
         if (mSelectedPointMarker != null)
             mSelectedPointMarker.remove();
@@ -486,8 +546,11 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (point != null) {
             Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": putting selected marker on map:" + point);
             mSelectedPointMarker = mMap.addMarker(new MarkerOptions()
-                    .position(point)
-                    .icon(BitmapDescriptorFactory.fromBitmap(scale(R.drawable.ic_marker_add_new_note))));
+                            .position(point)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.point_select))
+                            .anchor(.5f, .5f)
+            );
+            mSelectedPointMarker.setDraggable(true);
         }
     }
 
@@ -512,14 +575,45 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         return false;
     }
 
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+        Log.d(Constants.TRAILBOOK_TAG, "Starting drag");
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+        Log.d(Constants.TRAILBOOK_TAG, "dragging");
+        String pathId = TrailBookState.getActivePathId();
+        LatLng newLoc = marker.getPosition();
+
+        MarkerType type = getMarkerType(marker);
+        if (type == MarkerType.POINT && mSelectedLocation != null) {
+            TrailbookPathUtilities.movePoint(pathId, mSelectedLocation, newLoc);
+            mSelectedLocation = newLoc;
+            refreshSegmentsForActivePath();
+        } else if (type == MarkerType.NOTE) {
+            String paoId = mPaoMarkers.getKey(marker);
+            TrailbookPathUtilities.moveNote(pathId, paoId, newLoc);
+        }
+        mPathManager.savePath(pathId);
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+        Log.d(Constants.TRAILBOOK_TAG, "Ending drag");
+    }
+
     @Override
     public void onClick(View view) {
-        Log.d(Constants.TRAILBOOK_TAG, "View clicked:" + view.getId() + ", " + view.getTag());
-        if (view.getId() == R.id.nv_small_note_layout || view.getId() == R.id.vc_small_climb_layout || view.getId() == R.id.vn_button_expand) {
-            Log.d(Constants.TRAILBOOK_TAG, "Note clicked");
-            collapseSlidingPanelIfExpanded();
+        if (isAdded()) {
+            Log.d(Constants.TRAILBOOK_TAG, "View clicked:" + view.getId() + ", " + view.getTag());
+            if (view.getId() == R.id.nv_small_note_layout || view.getId() == R.id.vc_small_climb_layout || view.getId() == R.id.vn_button_expand) {
+                Log.d(Constants.TRAILBOOK_TAG, "Note clicked");
+                collapseSlidingPanelIfExpanded();
 
-            ((TrailBookActivity)getActivity()).showFullObject(((PointAttachedObjectView) view).getPaoId());
+                ((TrailBookActivity) getActivity()).showFullObject(((PointAttachedObjectView) view).getPaoId());
+            }
         }
     }
 
@@ -563,8 +657,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
 
         if (slidingPanel != null) {
-            PathDetailsView pdv = getPathDetailsView(pathId);
-            addViewToSlidingUpPanel(pdv);
+            mDetailView = getPathDetailsView(pathId);
+            registerForContextMenu(mDetailView.getMoreButton());
+            addViewToSlidingUpPanel(mDetailView);
             expandSlidingPanelIfCollapsed();
         }
 
@@ -572,9 +667,11 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void addViewToSlidingUpPanel(View v) {
-        LinearLayout panelContainer = (LinearLayout)getActivity().findViewById(R.id.details_panel_container);
-        panelContainer.removeAllViews();
-        panelContainer.addView(v);
+        if (isAdded()) {
+            LinearLayout panelContainer = (LinearLayout) getActivity().findViewById(R.id.details_panel_container);
+            panelContainer.removeAllViews();
+            panelContainer.addView(v);
+        }
     }
 
     private PathDetailsView getPathDetailsView(String pathId) {
@@ -584,6 +681,33 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         pv.setActionListener((PathDetailsActionListener) getActivity());
         return pv;
     }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,ContextMenu.ContextMenuInfo menuInfo) {
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment creating context menu");
+        if (mDetailView != null) {
+            Log.d(Constants.TRAILBOOK_TAG, "context menu for " + v.getId());
+            if (v.getId() == mDetailView.getMoreButton().getId()) {
+                PathSummary summary = mPathManager.getPathSummary(mDetailView.getPathId());
+                if (summary != null) {
+                    menu.setHeaderTitle(summary.getName());
+                    ApplicationUtils.addPathActionMenuItems(menu, summary.getId());
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        String pathId = mDetailView.getPathId();
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: item clicked for path:" + pathId);
+        TrailBookActivity actionListener = (TrailBookActivity)getActivity();
+        actionListener.processMenuAction(pathId, item);
+        return true;
+    }
+
+
 
     private MarkerType getMarkerType(Marker marker) {
         //TODO: refactor me
@@ -599,6 +723,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (id != null) {
             return MarkerType.NOTE;
         }
+
+        if (mSelectedPointMarker != null && marker.getId().equalsIgnoreCase(mSelectedPointMarker.getId()))
+            return MarkerType.POINT;
 
         return MarkerType.UNKNOWN;
     }
@@ -636,8 +763,11 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         //center the map on the current location
         mMap.setOnMapLoadedCallback(this);
         mMap.setOnMarkerClickListener(this);
+        mMap.setOnMarkerDragListener(this);
         mMap.setOnMapClickListener(this);
+        mMap.setOnMapLongClickListener(this);
         mMap.setMyLocationEnabled(true);
+        //mMap.setInfoWindowAdapter(new MapPointSelectedAdaptor(getActivity().getLayoutInflater()));
         setMapTypeToUserPreference();
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -673,7 +803,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private void updateEndMarkerToLocal(String pathId) {
         Marker endMarker = mEndMarkers.get(pathId);
         if (endMarker != null) {
-            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark);
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.path_marker);
             endMarker.setIcon(icon);
         }
     }
@@ -735,6 +865,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": adding new marker");
             Marker marker = mMap.addMarker(getMarker(paoObject, iconId));
             mPaoMarkers.put(objectId, marker);
+            if (TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
+                marker.setDraggable(true);
+            }
         } else {
             Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + "updating existing marker");
             currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(scale(iconId)));
@@ -750,7 +883,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         MarkerOptions options =  new MarkerOptions()
                 .position(paObject.getLocation())
                 .title(content)
-                .anchor(.5f, .5f)
+                .anchor(.5f, 1f)
                 .icon(BitmapDescriptorFactory.fromBitmap(scale(iconId)));
 
         return options;
@@ -759,7 +892,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private Bitmap scale (int resourceId) {
         BitmapDrawable bd=(BitmapDrawable) getResources().getDrawable(resourceId);
         Bitmap b=bd.getBitmap();
-        Bitmap newBitmap=Bitmap.createScaledBitmap(b, b.getWidth()/4,b.getHeight()/4, false);
+        Bitmap newBitmap=Bitmap.createScaledBitmap(b, b.getWidth()/1,b.getHeight()/1, false);
         return newBitmap;
     }
 
@@ -798,23 +931,27 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void addPathSummaryToMap(PathSummary summary) {
-        Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + "adding summary to map " + summary.getName());
-        addEndMarkerToMap(summary);
+        if (shouldDisplayPath(summary)) {
+            Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + "adding summary to map " + summary.getName());
+            addEndMarkerToMap(summary);
+        }
     }
 
     private void addEndMarkerToMap(PathSummary summary) {
-        if (mEndMarkers.get(summary.getId()) == null && summary != null && summary.getStart() != null && summary.getEnd() != null) {
-            Marker endMarker = mMap.addMarker(getNewEndMarker(summary));
-            mEndMarkers.put(summary.getId(), endMarker);
+        if (shouldDisplayPath(summary)) {
+            if (mEndMarkers.get(summary.getId()) == null && summary != null && summary.getEnd() != null) {
+                Marker endMarker = mMap.addMarker(getNewEndMarker(summary));
+                mEndMarkers.put(summary.getId(), endMarker);
+            }
         }
     }
 
     private MarkerOptions getNewEndMarker(PathSummary summary) {
         BitmapDescriptor icon = null;
         if (mPathManager.isStoredLocally(summary.getId())) {
-            icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark);
+            icon = BitmapDescriptorFactory.fromResource(R.drawable.path_marker);
         } else {
-            icon = BitmapDescriptorFactory.fromResource(R.drawable.ic_placemark_cloud);
+            icon = BitmapDescriptorFactory.fromResource(R.drawable.path_marker_cloud);
         }
 
         MarkerOptions options = new MarkerOptions()
@@ -825,10 +962,22 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void addStartMarkerToMap(PathSummary summary) {
-        if (mStartMarkers.get(summary.getId()) == null && summary != null && summary.getStart() != null && summary.getEnd() != null) {
-            Marker startMarker = mMap.addMarker(new MarkerOptions().position(summary.getStart()).title(summary.getName()));
+        if (mStartMarkers.get(summary.getId()) == null && summary != null && summary.getStart() != null) {
+            Marker startMarker = mMap.addMarker(getNewStartMarker(summary));
             mStartMarkers.put(summary.getId(), startMarker);
         }
+    }
+
+    private MarkerOptions getNewStartMarker(PathSummary summary) {
+        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.parking);
+
+        MarkerOptions options = new MarkerOptions()
+                .position(summary.getStart())
+                .title(getString(R.string.parking))
+                .snippet(summary.getName())
+                .icon(icon)
+                .anchor(.5f,1f);
+        return options;
     }
 
     public void zoomToPath(String pathId) {
@@ -838,7 +987,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 30));
         } else {
             PathSummary summary = mPathManager.getPathSummary(pathId);
-            zoomToLocation(summary.getEnd());
+            if (summary != null && summary.getEnd() != null)
+                zoomToLocation(summary.getEnd());
         }
     }
 
@@ -867,6 +1017,21 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (loc != null) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, DEFAULT_ZOOM_LEVEL));
         }
+    }
+
+    @Subscribe
+    public void onFilterChangedEvent(FilterChangedEvent event) {
+        hideAllPaths();
+    }
+
+    @Subscribe
+    public void onZoomRequestEvent(ZoomRequestEvent event) {
+        if (mMap == null || !isMapLoaded()) {
+            queueEventIfMapNotAvailable(event);
+            return;
+        }
+
+        zoomToPath(event.getPathId());
     }
 
     @Subscribe
@@ -1067,15 +1232,31 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     private void prepareMapForEditMode() {
         showOnlyPath(TrailBookState.getActivePathId());
-        setVisibilityForAllEndMarkers(false);
         removeSelectedMarker();
+        setAllPAOMarkersToMovable();
         zoomToPath(TrailBookState.getActivePathId());
+    }
+
+    private void setAllPAOMarkersToMovable() {
+        Set<Marker> markers = mPaoMarkers.values();
+        for (Marker m:markers) {
+            m.setDraggable(true);
+        }
+    }
+
+    private void setAllPAOMarkersToNotMovable() {
+        Set<Marker> markers = mPaoMarkers.values();
+        for (Marker m:markers) {
+            if (m.isVisible())
+                m.setDraggable(false);
+        }
     }
 
     private void prepareMapForLeadMode() {
         showOnlyPath(TrailBookState.getActivePathId());
         setVisibilityForAllEndMarkers(false);
         removeSelectedMarker();
+        setAllPAOMarkersToNotMovable();
         zoomToCurrentLocation();
     }
 
@@ -1084,6 +1265,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         setVisibilityForAllNoteMarkers(false);
         setVisibilityForAllStartMarkers(false);
         removeSelectedMarker();
+        setAllPAOMarkersToNotMovable();
     }
 
     private void queueEventIfMapNotAvailable(Object event) {
@@ -1118,6 +1300,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 onPathSummariesReceivedFromCloudEvent((PathSummariesReceivedFromCloudEvent) event);
             else if (event instanceof PathReceivedEvent)
                 onPathReceivedEvent((PathReceivedEvent) event);
+            else if (event instanceof ZoomRequestEvent)
+                onZoomRequestEvent((ZoomRequestEvent) event);
         }
     }
 }

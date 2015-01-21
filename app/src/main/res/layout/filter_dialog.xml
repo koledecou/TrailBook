@@ -4,68 +4,32 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <CheckBox
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Show paths I created"
-        android:id="@+id/fd_cb_mypaths"
-        android:checked="true" />
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="You are not a member of any private groups.  If you have a group name and password click the Unlock Private Group button for access."
+        android:id="@+id/tv_no_groups" />
 
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Show paths created by other people"
-        android:id="@+id/fd_cb_otherpaths"
-        android:checked="true" />
-
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Show paths in these groups"
-        android:id="@+id/fd_cb_groups"
-        android:checked="false" />
-
-    <LinearLayout
-        android:orientation="vertical"
+    <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:id="@+id/fd_group_container"
-        >
+        android:id="@+id/scroll_groups" />
 
-        <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sadece Arkadaslarim"
-            android:id="@+id/checkBox4"
-            android:checked="false" />
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/unlock_group"
+        android:id="@+id/fd_b_add_group"
+        android:layout_gravity="center_horizontal" />
 
-        <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="The Punters"
-            android:id="@+id/checkBox5"
-            android:checked="false" />
-    </LinearLayout>
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="fill_parent"
+        android:layout_width="606dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp">
 
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Add Group"
-            android:id="@+id/button2" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Click here to browse groups, or to get access to a private group"
-            android:id="@+id/textView" />
     </LinearLayout>
 
 </LinearLayout>

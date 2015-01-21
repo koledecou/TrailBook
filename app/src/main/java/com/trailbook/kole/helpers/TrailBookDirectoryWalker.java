@@ -12,9 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * Created by Fistik on 7/16/2014.
- */
 public class TrailBookDirectoryWalker extends DirectoryWalker {
     //TODO: should use filefilter.  bug in apache commons?
 //    private static FileFilter tbFilter = FileFilterUtils.suffixFileFilter(".tb");

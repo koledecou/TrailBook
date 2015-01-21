@@ -82,9 +82,9 @@ public class NoteFactory {
 
     public static int getSelectedIconId(String attachmentType) {
         if (attachmentType.equals(NOTE)) {
-            return R.drawable.ic_map_note_selected;
+            return R.drawable.info_bold;
         } else if (attachmentType.equals(CLIMB)) {
-            return  R.drawable.ic_map_note_selected;
+            return  R.drawable.climb_marker;
         } else {
             return R.drawable.ic_map_note_selected;
         }
@@ -92,9 +92,9 @@ public class NoteFactory {
 
     public static int getUnelectedIconId(String attachmentType) {
         if (attachmentType.equals(NOTE)) {
-            return R.drawable.ic_map_note_unselected;
+            return R.drawable.info;
         } else if (attachmentType.equals(CLIMB)) {
-            return  R.drawable.ic_map_note_unselected;
+            return  R.drawable.climb_marker;
         } else {
             return R.drawable.ic_map_note_unselected;
         }

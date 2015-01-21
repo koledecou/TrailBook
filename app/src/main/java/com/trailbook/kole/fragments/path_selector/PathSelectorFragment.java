@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 
@@ -44,6 +43,7 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
     public static final String EDIT = "EDIT";
 
     public static final String  PATH_ID_LIST_ARG="PATH_IDS";
+    public static final String  TITLE_ARG="TITLE";
 
     OnPathSelectorFragmentInteractionListener mListener;
 
@@ -52,9 +52,9 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
     List<String> listDataHeader;
     HashMap<String, List<PathSummary>> listDataChild;
 
-    private AbsListView mListView;
     public ArrayAdapter mAdapter;
     public ArrayList<String> mPathIds;
+    String mTitle;
 
     final private Comparator<PathListContent.PathSummaryItem> stringComparator = new Comparator<PathListContent.PathSummaryItem>() {
         public int compare(PathListContent.PathSummaryItem s1, PathListContent.PathSummaryItem s2) {
@@ -62,11 +62,12 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
         }
     };
 
-    public static PathSelectorFragment newInstance(ArrayList<String> pathIds) {
+    public static PathSelectorFragment newInstance(ArrayList<String> pathIds, String title) {
         PathSelectorFragment fragment = new PathSelectorFragment();
 
         Bundle args = new Bundle();
         args.putStringArrayList(PATH_ID_LIST_ARG, pathIds);
+        args.putString(TITLE_ARG, title);
         fragment.setArguments(args);
 
         return fragment;
@@ -82,9 +83,8 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        mTitle = getArguments().getString(TITLE_ARG);
         mPathIds = getPathIdsFromArg();
-
         mAdapter = getArrayAdapter();
     }
 
@@ -187,12 +187,20 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
 
     private void addPaths() {
         for (String pathId:mPathIds) {
+            addPathToMainBucket(pathId);
             ArrayList<String> tags = PathManager.getInstance().getTags(pathId);
             Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " adding tags to " + PathManager.getInstance().getPathSummary(pathId).getName() + ":" + tags);
             for (String tag:tags) {
                 addPathToTag(pathId, tag);
             }
         }
+    }
+
+    private void addPathToMainBucket(String pathId) {
+        PathSummary p = PathManager.getInstance().getPathSummary(pathId);
+        addTagHeaderIfNeeded(mTitle);
+        List<PathSummary> memberList = addTagMember(mTitle, p);
+        listDataChild.put(mTitle, memberList);
     }
 
     private void addPathToTag(String pathId, String tag) {

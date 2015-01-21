@@ -10,6 +10,9 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
+import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 import org.apache.commons.io.FileUtils;
@@ -35,6 +38,16 @@ import java.util.ArrayList;
  */
 
 public class TrailbookFileUtilities {
+    public static String getExternalMailTempDirectory() {
+        //return TrailBookState.getInstance().getCacheDir().getAbsolutePath() + File.separator + Constants.tempDir;
+        //return TrailBookState.getInstance().getCacheDir().getAbsolutePath();
+        return Environment.getExternalStorageDirectory().toString() + File.separator + "trailbook" + File.separator + "mail";
+    }
+
+    public static String getInternalMailTempDirectory() {
+        return TrailBookState.getInstance().getCacheDir().getAbsolutePath() + File.separator + Constants.tempDir;
+        //return TrailBookState.getInstance().getCacheDir().getAbsolutePath();
+    }
 
     public static String getInternalPathDirectory() {
         return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.pathsRootDir;
@@ -80,26 +93,34 @@ public class TrailbookFileUtilities {
 
     public static File getInternalPathSummaryFile(String pathId) {
         String fullDirectory = getInternalPathDirectory(pathId);
-        String fileName = pathId + "_summary.tb";
-        return new File(fullDirectory, fileName);
+        return new File(fullDirectory, getSummaryFileName(pathId));
     }
 
     public static File getCachedPathSummaryFile(String pathId) {
         String fullDirectory = getCacheDirectoryForPath(pathId);
-        String fileName = pathId + "_summary.tb";
-        return new File(fullDirectory, fileName);
+        return new File(fullDirectory, getSummaryFileName(pathId));
     }
 
     public static File getInternalSegmentPointsFile(String segmentId) {
         String fullDirectory = getInternalSegmentDirectory(segmentId);
-        String fileName = segmentId + "_points.tb";
-        return new File(fullDirectory, fileName);
+        return new File(fullDirectory, getPointsFileName(segmentId));
     }
 
     public static File getInternalPAOFile(String noteId) {
         String fullDirectory = getInternalNoteDirectory();
-        String fileName = noteId + "_note.tb";
-        return new File(fullDirectory, fileName);
+        return new File(fullDirectory, getNoteFileName(noteId));
+    }
+
+    public static String getSummaryFileName(String pathId) {
+        return pathId + "_summary.tb";
+    }
+
+    public static String getPointsFileName(String segmentId) {
+        return segmentId + "_points.tb";
+    }
+
+    public static String getNoteFileName(String noteId) {
+        return noteId + "_note.tb";
     }
 
     public static File getInternalImageFile(String imageFileName) {
@@ -263,5 +284,174 @@ public class TrailbookFileUtilities {
         inputStream.close();
         reader.close();
         return stringBuilder.toString();
+    }
+
+    public static File zipPathToTempFile(Path p) {
+        String tempPathDirectory = getExternalMailTempDirectory() + File.separator  + p.summary.getId();
+        packagePath(p, tempPathDirectory);
+
+        String tempPathZipFileName = p.summary.getName() + ".tbz";
+        String tempPathZipFileFullName =  getExternalMailTempDirectory() + File.separator + tempPathZipFileName;
+        Log.d(Constants.TRAILBOOK_TAG, "zipping to " + tempPathZipFileFullName);
+        Zipper zipper = new Zipper(tempPathDirectory, tempPathZipFileFullName);
+        zipper.zipIt();
+        //zipFileAtPath(tempPathDirectory, tempPathZipFileFullName);
+        File zipFile = new File(tempPathZipFileFullName);
+        return zipFile;
+    }
+
+    private static void packagePath(Path path, String targetDir) {
+        String pathId =  path.summary.getId();
+        try {
+            FileUtils.forceMkdir(new File(targetDir));
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error creating temp dir", e);
+        }
+
+        copyPathDirectory(pathId, new File(targetDir));
+        copySegments(path, targetDir);
+        copyNotes(path, targetDir);
+    }
+
+    private static void copyNotes(Path path, String tempPathDirectory) {
+        for (PointAttachedObject pao:path.paObjects) {
+            String noteId = pao.getId();
+            File targetDir = new File(tempPathDirectory + File.separator + "notes");
+            copyNoteFile(noteId, targetDir);
+            ArrayList<String> imageFileNames = pao.getAttachment().getImageFileNames();
+            copyImageFiles(imageFileNames, new File(targetDir + File.separator + "images"));
+        }
+    }
+
+    private static void copyImageFiles(ArrayList<String> fileNames, File targetDir) {
+        if (fileNames != null && fileNames.size()>0) {
+            for (String fileName : fileNames) {
+                if (fileName != null && fileName.length() > 0) {
+                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookFileUtilities copying image file: " + fileName);
+                    String fullFileName = getInternalImageFileDir() + File.separator + fileName;
+                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookFileUtilities copying image file full name: " + fileName);
+                    try {
+                        FileUtils.copyFileToDirectory(new File(fullFileName), targetDir);
+                    } catch (IOException e) {
+                        Log.e(Constants.TRAILBOOK_TAG, "Error copyiing image file ", e);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void copyNoteFile(String noteId, File targetDir) {
+        File sourceFile = new File(getInternalNoteDirectory() + File.separator + getNoteFileName(noteId));
+        try {
+            FileUtils.copyFileToDirectory(sourceFile, targetDir);
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error copyiing path dir ", e);
+        }
+    }
+
+    private static void copySegments(Path path, String tempPathDirectory) {
+        for (PathSegment s:path.segments) {
+            String segmentId = s.getId();
+            copySegmentDir(segmentId, new File(tempPathDirectory + File.separator + "segments" + File.separator + segmentId));
+        }
+    }
+
+    private static void copySegmentDir(String segmentId, File targetDir) {
+        File sourceDir = new File(getInternalSegmentDirectory(segmentId));
+        try {
+            FileUtils.copyDirectory(sourceDir, targetDir);
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error copyiing path dir ", e);
+        }
+    }
+
+    private static void copyPathDirectory(String pathId, File targetDir) {
+        File sourceDir = new File(getInternalPathDirectory(pathId));
+        try {
+            FileUtils.copyDirectory(sourceDir, targetDir);
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error copyiing path dir ", e);
+        }
+    }
+
+    public static String explodeCompressedPath(String pathZipFileName, String destFolder) {
+        Unzipper unzipper = new Unzipper(pathZipFileName, destFolder);
+        unzipper.unZipIt();
+        PathExtractDirectoryWalker walker = new PathExtractDirectoryWalker();
+        walker.putPathFilesInFolders(destFolder);
+        copyPathToInternalDirectories(walker);
+        return walker.getPathId();
+    }
+
+    private static void copyPathToInternalDirectories(PathExtractDirectoryWalker walker) {
+        copySummaryFileToCacheDir(walker.getSummaryFile());
+        copySummaryFileToPathDir(walker.getPathId(), walker.getSummaryFile());
+        copyNotesToNoteDir(walker.getNoteFiles());
+        copyImagesToImageDir(walker.getImageFiles());
+        copySegmentsToSegmentDir(walker.getSegmentDirectories());
+    }
+
+    private static void copySegmentsToSegmentDir(ArrayList<File> segmentDirectories) {
+        if (segmentDirectories != null && segmentDirectories.size()>0) {
+            for (File segmentDirectory:segmentDirectories) {
+                try {
+                    Log.d(Constants.TRAILBOOK_TAG, "copying segment dir " + segmentDirectory.getAbsolutePath() + " to " + getInternalSegmentDirectory());
+                    FileUtils.copyDirectoryToDirectory(segmentDirectory, new File(getInternalSegmentDirectory()));
+                    //FileUtils.copyDirectory(segmentDirectory, new File(getInternalSegmentDirectory()));
+                } catch (IOException e) {
+                    Log.e(Constants.TRAILBOOK_TAG, "Error copying segment to dir", e);
+                }
+            }
+        }
+    }
+
+    private static void copyImagesToImageDir(ArrayList<File> imageFiles) {
+        if (imageFiles != null && imageFiles.size()>0) {
+            for (File imageFile:imageFiles) {
+                try {
+                    FileUtils.copyFileToDirectory(imageFile, getInternalImageFileDir());
+                } catch (IOException e) {
+                    Log.e(Constants.TRAILBOOK_TAG, "Error copying image to dir", e);
+                }
+            }
+        }
+    }
+
+    private static void copyNotesToNoteDir(ArrayList<File> noteFiles) {
+        if (noteFiles != null && noteFiles.size()>0) {
+            for (File noteFile:noteFiles) {
+                try {
+                    FileUtils.copyFileToDirectory(noteFile, new File(getInternalNoteDirectory()));
+                } catch (IOException e) {
+                    Log.e(Constants.TRAILBOOK_TAG, "Error copying note to dir", e);
+                }
+            }
+        }
+    }
+
+    private static void copySummaryFileToPathDir(String pathId, File summaryFile) {
+        createPathDir(pathId);
+        try {
+            FileUtils.copyFileToDirectory(summaryFile, new File(getInternalPathDirectory(pathId)));
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error copying summary to path dir", e);
+        }
+    }
+
+    private static void copySummaryFileToCacheDir(File summaryFile) {
+        try {
+            FileUtils.copyFileToDirectory(summaryFile, new File(getInternalCacheDirectory()));
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error copying summary to cache dir", e);
+        }
+    }
+
+    private static void createPathDir(String pathId) {
+        String pathDir = getInternalPathDirectory(pathId);
+        try {
+            FileUtils.forceMkdir(new File(pathDir));
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error making path dir ", e);
+        }
     }
 }

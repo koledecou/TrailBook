@@ -13,6 +13,7 @@ import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathGroup;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
@@ -49,6 +50,7 @@ public class PathManager {
     private static Hashtable<String,PointAttachedObject> mPointAttachedObjects;
     private static Hashtable<String,PathSegment> mSegments;
     private static Hashtable<String,TrailBookComment> mPathComments;
+    private static Hashtable<String, PathGroup> mGroups;
     private static Bus bus;
 
     private Gson gson = new Gson();
@@ -626,6 +628,7 @@ public class PathManager {
 
     public void deletePath(String pathId, Context c) {
         try {
+            deletePointAttachedObjects(pathId, c);
             deleteSegments(pathId, c);
             deletePaths(pathId, c);
         } catch (Exception e) {
@@ -647,6 +650,39 @@ public class PathManager {
                 deleteSegment(segmentId, c);
                 bus.post(new SegmentDeletedEvent(segment));
                 mSegments.remove(segmentId);
+            }
+        }
+    }
+
+    public void deletePointAttachedObjects(String pathId, Context c) {
+        ArrayList<PointAttachedObject> pointAttachedObjects = getPointObjectsForPath(pathId);
+        if (pointAttachedObjects != null) {
+            for (PointAttachedObject pao : pointAttachedObjects) {
+                String paoId = pao.getId();
+                File paoFile = TrailbookFileUtilities.getInternalPAOFile(paoId);
+                Log.d(Constants.TRAILBOOK_TAG, "deleteing note file: " + paoFile);
+                try {
+                    FileUtils.forceDelete(paoFile);
+                } catch (IOException e) {
+                    Log.e(Constants.TRAILBOOK_TAG, "Cannot delete note file:" + paoFile, e);
+                }
+                deleteImages(pao);
+            }
+        }
+    }
+
+    private void deleteImages(PointAttachedObject pao) {
+        ArrayList<String> imageFileNames = pao.getAttachment().getImageFileNames();
+        if (imageFileNames == null || imageFileNames.size()<1)
+            return;
+
+        for (String fileName:imageFileNames) {
+            File file = TrailbookFileUtilities.getInternalImageFile(fileName);
+            try {
+                Log.d(Constants.TRAILBOOK_TAG, "deleteing image file: " + file);
+                FileUtils.forceDelete(file);
+            } catch (IOException e) {
+                Log.e(Constants.TRAILBOOK_TAG, "Cannot delete image file:" + file, e);
             }
         }
     }
@@ -756,10 +792,8 @@ public class PathManager {
     }
 
     public ArrayList<String> getTags(String pathId) {
-        //for now just give the all one
-        ArrayList<String> tags = new ArrayList<String>();
-        tags.add("All Paths");
-        return  tags;
+        //todo: implement tags
+        return  new ArrayList<String>();
     }
 
     public ArrayList<TrailBookComment> getComments(String pathId) {
@@ -773,5 +807,22 @@ public class PathManager {
 
     public void addPathComment(TrailBookComment comment) {
         mPathComments.put(comment.getId(), comment);
+    }
+
+    public PathGroup getGroup(String groupId) {
+        return mGroups.get(groupId);
+    }
+
+    public void addGroup(PathGroup group) {
+        mGroups.put(group.groupId, group);
+    }
+
+    public void removeCloudCache(String pathId) {
+        File cacheFile = TrailbookFileUtilities.getCachedPathSummaryFile(pathId);
+        try {
+            FileUtils.forceDelete(cacheFile);
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "PathManager: failed to delete cache file:" +cacheFile, e );
+        }
     }
 }

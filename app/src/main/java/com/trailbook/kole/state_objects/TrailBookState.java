@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.ViewConfiguration;
 
 import com.google.gson.Gson;
 import com.squareup.otto.Bus;
@@ -34,6 +35,8 @@ import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
+
+import java.lang.reflect.Field;
 
 
 @ReportsCrashes(formKey = "", // will not be used
@@ -88,6 +91,21 @@ public class TrailBookState extends Application {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         ACRA.init(this);
+
+        forceOverflowMenu();
+    }
+
+    private void forceOverflowMenu() {
+        try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if(menuKeyField != null) {
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            }
+        } catch (Exception ex) {
+            // Ignore
+        }
     }
 
     public static TrailBookState getInstance(){

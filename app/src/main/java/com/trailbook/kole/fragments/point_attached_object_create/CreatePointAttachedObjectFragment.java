@@ -314,7 +314,8 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
         hideSoftKeyboard();
         if (view.getId() == R.id.cn_b_ok) {
             Attachment a = createAttachment();
-            a.addImageFiles(mImageFileNames);
+            if (mImageFileNames != null && mImageFileNames.size()>0)
+                a.addImageFiles(mImageFileNames);
             mListener.onPointObjectCreated(mNoteId, a);
         } else if (view.getId() == R.id.cn_b_cancel) {
             mListener.onPointObjectCreateCanceled();

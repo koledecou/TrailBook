@@ -1,7 +1,9 @@
 package com.trailbook.kole.helpers;
 
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -9,12 +11,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.FilterSet;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathGroup;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
+import com.trailbook.kole.data.User;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
 
@@ -29,6 +34,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -59,6 +65,32 @@ public class TrailbookPathUtilities {
         }
 
         return nearestPointOnPath;
+    }
+
+    public static void deletePointFromPath(String pathId, LatLng point) {
+        ArrayList<PathSegment> segments = PathManager.getInstance().getSegmentsForPath(pathId);
+        if (segments == null || segments.size()<1 )
+            return;
+
+        for (PathSegment s : segments) {
+            s.deletePoint(point);
+        }
+    }
+
+    public static void movePoint(String pathId, LatLng oldLoc, LatLng newLoc) {
+        ArrayList<PathSegment> segments = PathManager.getInstance().getSegmentsForPath(pathId);
+        if (segments == null || segments.size()<1 )
+            return;
+
+        for (PathSegment s : segments) {
+            s.movePoint(oldLoc, newLoc);
+        }
+    }
+
+    public static void moveNote(String pathId, String paoId, LatLng newLoc) {
+        PointAttachedObject pao = PathManager.getInstance().getPointAttachedObject(paoId);
+        pao.move(newLoc);
+
     }
 
     private static LatLng getNearestPointOnSegment(LatLng referenceLocation, PathSegment s) {
@@ -366,4 +398,53 @@ public class TrailbookPathUtilities {
             return false;
         }
     }
+
+    public static ArrayList<PathGroup> getMyGroups() {
+        return null;
+    }
+
+    public static FilterSet getFilters() {
+        FilterSet filters = new FilterSet();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(TrailBookState.getInstance());
+        filters.showMyPaths =  preferences.getBoolean(Constants.FILTER_PREFS_SHOW_MY_PATHS_KEY, true);
+        filters.showOtherPaths =  preferences.getBoolean(Constants.FILTER_PREFS_SHOW_OTHER_PATHS_KEY, true);
+        filters.groupIdsToShow = preferences.getStringSet(Constants.FILTER_PREFS_GROUPS_TO_SHOW_KEY, new LinkedHashSet<String>());
+
+        Log.d(Constants.TRAILBOOK_TAG, "Filters: " + filters);
+
+        return filters;
+    }
+
+    public static void saveFilters(FilterSet filters) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(TrailBookState.getInstance());
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(Constants.FILTER_PREFS_SHOW_MY_PATHS_KEY, filters.showMyPaths);
+        editor.putBoolean(Constants.FILTER_PREFS_SHOW_OTHER_PATHS_KEY, filters.showOtherPaths);
+        editor.putStringSet(Constants.FILTER_PREFS_GROUPS_TO_SHOW_KEY, filters.groupIdsToShow);
+        editor.commit();
+    }
+
+    public static boolean isPathInFilter(PathSummary pathSummary, FilterSet filters) {
+        return true;
+    }
+
+/*    private static boolean isPathInGroups(PathSummary pathSummary, Set<String> groupIdsToShow) {
+        for (String groupId:groupIdsToShow) {
+            PathGroup group = PathManager.getInstance().getGroup(groupId);
+            if (group.pathIds != null && group.pathIds.contains(groupId))
+                return true;
+        }
+
+        return false;
+    }*/
+
+    private static boolean isPathMine(PathSummary pathSummary) {
+        String ownerId = pathSummary.getOwnerId();
+        User currentUser = TrailBookState.getCurrentUser();
+        if (currentUser != null && currentUser.userId.equals(ownerId))
+            return true;
+        else
+            return false;
+    }
+
 }
