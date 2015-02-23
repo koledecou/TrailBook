@@ -17,7 +17,7 @@
     <string name="cancel_new_path">Cancel</string>
     <string name="ok_new_path">New Path</string>
     <string name="new_path_dialog_title">New Path</string>
-    <string name="cpd_new_path">New Path</string>
+    <string name="cpd_new_path">Create</string>
     <string name="cpd_cancel">Cancel</string>
     <string name="cpd_title">New Path</string>
     <string name="trailNotesHint">Write notes here.</string>
