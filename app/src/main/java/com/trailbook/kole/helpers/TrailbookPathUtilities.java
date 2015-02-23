@@ -12,6 +12,7 @@ import com.google.gson.GsonBuilder;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.FilterSet;
+import com.trailbook.kole.data.KeyWordHashCollection;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathGroup;
@@ -167,17 +168,6 @@ public class TrailbookPathUtilities {
         return String.valueOf(date.getTime());
     }
 
-/*
-    public static String getPointAttachedObjectJSONString(PointAttachedObject note) {
-        Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        if (gson == null) {
-            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
-        }
-        Log.d(Constants.TRAILBOOK_TAG, "delete me: attachment type is " + note.attachmentType);
-        return gson.toJson(note);
-    }
-*/
-
     public static String getCommentJsonString(TrailBookComment comment) {
         Gson gson = new GsonBuilder().create();
         if (gson == null) {
@@ -192,6 +182,14 @@ public class TrailbookPathUtilities {
             Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
         }
         return gson.toJson(summary);
+    }
+
+    public static String getKeyHashJSON(KeyWordHashCollection hash) {
+        Gson gson = new GsonBuilder().create();
+        if (gson == null) {
+            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
+        }
+        return gson.toJson(hash);
     }
 
     public static String getSegmentPointsJSONString(PathSegment segment) {
@@ -387,6 +385,9 @@ public class TrailbookPathUtilities {
     public static boolean hasEditPermissions(String pathId) {
         PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
         if (summary ==  null)
+            return false;
+
+        if (TrailBookState.getCurrentUser() == null || TrailBookState.getCurrentUser().userId == null || TrailBookState.getCurrentUser().userId.length() < 1)
             return false;
 
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookPathUtilities: has edit permissions " + summary.getOwnerId() + "," +TrailBookState.getCurrentUser().userId);

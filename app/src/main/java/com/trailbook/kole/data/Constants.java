@@ -25,6 +25,7 @@ public class Constants {
     public static final String imageDir = "images";
     public static final String notesDir = "notes";
     public static final String commentsDir = "comments";
+    public static final String keyHashFile = "keys.txt";
     public static final String TRAILBOOK_TAG = "trailbook";
     public static final long CLOUD_REFRESH_DEFAULT_TIME_DELTA = 5*60*1000;
 

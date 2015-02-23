@@ -6,26 +6,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.PathSummary;
 
 import java.util.HashMap;
 import java.util.List;
 
-public class ExpandableListAdapter extends BaseExpandableListAdapter {
+public class KeyWordGroupsExpandableListAdapter extends BaseExpandableListAdapter {
 
     private Context mContext;
     private List<String> mListDataHeader; // header titles
     // child data in format of header title, child title
-    private HashMap<String, List<PathSummary>> mListDataChild;
+    private HashMap<String, List<String>> mListDataChild;
 
-    public ExpandableListAdapter(Context context) {
+    public KeyWordGroupsExpandableListAdapter(Context context) {
         this.mContext = context;
     }
 
-    public void setLists(List<String> listDataHeader, HashMap<String, List<PathSummary>> listChildData) {
+    public void setLists(List<String> listDataHeader, HashMap<String, List<String>> listChildData) {
         mListDataChild = listChildData;
         mListDataHeader = listDataHeader;
     }
@@ -44,20 +44,25 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getChildView(int groupPosition, final int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
-        final PathSummary child = (PathSummary) getChild(groupPosition, childPosition);
-
-        final String childText = child.getName();
+        final String child = (String) getChild(groupPosition, childPosition);
 
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this.mContext
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = infalInflater.inflate(R.layout.fragment_pathselector_list_item, null);
+            convertView = infalInflater.inflate(R.layout.key_word_list_item, null);
         }
 
         TextView txtListChild = (TextView) convertView
                 .findViewById(R.id.lblListItem);
 
-        txtListChild.setText(childText);
+        txtListChild.setText(child);
+
+        ImageView addButton = (ImageView) convertView.findViewById(R.id.add_image);
+        if (child.equals("Add"))
+            addButton.setVisibility(View.VISIBLE);
+        else
+            addButton.setVisibility(View.INVISIBLE);
+
         return convertView;
     }
 
@@ -89,7 +94,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this.mContext
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = infalInflater.inflate(R.layout.fragment_pathselector_list_group, null);
+            convertView = infalInflater.inflate(R.layout.key_word_list_group, null);
         }
 
         TextView lblListHeader = (TextView) convertView

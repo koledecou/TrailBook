@@ -69,14 +69,14 @@ public class NoteFactory {
     }
 
     public static PointAttachedObject getPointAttachedObjectFromJSONString(String jsonString) {
-        Log.d(Constants.TRAILBOOK_TAG, "NoteFactory: making pao from " + jsonString);
+        Log.v(Constants.TRAILBOOK_TAG, "NoteFactory: making pao from " + jsonString);
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(Attachment.class, new InterfaceAdapter<Attachment>());
         gsonBuilder.setPrettyPrinting();
         Gson gson =gsonBuilder.create();
 
         PointAttachedObject pao = gson.fromJson(jsonString,PointAttachedObject.class);
-        Log.d(Constants.TRAILBOOK_TAG, "NoteFactory: pao is " + pao);
+        Log.v(Constants.TRAILBOOK_TAG, "NoteFactory: pao is " + pao);
         return pao;
     }
 

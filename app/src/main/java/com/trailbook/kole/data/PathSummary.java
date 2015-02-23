@@ -1,5 +1,7 @@
 package com.trailbook.kole.data;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.data.geo.GeoPoint;
 
@@ -9,7 +11,7 @@ import java.util.Date;
 /**
  * Created by Fistik on 7/2/2014.
  */
-public class PathSummary {
+public class PathSummary implements Comparable<PathSummary> {
     String name;
     String description;
     long lastUpdatedTimestamp;
@@ -18,6 +20,7 @@ public class PathSummary {
     int downVotes=0;
     ArrayList<String> noteIds;
     ArrayList<String> segmentIds;
+    KeyWordGroup keyWordGroup;
 
     //TODO: add objects for associated climbs, books, summary images, etc...
     String _id = "-1";
@@ -122,5 +125,20 @@ public class PathSummary {
 
     public void removePao(String paoId) {
         noteIds.remove(paoId);
+    }
+
+    public KeyWordGroup getKeyWordGroup() {
+        return keyWordGroup;
+    }
+
+    public void setKeyWordGroup(KeyWordGroup keyWordGroup) {
+        this.keyWordGroup = keyWordGroup;
+    }
+
+    @Override
+    public int compareTo(PathSummary another) {
+        int result = this.name.compareToIgnoreCase(another.name);
+        Log.d(Constants.TRAILBOOK_TAG, " compared " + this.name + " to " + another.name + ": " + result);
+        return result;
     }
 }

@@ -25,12 +25,14 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
 
+
     <application
         android:name="com.trailbook.kole.state_objects.TrailBookState"
         android:allowBackup="true"
         android:icon="@drawable/trail_book_logo"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme"
+        >
 
         <provider
             android:name="com.trailbook.kole.helpers.CachedFileProvider"
@@ -39,13 +41,25 @@
 
         <activity
             android:name=".TrailBookActivity"
-            android:label="@string/app_name">
+            android:label="@string/title_activity_main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name="com.trailbook.kole.activities.SearchResultsActivity"
+            android:label="@string/search_acivity_name"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
+        </activity>
+
         <activity
             android:name=".ApproachingObjectNotificationReceiverActivity"
             android:excludeFromRecents="true"
@@ -139,6 +153,13 @@
             android:enabled="true"
             android:exported="true" >
         </receiver>
+
+        <provider
+            android:name="com.trailbook.kole.contentproviders.TrailbookKeywordContentProvider"
+            android:authorities="com.trailbook.kole.contentproviders.TrailbookKeywordContentProvider"
+            android:exported="true">
+        </provider>
+
     </application>
 
 </manifest>

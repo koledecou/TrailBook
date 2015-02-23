@@ -1,7 +1,6 @@
 package com.trailbook.kole.fragments.path_selector;
 
 
-
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.util.Log;
@@ -55,6 +54,7 @@ public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
         for (PathSummary summary: pathSummaries) {
             PathListContent.addItem(new PathListContent.PathSummaryItem(summary.getId(), summary.getName()));
         }
+        PathListContent.sort();
     }
 
     private void showNoPathsAlert() {

@@ -38,6 +38,7 @@ public class PathFileReceiverActivity extends Activity {
         String pathId = TrailbookFileUtilities.explodeCompressedPath(tempFileName, tempDirectory + File.separator + "import");
         Intent launchTrailbookIntent = new Intent(this, TrailBookActivity.class);
         launchTrailbookIntent.putExtra(TrailBookActivity.INITIAL_PATH_ID_KEY, pathId);
+        //launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(launchTrailbookIntent);
     }
 

@@ -15,12 +15,13 @@ import android.widget.ExpandableListView;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
-import com.trailbook.kole.fragments.list_content.ExpandableListAdapter;
+import com.trailbook.kole.fragments.list_content.PathSelectorExpandableListAdapter;
 import com.trailbook.kole.fragments.list_content.PathListContent;
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +48,7 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
 
     OnPathSelectorFragmentInteractionListener mListener;
 
-    ExpandableListAdapter listAdapter;
+    PathSelectorExpandableListAdapter listAdapter;
     ExpandableListView expListView;
     List<String> listDataHeader;
     HashMap<String, List<PathSummary>> listDataChild;
@@ -98,7 +99,7 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_pathselector_list, container, false);
         expListView = (ExpandableListView) view.findViewById(R.id.lvExp);
-        listAdapter = new ExpandableListAdapter(getActivity());
+        listAdapter = new PathSelectorExpandableListAdapter(getActivity());
         prepareListData();
 
         expListView.setAdapter(listAdapter);
@@ -123,7 +124,6 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " creating context menu");
         if (v.getId() == R.id.lvExp) {
-            ExpandableListView lv = (ExpandableListView) v;
             ExpandableListView.ExpandableListContextMenuInfo info  = (ExpandableListView.ExpandableListContextMenuInfo) menuInfo;
             Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " packed position=" + info.packedPosition);
             int groupPosition = ExpandableListView.getPackedPositionGroup(info.packedPosition);
@@ -134,7 +134,6 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
 
             menu.setHeaderTitle(summary.getName());
             ApplicationUtils.addPathActionMenuItems(menu, summary.getId());
-            //ApplicationUtils.addDownloadedPathMenuItems(menu, summaryItem.id);
         }
     }
 
@@ -174,6 +173,7 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
             PathSummary summary = pathManager.getPathSummary(pathId);
             PathListContent.addItem(new PathListContent.PathSummaryItem(summary.getId(), summary.getName()));
         }
+        PathListContent.sort();
     }
 
     private void prepareListData() {
@@ -188,12 +188,21 @@ public class PathSelectorFragment extends Fragment implements ExpandableListView
     private void addPaths() {
         for (String pathId:mPathIds) {
             addPathToMainBucket(pathId);
-            ArrayList<String> tags = PathManager.getInstance().getTags(pathId);
+
+/* todo: implement tags or regions
+           ArrayList<String> tags = PathManager.getInstance().getTags(pathId);
             Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " adding tags to " + PathManager.getInstance().getPathSummary(pathId).getName() + ":" + tags);
             for (String tag:tags) {
                 addPathToTag(pathId, tag);
-            }
+            }*/
         }
+
+        sortPaths(mTitle);
+    }
+
+    private void sortPaths(String groupKey) {
+        List<PathSummary> list = listDataChild.get(groupKey);
+        Collections.sort(list);
     }
 
     private void addPathToMainBucket(String pathId) {

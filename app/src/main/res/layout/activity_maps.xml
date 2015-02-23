@@ -19,9 +19,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="bottom"
-            sothree:panelHeight="0dp"
-            sothree:shadowHeight="4dp"
-            sothree:fadeColor="@android:color/transparent">
+            sothree:umanoPanelHeight="0dp"
+            sothree:umanoShadowHeight="4dp"
+            sothree:umanoFadeColor="@android:color/transparent">
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">

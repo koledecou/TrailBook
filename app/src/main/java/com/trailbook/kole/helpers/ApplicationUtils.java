@@ -17,6 +17,7 @@ import android.widget.PopupMenu;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.KeyWord;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.io.File;
@@ -104,6 +105,14 @@ public class ApplicationUtils {
         button.setEnabled(false);
     }
 
+    public static void addPathActionMenuItemsForSearchResults(Menu menu, String id) {
+        if (PathManager.getInstance().isStoredLocally(id)) {
+            addDownloadedPathMenuItemsForSearchResults(menu, id);
+        } else if (PathManager.getInstance().isPathInCloudCache(id)){
+            addCloudPathMenuItemsForSearchResults(menu,id);
+        }
+    }
+
     public static void addPathActionMenuItems(Menu menu, String id) {
         if (PathManager.getInstance().isStoredLocally(id)) {
             addDownloadedPathMenuItems(menu, id);
@@ -145,6 +154,17 @@ public class ApplicationUtils {
         }
     }
 
+    public static void addDownloadedPathMenuItemsForSearchResults(Menu m, String id) {
+        m.add(Menu.NONE, MENU_CONTEXT_FOLLOW_ID, Menu.NONE, FOLLOW_TEXT);
+        m.add(Menu.NONE, MENU_CONTEXT_TO_START_ID, Menu.NONE, TO_START_TEXT);
+        m.add(Menu.NONE, MENU_CONTEXT_ZOOM_ID, Menu.NONE, ZOOM_TEXT);
+    }
+
+    public static void addCloudPathMenuItemsForSearchResults(Menu m, String id) {
+        m.add(Menu.NONE, MENU_CONTEXT_DOWNLOAD_ID, Menu.NONE, DOWNLOAD_TEXT);
+        m.add(Menu.NONE, MENU_CONTEXT_ZOOM_ID, Menu.NONE, ZOOM_TEXT);
+    }
+
     public static void showActionsPopupForPath(Context c, View v, PopupMenu.OnMenuItemClickListener listener, String pathId) {
         PopupMenu popup = new PopupMenu(c, v);
         popup.setOnMenuItemClickListener(listener);
@@ -174,6 +194,21 @@ public class ApplicationUtils {
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+    }
+
+    public static String getLabelForKeywordType(int type) {
+        switch (type) {
+            case KeyWord.CLIMB:
+                return "Climb: ";
+            case KeyWord.CRAG:
+                return "Crag: ";
+            case KeyWord.REGION:
+                return "Region: ";
+            case KeyWord.PATH:
+                return "Path: ";
+            default:
+                return "";
         }
     }
 }

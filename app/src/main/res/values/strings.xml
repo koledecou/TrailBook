@@ -183,4 +183,17 @@
     <string name="path_name">Path Name</string>
     <string name="goes_to_climbs">Goes to Climbs (click to add):</string>
     <string name="goes_to_crags">Goes to crags / cliffs / formations (click to add)</string>
+    <string name="upload_path_dialog_title">Upload Path</string>
+    <string name="other_keywords">Other Keywords</string>
+    <string name="region">Region</string>
+    <string name="climbs_accessed">Climbs Accessed</string>
+    <string name="delete_key_word">Delete</string>
+    <string name="search_title">Search</string>
+    <string name="search_hint">climb, crag, region</string>
+    <string name="search_acivity_name">Search Results</string>
+    <string name="title_activity_main">TrailBook</string>
+    <string name="search_results_header">Search Results</string>
+    <string name="keyword_title_climbs">Add Climbs Accessed By This Trail</string>
+    <string name="keyword_title_crags">Add Crags Accessed By This Trail</string>
+    <string name="keyword_title_regions">Add Regions Associated With This Trail</string>
 </resources>

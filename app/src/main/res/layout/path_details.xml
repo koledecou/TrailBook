@@ -29,6 +29,13 @@
             android:layout_height="wrap_content"
             android:text="@string/follow"
             android:id="@+id/pdv_button_follow" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/to_start"
+            android:id="@+id/pdv_button_to_start" />
     </LinearLayout>
 
     <LinearLayout

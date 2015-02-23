@@ -4,8 +4,27 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:id="@+id/">
+    android:paddingEnd="20dp">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/upload"
+            android:id="@+id/upd_b_ok"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cpd_cancel"
+            android:id="@+id/upd_b_cancel"/>
+
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
@@ -17,61 +36,20 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/path_name"
-            android:id="@+id/textView" />
+            android:textSize="17dp"
+            android:textColor="#ff573921"
+            android:id="@+id/name_label" />
 
         <EditText
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/cpd_et_path_name"
+            android:id="@+id/upd_et_path_name"
             android:imeOptions="actionDone" />
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/goes_to_climbs"
-        android:id="@+id/textView2" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Walk On the Water, Haley's Little Warm-up, Black is Brown, Deja Thorus, Uncle Fanny, Church Bowl Lieback, Black is Brown, Pole Position, Revival, Tammy Fae, Aunt Fanny's Pantry"
-        android:id="@+id/textView3"
-        android:layout_marginLeft="@dimen/left_pad" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/goes_to_crags"
-        android:id="@+id/textView4" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Church Bowl"
-        android:id="@+id/textView5"
-        android:layout_marginLeft="@dimen/left_pad" />
-
-    <LinearLayout
-        android:orientation="horizontal"
+    <ExpandableListView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal">
+        android:id="@+id/lvExp" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cpd_cancel"
-            android:id="@+id/cpd_b_cancel"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/upload"
-            android:id="@+id/cpd_b_ok"/>
-    </LinearLayout>
 </LinearLayout>

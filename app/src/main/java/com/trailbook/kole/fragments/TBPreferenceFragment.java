@@ -113,16 +113,18 @@ public class TBPreferenceFragment extends PreferenceFragment implements Preferen
     }
 
     private void setCurrentUserIdDisplay(User user) {
-        Preference savedUserIdDisplayPreference = (Preference) findPreference("SAVED_USER_ID_DISPLAY");
-        savedUserIdDisplayPreference.setOnPreferenceClickListener(this);
-        String userId = user.userId;
-        Log.d(Constants.TRAILBOOK_TAG, "TBPreferenceFragment: setting user " + userId);
-        //savedUserIdDisplayPreference.setIcon(R.drawable.ic_google_plus);
-        savedUserIdDisplayPreference.setSummary(
-                getUserNameForDisplay(user) +
-                System.getProperty("line.separator") +
-                getUserIdForDisplay(user)
-        );
+        if (user != null) {
+            Preference savedUserIdDisplayPreference = (Preference) findPreference("SAVED_USER_ID_DISPLAY");
+            savedUserIdDisplayPreference.setOnPreferenceClickListener(this);
+            String userId = user.userId;
+            Log.d(Constants.TRAILBOOK_TAG, "TBPreferenceFragment: setting user " + userId);
+            //savedUserIdDisplayPreference.setIcon(R.drawable.ic_google_plus);
+            savedUserIdDisplayPreference.setSummary(
+                    getUserNameForDisplay(user) +
+                            System.getProperty("line.separator") +
+                            getUserIdForDisplay(user)
+            );
+        }
     }
 
     private String getUserNameForDisplay(User u) {

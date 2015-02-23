@@ -138,7 +138,7 @@ public class PreferenceUtilities {
 
     public static int getMapType(Context c) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
-        String mapType = prefs.getString("map_type_pref", "SATELLITE");
+        String mapType = prefs.getString("map_type_pref", "HYBIRD");
         if ("TERRAIN".equals(mapType))
             return GoogleMap.MAP_TYPE_TERRAIN;
         else if ("HYBIRD".equals(mapType))

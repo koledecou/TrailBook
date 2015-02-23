@@ -25,6 +25,8 @@ import com.trailbook.kole.state_objects.PathManager;
 import java.util.ArrayList;
 
 public class CreateClimbFragment extends CreatePointAttachedObjectFragment implements AddPitchDescriptionDialogFragment.AddPitchDescriptionDialogListener{
+    private static final String CLASSNAME = "CreateClimbFragment";
+
     private static final String CLIMB_NAME = "CLIMB_NAME";
     private static final String GRADE = "GRADE";
     private static final String GRADE_SYSTEM_POSITION = "GRADE_SYSTEM_POSITION";
@@ -112,11 +114,11 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     @Override
     public void onClick(View view) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": view clicked: " + view.getId());
+        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": view clicked: " + view.getId());
         hideSoftKeyboard();
         if (view.getId() == R.id.cc_b_add_pitch_descriptions) {
             ArrayList<String> newPitchDescriptions = populatePitchDescriptionArray(mPitchDescriptions);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " new pitch descriptions: " + newPitchDescriptions);
+            Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " new pitch descriptions: " + newPitchDescriptions);
             if (newPitchDescriptions!=null) {
                 showEditPitchDescriptionDialog(newPitchDescriptions);
             }
@@ -128,7 +130,7 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     private ArrayList<String> populatePitchDescriptionArray(ArrayList<String> existingDescriptions) {
         ArrayList<String> newDescriptionArray = new ArrayList<String>();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " edit text picth count contents:" + mEditTextPitchCount.getText());
+        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " edit text picth count contents:" + mEditTextPitchCount.getText());
         if (mEditTextPitchCount.getText() != null && mEditTextPitchCount.getText().toString().length()>0) {
             String pitchCount = mEditTextPitchCount.getText().toString();
             int totalPitchCount = Integer.parseInt(pitchCount);
@@ -225,7 +227,7 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     @Override
     public void onAddPitchDescriptions(ArrayList<String> pitchDescriptions) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got pitch descriptions:" + pitchDescriptions);
+        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": got pitch descriptions:" + pitchDescriptions);
         mPitchDescriptions = pitchDescriptions;
     }
 }

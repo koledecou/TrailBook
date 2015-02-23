@@ -229,6 +229,10 @@ public class TrailbookFileUtilities {
         return "SwA"+Long.toString(System.currentTimeMillis())+"SwA";
     }
 
+    public static String getKeyHashFileName() {
+        return TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator  + Constants.keyHashFile;
+    }
+
     public void addFilePart(OutputStream os, String paramName, String fileName, byte[] data) throws Exception {
         os.write( (Constants.delimiter + getBoundry() + "\r\n").getBytes());
         os.write( ("Content-Disposition: form-data; name=\"" + paramName +  "\"; filename=\"" + fileName + "\"\r\n"  ).getBytes());

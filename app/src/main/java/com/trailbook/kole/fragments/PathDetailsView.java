@@ -92,10 +92,11 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
 
         mFollowButton = (Button)findViewById(R.id.pdv_button_follow);
         mFollowButton.setOnClickListener(this);
-/*
-        mNavToStartButton = (Button)findViewById(R.id.pdv_nav_to_start);
+
+        mNavToStartButton = (Button)findViewById(R.id.pdv_button_to_start);
         mNavToStartButton.setOnClickListener(this);
 
+        /*
         mZoomButton = (Button)findViewById(R.id.pdv_zoom);
         mZoomButton.setOnClickListener(this);*/
 
@@ -127,6 +128,8 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         } else if (v.getId() == R.id.pdv_button_follow) {
             Toast.makeText(getContext(), "following " + mName, Toast.LENGTH_LONG).show();
             actionListener.onFollowRequested(mPathId);
+        } else if (v.getId() == R.id.pdv_button_to_start) {
+            actionListener.onNavigateToStart(mPathId);
         }
 
 /*        else if (v.getId() == R.id.pdv_zoom) {

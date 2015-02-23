@@ -12,6 +12,9 @@ import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.data.KeyWord;
+import com.trailbook.kole.data.KeyWordDAO;
+import com.trailbook.kole.data.KeyWordGroup;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathGroup;
 import com.trailbook.kole.data.PathSegment;
@@ -19,12 +22,12 @@ import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.events.MapObjectAddedEvent;
-import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.PathDeletedEvent;
 import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedFromCloudEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.PathUpdatedEvent;
+import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
 import com.trailbook.kole.helpers.NoteFactory;
@@ -53,7 +56,7 @@ public class PathManager {
     private static Hashtable<String, PathGroup> mGroups;
     private static Bus bus;
 
-    private Gson gson = new Gson();
+    private static Gson gson = new Gson();
 
     private PathManager() {
         mPaths = new Hashtable<String, PathSummary>();
@@ -72,8 +75,72 @@ public class PathManager {
         String id = summary.getId();
         Log.d(Constants.TRAILBOOK_TAG, "adding path summary,"+id);
         mPaths.put(id, summary);
-//        bus.post(new PathSummaryAddedEvent(summary));
+        hashKeywords(summary);
     }
+
+    public static void hashKeywords(PathSummary summary) {
+        Log.d(Constants.TRAILBOOK_TAG, "PathManager: hashing key words for " + summary.getName());
+        KeyWordGroup keyWords = summary.getKeyWordGroup();
+        KeyWordDAO keyWordDAO = new KeyWordDAO(TrailBookState.getInstance());
+        keyWordDAO.open();
+
+        try {
+            String pathId = summary.getId();
+            String pathName = summary.getName();
+            if (keyWords != null && keyWords.climbs != null) {
+                for (String keyWord : keyWords.climbs) {
+                    Log.d(Constants.TRAILBOOK_TAG, "PathManager: hashing climb key word " + keyWord + " for " + summary.getName());
+                    KeyWord climbWord = new KeyWord(KeyWord.CLIMB, keyWord, pathId, pathName);
+                    keyWordDAO.insertUpdateKeyWord(climbWord);
+                }
+            }
+            if (keyWords != null && keyWords.crags != null) {
+                for (String keyWord : keyWords.crags) {
+                    Log.d(Constants.TRAILBOOK_TAG, "PathManager: hashing crag key word " + keyWord + " for " + summary.getName());
+                    KeyWord cragWord = new KeyWord(KeyWord.CRAG, keyWord, pathId, pathName);
+                    keyWordDAO.insertUpdateKeyWord(cragWord);
+                }
+            }
+            if (keyWords != null && keyWords.regions != null) {
+                for (String keyWord : keyWords.regions) {
+                    Log.d(Constants.TRAILBOOK_TAG, "PathManager: hashing regions key word " + keyWord + " for " + summary.getName());
+                    KeyWord regionWord = new KeyWord(KeyWord.REGION, keyWord, pathId, pathName);
+                    keyWordDAO.insertUpdateKeyWord(regionWord);
+                }
+            }
+        }catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "PathManager: error hashing key words ", e);
+        } finally {
+            keyWordDAO.close();
+        }
+
+    }
+
+
+/*
+    public static void saveKeyWordHash() {
+        Log.d(Constants.TRAILBOOK_TAG, "PathManager: saving key word hash");
+        String keyHashJSON = TrailbookPathUtilities.getKeyHashJSON(mKeyWordHashes);
+        String keyHashFile = TrailbookFileUtilities.getKeyHashFileName();
+        try {
+            FileUtils.write(new File(keyHashFile), keyHashJSON);
+        } catch (IOException e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error saving keys", e);
+        }
+    }
+*/
+/*
+    public static void loadKeyWordHash() {
+        Log.d(Constants.TRAILBOOK_TAG, "PathManager: loading key word hash");
+        String keyHashFile = TrailbookFileUtilities.getKeyHashFileName();
+        try {
+            String fileContents = FileUtils.readFileToString(new File(keyHashFile));
+            mKeyWordHashes = gson.fromJson(fileContents, KeyWordHashCollection.class);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "Error getting keys", e);
+        }
+    }*/
+
 
     public boolean objectBelongsToPath(String objectId, String pathId) {
         PathSummary summary = getPathSummary(pathId);
@@ -243,7 +310,7 @@ public class PathManager {
         PointAttachedObject paObject = null;
         try {
             String paoFileContents = FileUtils.readFileToString(paoFile);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " pao file contents:" + paoFileContents);
+            Log.v(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " pao file contents:" + paoFileContents);
             paObject = NoteFactory.getPointAttachedObjectFromJSONString(paoFileContents);
 /*            Type paoNoteType = new TypeToken<PointAttachedObject<Note>>() {
             }.getType();
@@ -306,15 +373,6 @@ public class PathManager {
         }
     }
 
-/*deleteme    public void savePathSummary (String pathId, Context c) {
-        Log.d(Constants.TRAILBOOK_TAG, "Saving " + pathId);
-        Path2 summary = getPathSummary(pathId);
-        if (summary == null)
-            return;
-
-        savePathSummary(summary, c);
-    }*/
-
     public void saveSegments(String pathId) {
         PathSummary summary = getPathSummary(pathId);
         ArrayList<String> segmentIds = summary.getSegmentIdList();
@@ -348,7 +406,7 @@ public class PathManager {
             summary = getSummaryFromString(summaryFileContents);
             addPathSummary(summary);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "PathManager Error: can't load summary file for path " + pathId);
+            Log.e(Constants.TRAILBOOK_TAG, "PathManager Error: can't load summary file for path " + pathId + " " + summary.getName(), e);
             return null;
         }
 
