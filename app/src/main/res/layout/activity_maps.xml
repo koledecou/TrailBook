@@ -48,7 +48,7 @@
                     android:layout_gravity="bottom|center_horizontal"
                     android:paddingBottom="@dimen/bottom_pad" />
 
-                <ProgressBar
+<!--                <ProgressBar
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -60,9 +60,9 @@
                     android:max="100"
                     android:minHeight="80dp"
                     android:minWidth="150dp"
-                    android:layout_gravity="bottom|center_horizontal"
+                    android:layout_gravity="center_vertical|center_horizontal"
                     android:paddingBottom="@dimen/bottom_pad"
-                    android:id="@+id/progressBar" />
+                    android:id="@+id/progressBar" />-->
             </FrameLayout>
             <LinearLayout
                 android:id="@+id/details_panel_container"

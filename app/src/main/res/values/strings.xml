@@ -196,4 +196,5 @@
     <string name="keyword_title_climbs">Add Climbs Accessed By This Trail</string>
     <string name="keyword_title_crags">Add Crags Accessed By This Trail</string>
     <string name="keyword_title_regions">Add Regions Associated With This Trail</string>
+    <string name="download_in_progress">Download In Progress</string>
 </resources>

@@ -45,6 +45,8 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     public static final String REGIONS = "Regions";
     public static final String CRAGS = "Crags";
     private static final int MENU_CONTEXT_DELETE_ID = 1;
+    private static final String CLIMBS_ADDED_KEY = "CLIMBS_ADDED";
+    boolean mClimbsFromPathHaveBeenAdded = false;
 
     private ExpandableListView mListView;
 
@@ -104,11 +106,13 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
             outState.putString(PATH_NAME_KEY, mEditTextPathName.getText().toString());
 
         outState.putString(PATH_ID_KEY, mPathId);
+        outState.putBoolean(CLIMBS_ADDED_KEY, mClimbsFromPathHaveBeenAdded);
     }
 
     public void restoreState(Bundle savedState) {
         Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + "Restoring state. ");
         mPathId = savedState.getString(PATH_ID_KEY);
+        mClimbsFromPathHaveBeenAdded = savedState.getBoolean(CLIMBS_ADDED_KEY);
     }
 
     public void restoreViewValues(Bundle savedState) {
@@ -199,7 +203,8 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
             mKeyWords = new KeyWordGroup();
         }
 
-        populateClimbsFromPath(pathId);
+        if (!mClimbsFromPathHaveBeenAdded)
+            populateClimbsFromPath(pathId);
     }
 
     private void populateKeyWordListView() {
@@ -220,11 +225,15 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
         for (PointAttachedObject pao:pointAttachedObjects) {
             if (pao != null) {
                 Attachment a = pao.getAttachment();
-                if (a.getType() == NoteFactory.CLIMB) {
+                Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": type="+a.getType());
+                if (a.getType().equals(NoteFactory.CLIMB)) {
+                    Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": adding climb "+a.getShortContent());
                     mKeyWords.addClimb(a.getShortContent());
                 }
             }
         }
+        savePathSummaryKeywordGroup(pathId, mKeyWords);
+        mClimbsFromPathHaveBeenAdded = true;
     }
 
     private KeyWordGroupsExpandableListAdapter getListDataAdapter() {

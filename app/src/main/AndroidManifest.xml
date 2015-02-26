@@ -40,7 +40,7 @@
         </provider>
 
         <activity
-            android:name=".TrailBookActivity"
+            android:name=".TrailbookLauncher"
             android:label="@string/title_activity_main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,9 +48,16 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".TrailBookActivity"
+            android:label="@string/title_activity_main">
+            <intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="com.trailbook.kole.activities.SearchResultsActivity"
-            android:label="@string/search_acivity_name"
-            android:launchMode="singleTop">
+            android:label="@string/search_acivity_name">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>

@@ -37,9 +37,10 @@ public class PathFileReceiverActivity extends Activity {
         WriteInputStreamToTempFile(input, tempFileName);
         String pathId = TrailbookFileUtilities.explodeCompressedPath(tempFileName, tempDirectory + File.separator + "import");
         Intent launchTrailbookIntent = new Intent(this, TrailBookActivity.class);
+        launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         launchTrailbookIntent.putExtra(TrailBookActivity.INITIAL_PATH_ID_KEY, pathId);
-        //launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(launchTrailbookIntent);
+        finish();
     }
 
     private void cleanupTempDirectories() {

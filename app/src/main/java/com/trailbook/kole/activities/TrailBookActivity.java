@@ -26,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -51,7 +52,6 @@ import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.PathCommentAddedEvent;
 import com.trailbook.kole.events.PathDetailRequestEvent;
 import com.trailbook.kole.events.PathReceivedEvent;
-import com.trailbook.kole.events.PathUpdatedEvent;
 import com.trailbook.kole.events.RefreshMessageEvent;
 import com.trailbook.kole.events.ZoomRequestEvent;
 import com.trailbook.kole.fragments.DisplayCommentsFragment;
@@ -135,6 +135,9 @@ public class TrailBookActivity extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        requestWindowFeature(Window.FEATURE_PROGRESS);
+
         Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " OnCreate");
 
         mLocationReceiver = new TrailBookLocationReceiver();
@@ -160,7 +163,9 @@ public class TrailBookActivity extends Activity
         setUpWorkFragmentIfNeeded();
 
         String launchedPathId = getLaunchPathId();
-        if (launchedPathId != null) {
+        if (launchedPathId == null || launchedPathId.equals(TrailBookState.NO_START_PATH)) {
+            launchFromRestoredState();
+        } else {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " launching path " + launchedPathId);
             TrailBookState.setMode(TrailBookState.MODE_SEARCH);
             AsyncGetPathFromLocalDevice asyncGetPath = new AsyncGetPathFromLocalDevice();
@@ -168,9 +173,6 @@ public class TrailBookActivity extends Activity
             onZoomRequested(launchedPathId);
             refreshPaths(false);
             requestShowPathDetails(launchedPathId);
-
-        } else {
-            launchFromRestoredState();
         }
     }
 
@@ -758,8 +760,14 @@ public class TrailBookActivity extends Activity
 
     @Override
     public void onDownloadRequested(String pathId) {
-        mWorkFragment.startDownloadPath(pathId);
-        collapseSlidingPanel();
+        if (isNetworkConnected()) {
+            mWorkFragment.startDownloadPath(pathId);
+            mMapFragment.displayMessage(getString(R.string.download_in_progress));
+            collapseSlidingPanel();
+        }else {
+            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
+            showNoNetworkStatusDialog();
+        }
     }
 
     @Override
@@ -775,7 +783,7 @@ public class TrailBookActivity extends Activity
     }
 
     private void startFollowing(String pathId) {
-        TrailBookState.setActivePathId( pathId);
+        TrailBookState.setActivePathId(pathId);
         TrailBookState.setActiveSegmentId( null);
         TrailBookState.setLocationProcessor(new PathFollowerLocationProcessor(pathId, this));
         TrailBookState.getInstance().startLocationUpdates();
@@ -929,7 +937,6 @@ public class TrailBookActivity extends Activity
                     Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": parsed path:" + pathName);
                     mPathManager.savePath(pathContainer);
                     mPathManager.addPath(pathContainer);
-                    bus.post(new PathUpdatedEvent(pathContainer.summary));
                 }
             } catch (Exception e) {
                 Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": Exception getting kml file", e);
@@ -1207,6 +1214,7 @@ public class TrailBookActivity extends Activity
         invalidateOptionsMenu();
 
         upload(pathId);
+        collapseSlidingPanel();
     }
 
     private class WebServiceStateReceiver extends BroadcastReceiver
@@ -1218,25 +1226,27 @@ public class TrailBookActivity extends Activity
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Recieved intent for " + action);
             if (UploadPathService.BROADCAST_ACTION.equalsIgnoreCase(action)) {
                 int progress = intent.getIntExtra(UploadPathService.EXTENDED_DATA_STATUS_KEY, 0);
+                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " upload progress is  " + progress);
                 if (progress == UploadPathService.STATUS_FAILURE) {
                     Toast.makeText(TrailBookActivity.this, getString(R.string.upload_failed), Toast.LENGTH_LONG).show();
                     //todo: send failure notification
                     mMapFragment.hideMapMessage();
-                    mMapFragment.hideProgressBar();
+                    setProgressBarIndeterminateVisibility(false);
                 }
 
                 if (progress == UploadPathService.STATUS_COMPLETE) {
                     Toast.makeText(TrailBookActivity.this, getString(R.string.upload_completed), Toast.LENGTH_LONG).show();
                     if (mMapFragment != null) {
-                        mMapFragment.hideProgressBar();
+                        setProgressBarIndeterminateVisibility(false);
                         mMapFragment.hideMapMessage();
                     }
                 } else {
                     if (mMapFragment != null) {
                         mMapFragment.displayMessage(getString(R.string.path_uploading));
-                        mMapFragment.updateProgressBar(progress);
+                        setProgressBarIndeterminateVisibility(true);
                     }
                 }
             } else if (DownloadPathService.BROADCAST_ACTION.equalsIgnoreCase(action)) {
@@ -1244,6 +1254,8 @@ public class TrailBookActivity extends Activity
                 String pathId =  intent.getStringExtra(DownloadPathService.PATH_ID_KEY);
                 if (progress == DownloadPathService.STATUS_COMPLETE) {
                     Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();
+                    setProgressBarIndeterminateVisibility(false);
+                    mMapFragment.hideMapMessage();
                     Path path = mPathManager.getPath(pathId);
                     bus.post(new PathReceivedEvent(path));
                 }

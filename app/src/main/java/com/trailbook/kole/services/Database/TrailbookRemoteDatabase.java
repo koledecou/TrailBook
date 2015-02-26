@@ -49,6 +49,8 @@ public class TrailbookRemoteDatabase {
                 mongoClient = new MongoClient(new ServerAddress(DBConstants.serverAddress, DBConstants.port), Arrays.asList(credential));
                 db = mongoClient.getDB(DBConstants.database);
                 Log.d(Constants.TRAILBOOK_TAG, "Mongo: connected to " + db.toString());
+                //todo: don't forget to take this out!!!
+                logJson();
                 return true;
             } catch (Exception e) {
                 Log.e(Constants.TRAILBOOK_TAG, "Mongo: error connecting to trailbook db", e);
@@ -58,6 +60,12 @@ public class TrailbookRemoteDatabase {
             Log.d(Constants.TRAILBOOK_TAG, "Mongo: already connected");
             return true;
         }
+    }
+
+    private void logJson() {
+        Gson gson = new Gson();
+        DBConstants c = new DBConstants();
+        Log.d(Constants.TRAILBOOK_TAG, "JSON Connect Strings:" + gson.toJson(c));
     }
 
     private boolean isConnected() {

@@ -22,6 +22,7 @@ import com.trailbook.kole.data.KeyWordDAO;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.PathManager;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 import java.util.ArrayList;
 
@@ -64,6 +65,7 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
         PathSummary summary = PathManager.getInstance().getPathSummary(keyWord.pathId);
 
         Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " need to launch main activity for action " + summary.getName() + " " + item.getItemId());
+        launchMapForPath(summary.getId());
         return true;
     }
 
@@ -82,10 +84,12 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
     }
 
     private void launchMapForPath(String pathId) {
-        Intent launchTrailbookIntent = new Intent(this, TrailBookActivity.class);
+/*        Intent launchTrailbookIntent = new Intent(this, TrailBookActivity.class);
+        launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         launchTrailbookIntent.putExtra(TrailBookActivity.INITIAL_PATH_ID_KEY, pathId);
-        //launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(launchTrailbookIntent);
+        startActivity(launchTrailbookIntent);*/
+        TrailBookState.setZoomToPathId(pathId);
+        finish();
     }
 
     private void displayResults(ArrayList<KeyWord> mResults) {
@@ -94,8 +98,8 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
         ListView listView = (ListView)findViewById(R.id.lv_results);
         mAdapter = new KeyWordArrayAdapter(this, mResults);
         listView.setAdapter(mAdapter);
-        addOnClickListener(listView);
-        registerForContextMenu(listView);
+        listView.setOnItemClickListener(this);
+        //registerForContextMenu(listView);
     }
 
     private void addOnClickListener(ListView view)
@@ -127,7 +131,11 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " clicked " + position);
+        KeyWord keyWord = (KeyWord)mAdapter.getItem(position);
+        PathSummary summary = PathManager.getInstance().getPathSummary(keyWord.pathId);
+        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " need to launch main activity for action " + summary.getName());
+        launchMapForPath(summary.getId());
     }
 
     private class KeyWordArrayAdapter extends BaseAdapter {

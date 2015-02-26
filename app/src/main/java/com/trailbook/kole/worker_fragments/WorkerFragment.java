@@ -149,6 +149,7 @@ public class WorkerFragment extends Fragment {
         Intent intent = new Intent(getActivity(), DownloadPathService.class);
         intent.putExtra(DownloadPathService.PATH_ID_KEY, pathId);
         getActivity().startService(intent);
+        getActivity().setProgressBarIndeterminateVisibility(true);
     }
 
 /*

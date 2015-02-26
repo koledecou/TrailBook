@@ -59,6 +59,7 @@ public class TrailBookState extends Application {
     private static final String SAVED_USER_NAME = "SAVED_USER_NAME" ;
     private static final String SAVED_PROFILE_PIC_URL = "SAVED_USER_PROFILE_PIC";
     private static final String SAVED_GOOD_TO_SAVE_LOCATIONS = "SAVED_GOOD_TO_SAVE_LOCATIONS";
+    public static final String NO_START_PATH = "NONE";
 
     private static int mMode = MODE_SEARCH;
     private static String mCurrentPathId;
@@ -67,6 +68,7 @@ public class TrailBookState extends Application {
     private static PathManager mPathManager;
     private static SharedPreferences prefs;
     private static long mLastRefreshedFromCloudTimeStamp = 0;
+    private static String mZoomToPathId = NO_START_PATH;
     private static LocationProcessor locationProcessor;
     private static User mUser;
     private static int mConsecutiveGoodLocations = 0;
@@ -115,6 +117,18 @@ public class TrailBookState extends Application {
     public static void setMode(int mode) {
         TrailBookState.mMode = mode;
         saveMode();
+    }
+
+    public static void setZoomToPathId(String zoomToPathId) {
+        TrailBookState.mZoomToPathId = zoomToPathId;
+    }
+
+    public static void resetZoomToPathId() {
+        TrailBookState.mZoomToPathId = NO_START_PATH;
+    }
+
+    public static String getZoomToPathId() {
+        return mZoomToPathId;
     }
 
     public static PathManager getPathManager() {
@@ -321,6 +335,7 @@ public class TrailBookState extends Application {
         restoreMode();
         restoreSavedLocIfNeeded();
         restoreLastRefreshedFromCloudTimeStamp();
+
     }
 
     public static void setLocationProcessor(LocationProcessor processor) {

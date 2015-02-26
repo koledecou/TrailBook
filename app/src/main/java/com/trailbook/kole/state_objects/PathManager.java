@@ -26,7 +26,6 @@ import com.trailbook.kole.events.PathDeletedEvent;
 import com.trailbook.kole.events.PathReceivedEvent;
 import com.trailbook.kole.events.PathSummariesReceivedFromCloudEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
-import com.trailbook.kole.events.PathUpdatedEvent;
 import com.trailbook.kole.events.PointAttachedObjectDeletedEvent;
 import com.trailbook.kole.events.SegmentDeletedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
@@ -233,7 +232,6 @@ public class PathManager {
         for (PathSegment segment:segments) {
             bus.post(new SegmentUpdatedEvent(segment));
         }
-        bus.post(new PathUpdatedEvent(path.summary));
     }
 
     private void addPointsToSegment(ArrayList<LatLng> points, PathSegment thisSegment) {
@@ -284,7 +282,6 @@ public class PathManager {
             savePathSummaryToLocalPaths(summary);
             saveSegments(pathId);
             savePointObjects(getPointObjectsForPath(pathId));
-            bus.post(new PathUpdatedEvent(summary));
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + pathId, e);
         }
