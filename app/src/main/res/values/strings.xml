@@ -17,7 +17,7 @@
     <string name="cancel_new_path">Cancel</string>
     <string name="ok_new_path">New Path</string>
     <string name="new_path_dialog_title">New Path</string>
-    <string name="cpd_new_path">New Path</string>
+    <string name="cpd_new_path">Create</string>
     <string name="cpd_cancel">Cancel</string>
     <string name="cpd_title">New Path</string>
     <string name="trailNotesHint">Write notes here.</string>
@@ -56,12 +56,6 @@
     <string name="polling_frequency_medium_summary">Interval (seconds) to poll location data in medium accuracy mode.</string>
     <string name="polling_frequency_low">Polling Frequencey Low</string>
     <string name="polling_frequency_low_summary">Interval (seconds) at which to poll location data in battery saving mode.</string>
-    <string name="idle">Enable idling</string>
-    <string name="idle_summary">Idle when movment is not dectedted within the specified time.</string>
-    <string name="idle_time">Idle Time (minutes)</string>
-    <string name="idle_time_summary">Idle when movement is not dected within this number of minutes.</string>
-    <string name="idle_distance">Idle Distance (ft/m)</string>
-    <string name="idle_distance_summary">If you haven\'t traveled at least this distance (feet/meters) within the idle time location polling will stop until manually resumed.</string>
     <string name="follower_options">Follower Options</string>
     <string name="proximity_far_cat">General Proximity Radius Alert Settings</string>
     <string name="proximity_close_cat">Close Proximity Radius Alert Settings</string>
