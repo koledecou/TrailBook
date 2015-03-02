@@ -191,4 +191,6 @@
     <string name="keyword_title_crags">Add Crags Accessed By This Trail</string>
     <string name="keyword_title_regions">Add Regions Associated With This Trail</string>
     <string name="download_in_progress">Download In Progress</string>
+    <string name="upload_failed_notification_title">Upload Failed</string>
+    <string name="Retry">Retry</string>
 </resources>

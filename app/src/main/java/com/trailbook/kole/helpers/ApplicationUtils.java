@@ -1,6 +1,9 @@
 package com.trailbook.kole.helpers;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,6 +17,8 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.PopupMenu;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Constants;
@@ -210,5 +215,22 @@ public class ApplicationUtils {
             default:
                 return "";
         }
+    }
+
+    public static boolean isFragmentShowing(FragmentManager fm, String tag) {
+        Fragment f = fm.findFragmentByTag(tag);
+        if (f != null && f.isVisible()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static void toastGreen(Activity activity, int resId) {
+        Toast toast = Toast.makeText(activity, resId, Toast.LENGTH_LONG);
+        TextView v = (TextView) toast.getView().findViewById(android.R.id.message);
+        v.setBackgroundColor(Color.GREEN);
+        toast.show();
+
     }
 }

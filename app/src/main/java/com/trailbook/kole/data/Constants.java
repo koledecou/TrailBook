@@ -17,6 +17,7 @@ public class Constants {
     public static final String getNotesScript = "/getNotesFromFile.py";
     public static final String uploadJson = "/uploadJson.py";
     public static final String uploadImage = "/uploadImage.py";
+    public static final String dbConnectConfigUrl = "http://www.thetrailbook.com/trailbook/config/test_dbconfig.txt";
     public static final String deviceExternalDir = Environment.getExternalStorageDirectory().getPath();
     public static final String tempDir = "temp";
     public static final String pathsRootDir = "paths";

@@ -20,8 +20,10 @@ import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.helpers.NoteFactory;
+import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -45,12 +47,16 @@ public class TrailbookRemoteDatabase {
     private boolean connect() {
         if (mongoClient == null || !isConnected()) {
             try {
+                populateDBConstantsFromRemoteServer();
+                if (DBConstants.database == null || DBConstants.username == null || DBConstants.password == null)
+                    return false;
+
+                Log.d(Constants.TRAILBOOK_TAG, "Mongo: database connecting to: " + DBConstants.username + ", " + DBConstants.database);
+
                 MongoCredential credential = MongoCredential.createMongoCRCredential(DBConstants.username, DBConstants.database, DBConstants.password);
                 mongoClient = new MongoClient(new ServerAddress(DBConstants.serverAddress, DBConstants.port), Arrays.asList(credential));
                 db = mongoClient.getDB(DBConstants.database);
                 Log.d(Constants.TRAILBOOK_TAG, "Mongo: connected to " + db.toString());
-                //todo: don't forget to take this out!!!
-                logJson();
                 return true;
             } catch (Exception e) {
                 Log.e(Constants.TRAILBOOK_TAG, "Mongo: error connecting to trailbook db", e);
@@ -62,17 +68,11 @@ public class TrailbookRemoteDatabase {
         }
     }
 
-    private void logJson() {
-        Gson gson = new Gson();
-        DBConstants c = new DBConstants();
-        Log.d(Constants.TRAILBOOK_TAG, "JSON Connect Strings:" + gson.toJson(c));
-    }
-
     private boolean isConnected() {
         try {
             Set<String> names = db.getCollectionNames();
             if (names == null || names.size()<1) {
-                Log.e(Constants.TRAILBOOK_TAG, "Mongo: can't connect to db ");
+                Log.d(Constants.TRAILBOOK_TAG, "Mongo: not connected to db ");
                 return false;
             } else {
                 Log.d(Constants.TRAILBOOK_TAG, "Mongo: already connected");
@@ -81,6 +81,16 @@ public class TrailbookRemoteDatabase {
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "Mongo: can't connect to db ", e);
             return false;
+        }
+    }
+
+    private static void populateDBConstantsFromRemoteServer() {
+        try {
+            InputStream in = new java.net.URL(Constants.dbConnectConfigUrl).openStream();
+            String jsonDbConstants = TrailbookFileUtilities.convertStreamToString(in);
+            DBConstants.populateFromJsonString(jsonDbConstants);
+        } catch (Exception e) {
+            Log.e(Constants.TRAILBOOK_TAG, "error getting db json", e);
         }
     }
 

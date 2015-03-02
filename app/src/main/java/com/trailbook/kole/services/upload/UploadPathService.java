@@ -35,6 +35,8 @@ public class UploadPathService extends IntentService {
     private int mTotalOfItems = 0;
     private int mNumberOfItemsUploaded = 0;
 
+    private boolean mFailure = false;
+
     public UploadPathService() {
         super(SERVICE_NAME);
     }
@@ -57,9 +59,11 @@ public class UploadPathService extends IntentService {
         Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: uploading path " + pathId);
         Path pathContainer = PathManager.getInstance().getPath(pathId);
         mTotalOfItems = getNumberOfUploadItems(pathContainer.summary);
+        mFailure = false;
         uploadPathToDatabase(pathContainer);
         postImages(pathContainer.summary);
-        sendCompletedBroadcast();
+        if (!mFailure)
+            sendCompletedBroadcast();
     }
 
     private int getNumberOfUploadItems(PathSummary summary) {
@@ -74,8 +78,9 @@ public class UploadPathService extends IntentService {
         return nItems;
     }
 
-    private void sendFailedBroadcast() {
+    private void sendFailedBroadcast(String pathId) {
         Intent broadcastIntent = getBroadcastIntent(STATUS_FAILURE);
+        broadcastIntent.putExtra(PATH_ID_KEY, pathId);
         sendBroadcast(broadcastIntent);
     }
 
@@ -107,14 +112,17 @@ public class UploadPathService extends IntentService {
                 //todo: send broadcast message to application
                 Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: upload completed for path " + pathContainer.summary.getName());
                 mNumberOfItemsUploaded++;
+                Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: percent complete " + getCurrentPercentage());
                 sendProgressBroadcast(getCurrentPercentage());
             } else {
                 Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: upload failed for path " + pathContainer.summary.getName());
-                sendFailedBroadcast();
+                mFailure = true;
+                sendFailedBroadcast(pathContainer.summary.getId());
             }
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: exception getting path summaries.  DB may not be available", e);
-            sendFailedBroadcast();
+            Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: exception uploading the path.  DB may not be available", e);
+            mFailure = true;
+            sendFailedBroadcast(pathContainer.summary.getId());
         }
         return;
     }
@@ -132,23 +140,23 @@ public class UploadPathService extends IntentService {
             Log.d(Constants.TRAILBOOK_TAG,"UploadPathService: posting images " + imageFileNames);
             if (imageFileNames != null) {
                 for (String imageFileName : imageFileNames) {
-                    postImage(imageFileName);
+                    postImage(imageFileName, summary.getId());
                 }
             }
         }
     }
 
-    private void postImage(String imageFileName) {
+    private void postImage(String imageFileName, String pathId) {
         ArrayList<MultipartEntity> entities = new ArrayList<MultipartEntity>();
         if (imageFileName != null && imageFileName.length()>0) {
             MultipartEntity entity = TrailbookFileUtilities.getMultipartEntityForPAOImage(imageFileName);
             if (entity != null)
                 entities.add(entity);
         }
-        startImageUpload(entities);
+        startImageUpload(entities, pathId);
     }
 
-    private void startImageUpload (ArrayList<MultipartEntity> entities) {
+    private void startImageUpload (ArrayList<MultipartEntity> entities, String pathId) {
         try {
             String destinationUrl = TrailbookFileUtilities.getImageUploadUrl();
             DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -157,16 +165,17 @@ public class UploadPathService extends IntentService {
             for (MultipartEntity entity:entities) {
                 httppost.setEntity(entity);
                 HttpResponse response = httpClient.execute(httppost);
-                Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: post complete. response:" + response);
+                Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: image post complete. response:" + response);
                 mNumberOfItemsUploaded++;
+                Log.d(Constants.TRAILBOOK_TAG, "UploadPathService: percent complete " + getCurrentPercentage());
                 sendProgressBroadcast(getCurrentPercentage());
             }
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "UploadPathService: error in uploading file.", e);
-            sendFailedBroadcast();
+            mFailure = true;
+            sendFailedBroadcast(pathId);
         }
 
         return;
     }
-
 }

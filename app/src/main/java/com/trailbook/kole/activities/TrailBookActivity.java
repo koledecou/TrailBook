@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.BroadcastReceiver;
@@ -20,6 +21,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
@@ -73,6 +75,7 @@ import com.trailbook.kole.helpers.MapUtilities;
 import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
+import com.trailbook.kole.location_processors.NotificationUtils;
 import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
 import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathFromLocalDevice;
@@ -463,6 +466,7 @@ public class TrailBookActivity extends Activity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            collapseSlidingPanel();
             return true;
         } else if (id == R.id.action_bar_create_note) {
             collapseSlidingPanel();
@@ -600,11 +604,15 @@ public class TrailBookActivity extends Activity
 
     private void switchFragmentAndAddToBackstack(Fragment frag, String tag) {
         FragmentManager fm = getFragmentManager();
-        fm.beginTransaction()
-                .replace(R.id.map_container, frag, tag)
-                .addToBackStack(MAPS_ACTIVITY_TAG)
-                .commit();
+        if (!ApplicationUtils.isFragmentShowing(fm, tag)) {
+            fm.beginTransaction()
+                    .replace(R.id.map_container, frag, tag)
+                    .addToBackStack(MAPS_ACTIVITY_TAG)
+                    .commit();
+        }
     }
+
+
 
     private void setUpWorkFragmentIfNeeded() {
         FragmentManager fm = getFragmentManager();
@@ -784,7 +792,7 @@ public class TrailBookActivity extends Activity
 
     private void startFollowing(String pathId) {
         TrailBookState.setActivePathId(pathId);
-        TrailBookState.setActiveSegmentId( null);
+        TrailBookState.setActiveSegmentId(null);
         TrailBookState.setLocationProcessor(new PathFollowerLocationProcessor(pathId, this));
         TrailBookState.getInstance().startLocationUpdates();
         bus.post(new RefreshMessageEvent());
@@ -1235,9 +1243,10 @@ public class TrailBookActivity extends Activity
                     //todo: send failure notification
                     mMapFragment.hideMapMessage();
                     setProgressBarIndeterminateVisibility(false);
-                }
-
-                if (progress == UploadPathService.STATUS_COMPLETE) {
+                    String pathId =  intent.getStringExtra(UploadPathService.PATH_ID_KEY);
+                    sendUploadFailedNotification(pathId);
+                } else if (progress == UploadPathService.STATUS_COMPLETE) {
+                    //ApplicationUtils.toastGreen(TrailBookActivity.this, R.string.upload_completed);
                     Toast.makeText(TrailBookActivity.this, getString(R.string.upload_completed), Toast.LENGTH_LONG).show();
                     if (mMapFragment != null) {
                         setProgressBarIndeterminateVisibility(false);
@@ -1253,6 +1262,7 @@ public class TrailBookActivity extends Activity
                 int progress = intent.getIntExtra(DownloadPathService.EXTENDED_DATA_STATUS_KEY, 0);
                 String pathId =  intent.getStringExtra(DownloadPathService.PATH_ID_KEY);
                 if (progress == DownloadPathService.STATUS_COMPLETE) {
+                    //ApplicationUtils.toastGreen(TrailBookActivity.this, R.string.download_completed);
                     Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();
                     setProgressBarIndeterminateVisibility(false);
                     mMapFragment.hideMapMessage();
@@ -1262,5 +1272,20 @@ public class TrailBookActivity extends Activity
             }
         }
     }
+
+
+    private void sendUploadFailedNotification(String pathId) {
+        PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
+
+        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": sending upload failed notification for path " + summary.getName());
+        NotificationCompat.Builder builder = NotificationUtils.createUploadFailedNotifyBuilder(this, pathId);
+
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(
+                NotificationUtils.getNotificationId(pathId),
+                builder.build());
+        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": sent upload failed notification for path " + summary.getName());
+    }
+
 
 }

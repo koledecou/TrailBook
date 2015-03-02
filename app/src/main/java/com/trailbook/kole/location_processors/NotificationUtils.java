@@ -4,11 +4,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
+import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -19,10 +21,12 @@ public class NotificationUtils {
     public static final String EXTRA_STOP = "EXTRA_STOP" ;
     public static final String EXTRA_RESUME = "EXTRA_RESUME";
     public static final String EXTRA_PAUSE = "EXTRA_PAUSE";
+    public static final String EXTRA_PATH_ID = "EXTRA_PATH_ID";
 
     public static final int RC_STOP = 0;
     public static final int RC_RESUME = 1;
     public static final int RC_PAUSE = 2;
+    public static final int RC_RETRY = 3;
 
     public static NotificationCompat.Builder createListeningNotifyBuilder(Context context, String title, String content, String pathId, RemoteViews notificationRemoteView) {
         PathSummary p = PathManager.getInstance().getPathSummary(pathId);
@@ -48,6 +52,27 @@ public class NotificationUtils {
                 .setContent(notificationRemoteView)
                 .setContentIntent(getListeningNotificationPendingIntent(context))
                 .setOngoing(true);
+    }
+
+    public static NotificationCompat.Builder createUploadFailedNotifyBuilder(Context context, String pathId) {
+        RemoteViews notificationRemoteView = getUploadFailedNotificationRemoteView(context);
+        PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
+        String title = summary.getName();
+        String content = context.getString(R.string.upload_failed_notification_title);
+/*
+        Intent retryButtonIntent = new Intent(context, ReceiveRetryUploadCommand.class);
+        retryButtonIntent.putExtra(EXTRA_PATH_ID, pathId);
+
+        notificationRemoteView.setOnClickPendingIntent(R.id.retry_button, PendingIntent.getBroadcast(context, RC_RETRY, retryButtonIntent, 0));
+*/
+
+        notificationRemoteView.setTextViewText(R.id.fn_text_title, title);
+        notificationRemoteView.setTextViewText(R.id.fn_text_content, content);
+
+        return new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.trail_book_logo)
+                .setContent(notificationRemoteView)
+                .setContentIntent(getListeningNotificationPendingIntent(context));
     }
 
     public static RemoteViews getLeadingNotificationRemoteView(Context context) {
@@ -82,5 +107,29 @@ public class NotificationUtils {
     public static RemoteViews getNotificationRemoteView(Context context) {
         RemoteViews followingNotificationView = new RemoteViews(context.getPackageName(), R.layout.active_path_notification);
         return followingNotificationView;
+    }
+
+    public static RemoteViews getUploadFailedNotificationRemoteView(Context context) {
+        RemoteViews uploadFailedView = new RemoteViews(context.getPackageName(), R.layout.upload_failed_notification);
+        return uploadFailedView;
+    }
+
+    public static int getNotificationId(String objectID) {
+        int id;
+        //the last 9 digits should be safe to cast as an int
+        try {
+            String objectIdTrunc;
+            if (objectID.length() > 9)
+                objectIdTrunc = objectID.substring(objectID.length() - 9, objectID.length());
+            else
+                objectIdTrunc = objectID.replace('-', '0');
+
+            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notification id for note " + objectID + ":" + objectIdTrunc);
+            id = Integer.parseInt(objectIdTrunc);
+        } catch (Exception e) {
+            Log.d(Constants.TRAILBOOK_TAG, "error getting note id.", e);
+            id = 10;
+        }
+        return id;
     }
 }

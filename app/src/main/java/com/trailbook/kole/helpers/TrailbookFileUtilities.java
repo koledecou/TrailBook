@@ -213,12 +213,12 @@ public class TrailbookFileUtilities {
         try {
             File imageFile = getInternalImageFile(imageFileName);
             MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-
-/*deleteme            entity.addPart("segmentId", new StringBody(n.getParentSegmentId()));
-            entity.addPart("noteId", new StringBody(n.getNoteID()));*/
-            entity.addPart("imageFile",  new FileBody(imageFile)); //image should be a String
-
-            return entity;
+            if (imageFile.exists()) {
+                entity.addPart("imageFile", new FileBody(imageFile)); //image should be a String
+                return entity;
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG, "error getting multipart entity", e);
             return null;
@@ -457,5 +457,10 @@ public class TrailbookFileUtilities {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Error making path dir ", e);
         }
+    }
+
+    public static String convertStreamToString(java.io.InputStream is) {
+        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 }

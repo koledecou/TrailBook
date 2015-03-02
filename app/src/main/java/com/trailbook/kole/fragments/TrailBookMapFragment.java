@@ -616,7 +616,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": putting selected marker on map:" + point);
             mSelectedPointMarker = mMap.addMarker(new MarkerOptions()
                             .position(point)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.point_select))
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.point_select_2))
                             .anchor(.5f, .5f)
             );
             mSelectedPointMarker.setDraggable(true);
@@ -643,7 +643,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
         return false;
     }
-
 
     @Override
     public void onMarkerDragStart(Marker marker) {
