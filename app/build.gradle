@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
+
     signingConfigs {
     }
     compileSdkVersion 21
@@ -18,16 +19,18 @@ android {
     }
     buildTypes {
         release {
-            runProguard true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
             debuggable true
-            jniDebugBuild true
+            jniDebuggable true
         }
     }
     productFlavors {
     }
+
+
 }
 
 dependencies {
@@ -50,9 +53,7 @@ dependencies {
     compile 'org.apache.commons:commons-collections4:4.0'
     compile 'org.apache.httpcomponents:httpmime:4.2.1'
     compile 'org.apache.httpcomponents:httpclient:4.2.1'
-    compile 'com.sothree.slidinguppanel:library:+'
+    compile 'com.sothree.slidinguppanel:library:3.0.0'
     compile 'org.mongodb:mongo-java-driver:2.12.3'
     compile 'ch.acra:acra:4.5.0'
 }
-
-
