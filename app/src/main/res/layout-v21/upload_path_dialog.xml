@@ -45,7 +45,7 @@
         android:background="@color/WhiteSmoke">
 
         <Button
-            style="@style/btnStyleBeige"
+            style="?android:attr/buttonBarNegativeButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="@string/cpd_cancel"
@@ -53,7 +53,7 @@
             android:layout_weight=".5" />
 
         <Button
-            style="@style/btnStyleOlive"
+            style="?android:attr/buttonBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="@string/start_upload"

@@ -163,8 +163,13 @@ public class TrailbookRemoteDatabase {
             while (pathsCursor.hasNext()) {
                 DBObject pathObject = pathsCursor.next();
                 Log.d(Constants.TRAILBOOK_TAG, "Mongo: got path " + pathObject);
-                PathSummary path = getPathFromDBObject(pathObject);
-                paths.add(path);
+                PathSummary path = null;
+                try {
+                    path = getPathFromDBObject(pathObject);
+                    paths.add(path);
+                } catch (Exception e) {
+                    Log.d(Constants.TRAILBOOK_TAG, "Mongo: error getting paths", e);
+                }
                 Log.d(Constants.TRAILBOOK_TAG, "Mongo: segmentd for " + path.getName() + ":" + path.getSegmentIdList());
             }
         } finally {
@@ -237,52 +242,32 @@ public class TrailbookRemoteDatabase {
     }
 
     private TrailBookComment getCommentFromDBObject(DBObject commentObject) {
-        try {
-            TrailBookComment comment = gson.fromJson(commentObject.toString(), TrailBookComment.class);
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment: " + comment.getShortContent());
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment: " + comment.getUser());
-            return comment;
-        } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting comment", e);
-            return null;
-        }
+        TrailBookComment comment = gson.fromJson(commentObject.toString(), TrailBookComment.class);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment: " + comment.getShortContent());
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: got comment: " + comment.getUser());
+        return comment;
     }
 
     private PathSummary getPathFromDBObject(DBObject pathObject) {
-        try {
-            PathSummary path = gson.fromJson(pathObject.toString(), PathSummary.class);
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got path:" + path.getName());
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: path segments:" + path.getSegmentIdList());
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: path notes:" + path.getObjectIdList());
-            return path;
-        } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting path", e);
-            return null;
-        }
+        PathSummary path = gson.fromJson(pathObject.toString(), PathSummary.class);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: got path:" + path.getName());
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: path segments:" + path.getSegmentIdList());
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: path notes:" + path.getObjectIdList());
+        return path;
     }
 
     private PathSegment getSegmentFromDBObject(DBObject segmentObject) {
-        try {
-            PathSegment segment = gson.fromJson(segmentObject.toString(), PathSegment.class);
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got segment:" + segment);
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: segment points:" + segment.getPoints());
-            return segment;
-        } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting segment", e);
-            return null;
-        }
+        PathSegment segment = gson.fromJson(segmentObject.toString(), PathSegment.class);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: got segment:" + segment);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: segment points:" + segment.getPoints());
+        return segment;
     }
 
     private PointAttachedObject getPointAttachedObjectFromDBObject(DBObject paoNoteObject) {
-        try {
-            PointAttachedObject paoNote = NoteFactory.getPointAttachedObjectFromJSONString(paoNoteObject.toString());
-            Log.d(Constants.TRAILBOOK_TAG, "Mongo: got paoNote:" + paoNote.getLocation() + " content:" + paoNote.getAttachment().getShortContent() +
-                    " images: " + paoNote.getAttachment().getImageFileNames());
-            return paoNote;
-        } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Mongo: exception getting paoNote", e);
-            return null;
-        }
+        PointAttachedObject paoNote = NoteFactory.getPointAttachedObjectFromJSONString(paoNoteObject.toString());
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: got paoNote:" + paoNote.getLocation() + " content:" + paoNote.getAttachment().getShortContent() +
+                " images: " + paoNote.getAttachment().getImageFileNames());
+        return paoNote;
     }
 
     public void cloudDeletePath(PathSummary summary) {

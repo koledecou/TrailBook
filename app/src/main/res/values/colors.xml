@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
+    <!--<color name="ButtonText">#0099CC</color>-->
+    <color name="ActionButtonTextColor">#0099CC</color>
+    <!--<color name="PanelBackgroundColor">#3F51B5</color>-->
+    <color name="PanelBackgroundColor">#556B2F</color>
+    <color name="ListTitleBackgroundColor">#827717</color>
+    <color name="MapMessageTextColor">#0099CC</color>
     <color name="White">#FFFFFF</color>
     <color name="Ivory">#FFFFF0</color>
     <color name="LightYellow">#FFFFE0</color>

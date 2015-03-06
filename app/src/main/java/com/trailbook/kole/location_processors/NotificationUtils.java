@@ -54,11 +54,10 @@ public class NotificationUtils {
                 .setOngoing(true);
     }
 
-    public static NotificationCompat.Builder createUploadFailedNotifyBuilder(Context context, String pathId) {
+    public static NotificationCompat.Builder createUploadFailedNotifyBuilder(Context context, String pathId, String content) {
         RemoteViews notificationRemoteView = getUploadFailedNotificationRemoteView(context);
         PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
         String title = summary.getName();
-        String content = context.getString(R.string.upload_failed_notification_title);
 /*
         Intent retryButtonIntent = new Intent(context, ReceiveRetryUploadCommand.class);
         retryButtonIntent.putExtra(EXTRA_PATH_ID, pathId);

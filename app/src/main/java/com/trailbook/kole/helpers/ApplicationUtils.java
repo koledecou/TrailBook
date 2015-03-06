@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.trailbook.kole.activities.R;
+import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWord;
 import com.trailbook.kole.state_objects.PathManager;
@@ -120,10 +121,12 @@ public class ApplicationUtils {
 
     public static void addPathActionMenuItems(Menu menu, String id) {
         if (PathManager.getInstance().isStoredLocally(id)) {
+            Log.d(Constants.TRAILBOOK_TAG, "adding local menu items");
             addDownloadedPathMenuItems(menu, id);
         }
 
         if (PathManager.getInstance().isPathInCloudCache(id)){
+            Log.d(Constants.TRAILBOOK_TAG, "adding cloud menu items");
             addCloudPathMenuItems(menu,id);
         }
     }
@@ -232,5 +235,13 @@ public class ApplicationUtils {
         v.setBackgroundColor(Color.GREEN);
         toast.show();
 
+    }
+
+    public static boolean isCreateNoteDialogShowing(FragmentManager fm) {
+        if (fm.findFragmentByTag(TrailBookActivity.ADD_NOTE_FRAG_TAG) != null){
+            return true;
+        } else {
+            return false;
+        }
     }
 }

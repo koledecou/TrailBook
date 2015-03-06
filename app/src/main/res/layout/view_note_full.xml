@@ -20,7 +20,6 @@
         android:text="Leave the main trail at the big tree.  Go right down a rocky hillside."
         android:id="@+id/vn_text_content"
         android:layout_gravity="top|left"
-        android:textAlignment="textStart"
         android:textColor="@color/Black"
         android:paddingTop="@dimen/bottom_pad" />
 

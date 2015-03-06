@@ -53,7 +53,7 @@ public class DownloadPathService extends IntentService {
             getImages(pathContainer);
             sendCompletedBroadcast();
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: exception getting path summaries.  DB may not be available", e);
+            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: exception getting path summaries.  DB may not be available or there may be a problem with data", e);
             sendFailedBroadcast();
         }
 
