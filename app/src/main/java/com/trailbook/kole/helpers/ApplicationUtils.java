@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -244,4 +246,27 @@ public class ApplicationUtils {
             return false;
         }
     }
+
+    public static boolean isNetworkConnected(Activity activity) {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    public static void showNoNetworkStatusDialog(Activity activity, String message) {
+        DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog,int id) {
+            }
+        };
+        ApplicationUtils.showAlert(activity, clickListenerOK, activity.getString(R.string.no_network_title),
+                message,
+                activity.getString(R.string.OK), null);
+    }
+
 }

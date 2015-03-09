@@ -195,4 +195,5 @@
     <string name="start_upload">Start Upload</string>
     <string name="download_failed">Download Failed</string>
     <string name="download_failed_notification_title">Download Failed</string>
+    <string name="no_network_at_startup">Network trails could not be loaded, loading local trails only. Please check your internet connection</string>
 </resources>
