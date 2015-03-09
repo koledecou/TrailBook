@@ -139,7 +139,7 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
             if (distanceToNote < PreferenceUtilities.getNoteAlertDistanceInMeters(mContext)) {
                 sendApproachingObjectNotification(paObject.getId(), paObject, distanceToNote);
             } else {
-                cancelNotification(getNotificationId(paObject.getId()));
+                cancelNotification(NotificationUtils.getNotificationId(paObject.getId()));
             }
         }
     }
@@ -193,7 +193,7 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
     }
 
     private void sendApproachingObjectNotification(String noteId, PointAttachedObject paObject, double distance) {
-        int notificationId = getNotificationId(noteId);
+        int notificationId = NotificationUtils.getNotificationId(noteId);
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notificationid" + notificationId);
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: title: " + mContext.getString(R.string.note_notification_title));
         //todo: change this for other types
@@ -208,25 +208,6 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
                 notificationId,
                 mApproachingPointObjectNotificationBuilder.build());
         Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: sent approaching object notification.");
-    }
-
-    private int getNotificationId(String objectID) {
-        int id;
-        //the last 9 digits should be safe to cast as an int
-        try {
-            String objectIdTrunc;
-            if (objectID.length() > 9)
-                objectIdTrunc = objectID.substring(objectID.length() - 9, objectID.length());
-            else
-                objectIdTrunc = objectID.replace('-', '0');
-
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notification id for note " + objectID + ":" + objectIdTrunc);
-            id = Integer.parseInt(objectIdTrunc);
-        } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "error getting note id.", e);
-            id = 10;
-        }
-        return id;
     }
 
     private boolean hasAlertBeenPlayedRecently() {

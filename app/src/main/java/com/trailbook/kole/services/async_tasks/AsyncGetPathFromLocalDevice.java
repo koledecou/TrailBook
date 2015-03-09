@@ -25,6 +25,8 @@ public class AsyncGetPathFromLocalDevice extends AsyncTask<String, Void, ArrayLi
         ArrayList<Path> paths = new ArrayList<Path>();
         try {
             for (String pathId:pathIds) {
+                if (!manager.isStoredLocally(pathId))
+                    continue;
                 Path path = manager.loadPathFromDevice(pathId);
                 if (path != null && path.summary != null) {
                     paths.add(path);

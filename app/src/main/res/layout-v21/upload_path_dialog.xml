@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:background="@color/White">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/path_name"
+            android:textSize="17dp"
+            android:textColor="#ff573921"
+            android:id="@+id/name_label" />
+
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/upd_et_path_name"
+            android:imeOptions="actionDone" />
+    </LinearLayout>
+
+    <ExpandableListView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.0"
+        android:id="@+id/lvExp"
+        android:background="@color/White" />
+
+    <LinearLayout android:id="@+id/footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        style="?android:attr/buttonBarStyle"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/WhiteSmoke">
+
+        <Button
+            style="?android:attr/buttonBarNegativeButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/cpd_cancel"
+            android:id="@+id/upd_b_cancel"
+            android:layout_weight=".5" />
+
+        <Button
+            style="?android:attr/buttonBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/start_upload"
+            android:id="@+id/upd_b_ok"
+            android:layout_weight=".5"
+            android:textColor="@color/ActionButtonTextColor" />
+
+    </LinearLayout>
+</LinearLayout>

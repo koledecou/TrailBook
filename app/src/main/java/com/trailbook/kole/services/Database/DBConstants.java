@@ -1,5 +1,12 @@
 package com.trailbook.kole.services.database;
 
+import android.util.Log;
+
+import com.trailbook.kole.data.Constants;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Created by kole on 9/19/2014.
  */
@@ -16,4 +23,22 @@ public class DBConstants {
 
     public static String serverAddress = "kahana.mongohq.com";
     public static int port = 10017;
+
+    public static void populateFromJsonString(String jsonDbConstants) {
+        try {
+            JSONObject jsonObject = new JSONObject(jsonDbConstants);
+            pathCollectionName = jsonObject.getString("pathCollectionName");
+            segmentCollectionName = jsonObject.getString("segmentCollectionName");
+            generalCommentsCollectionName = jsonObject.getString("generalCommentsCollectionName");
+            attachedCommentsCollectionName = jsonObject.getString("attachedCommentsCollectionName");
+            noteCollectionName = jsonObject.getString("noteCollectionName");
+            username = jsonObject.getString("username");
+            database = jsonObject.getString("database");
+            password = jsonObject.getString("password").toCharArray();
+            serverAddress = jsonObject.getString("serverAddress");
+            port = jsonObject.getInt("port");
+        } catch (JSONException e) {
+            Log.d(Constants.TRAILBOOK_TAG, "error parsing db constants.", e);
+        }
+    }
 }

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:id="@+id/active_path_notificatin_layout">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.StatusBar.EventContent.Title"
+        android:text="The Desert Mule"
+        android:id="@+id/fn_text_title"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/imageView2"
+        android:layout_marginLeft="5dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.StatusBar.EventContent"
+        android:text="@string/upload_failed"
+        android:id="@+id/fn_text_content"
+        android:layout_below="@+id/fn_text_title"
+        android:layout_toRightOf="@+id/imageView2"
+        android:layout_marginLeft="10dp"
+        android:layout_toLeftOf="@+id/fn_button_layout" />
+
+    <LinearLayout
+        android:id="@+id/fn_button_layout"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:weightSum="1">
+
+<!--        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Retry"
+            android:id="@+id/retry_button"
+            android:layout_weight="6.29" />-->
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageView2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:src="@drawable/trail_book_logo"
+        android:layout_alignParentTop="true" />
+</RelativeLayout>

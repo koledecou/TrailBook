@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.trailbook.kole.activities" >
 
     <uses-feature
@@ -31,12 +32,13 @@
         android:allowBackup="true"
         android:icon="@drawable/trail_book_logo"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme"
+        android:theme="@style/TrailBookActionBarTheme"
         >
 
         <provider
             android:name="com.trailbook.kole.helpers.CachedFileProvider"
-            android:authorities="com.trailbook.kole.helpers.provider">
+            android:authorities="com.trailbook.kole.helpers.provider"
+            tools:ignore="ExportedContentProvider">
         </provider>
 
         <activity
@@ -80,11 +82,11 @@
             android:label="@string/title_activity_note_notification"
             android:launchMode="singleTask"
             android:taskAffinity="" >
-            <category android:name="android.intent.category.LAUNCHER" />
             <!-- For email -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
                 <data android:scheme="content" />
                 <data android:pathPattern=".*\\.tbz" />
                 <data android:mimeType="application/octet-stream" />

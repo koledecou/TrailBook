@@ -123,6 +123,9 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mPathId = getArguments().getString(PATH_ID);
+        if (mPathId == null) {
+            getActivity().getFragmentManager().beginTransaction().remove(this).commit();
+        }
 
         View view  = inflater.inflate(R.layout.upload_path_dialog, container, false);
 
@@ -191,8 +194,11 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
 
     private void populatePathName(String pathId) {
         PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
-        String name = summary.getName();
-        mEditTextPathName.setText(name);
+        if (summary != null) {
+            String name = summary.getName();
+            if (name != null)
+                mEditTextPathName.setText(name);
+        }
     }
 
     private void refreshKeywords(String pathId) {

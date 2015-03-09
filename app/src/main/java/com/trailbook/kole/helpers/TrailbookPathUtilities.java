@@ -411,7 +411,7 @@ public class TrailbookPathUtilities {
         filters.showOtherPaths =  preferences.getBoolean(Constants.FILTER_PREFS_SHOW_OTHER_PATHS_KEY, true);
         filters.groupIdsToShow = preferences.getStringSet(Constants.FILTER_PREFS_GROUPS_TO_SHOW_KEY, new LinkedHashSet<String>());
 
-        Log.d(Constants.TRAILBOOK_TAG, "Filters: " + filters);
+        Log.i(Constants.TRAILBOOK_TAG, "Filters: " + filters);
 
         return filters;
     }

@@ -4,27 +4,8 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="20dp"
-    android:paddingEnd="20dp">
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/upload"
-            android:id="@+id/upd_b_ok"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cpd_cancel"
-            android:id="@+id/upd_b_cancel"/>
-
-    </LinearLayout>
+    android:paddingEnd="20dp"
+    android:background="@color/White">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -50,6 +31,35 @@
     <ExpandableListView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/lvExp" />
+        android:layout_weight="1.0"
+        android:id="@+id/lvExp"
+        android:background="@color/White" />
 
+    <LinearLayout android:id="@+id/footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        style="?android:attr/buttonBarStyle"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/WhiteSmoke">
+
+        <Button
+            style="@style/btnStyleBeige"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/cpd_cancel"
+            android:id="@+id/upd_b_cancel"
+            android:layout_weight=".5" />
+
+        <Button
+            style="@style/btnStyleOlive"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/start_upload"
+            android:id="@+id/upd_b_ok"
+            android:layout_weight=".5"
+            android:textColor="@color/ActionButtonTextColor" />
+
+    </LinearLayout>
 </LinearLayout>

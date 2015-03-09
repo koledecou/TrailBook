@@ -130,6 +130,7 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
             mPreviousArrowView.setOnClickListener(this);
 
         showOrHideSliderArrows(mImageFileNames);
+        showOrHideImageContainer(mImageFileNames);
     }
 
 
@@ -152,6 +153,7 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
             Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "CreateNoteFragment: image uri is:" + mLastPictureUri);
             mImageView.setImageURI(imageToDisplay);
             showOrHideSliderArrows(mImageFileNames);
+            showOrHideImageContainer(mImageFileNames);
         }
     }
 
@@ -200,6 +202,7 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
             mImageFileNames.remove(mCurrentImageIndex);
         }
         showOrHideSliderArrows(mImageFileNames);
+        showOrHideImageContainer(mImageFileNames);
         mCurrentImageIndex=0;
         loadCurrentImage();
     }
@@ -339,10 +342,21 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
             mImageView.setVisibility(View.INVISIBLE);
         }
         showOrHideSliderArrows(mImageFileNames);
+        showOrHideImageContainer(mImageFileNames);
+    }
+
+    private void showOrHideImageContainer(ArrayList<String> imageFileNames) {
+        View imageContainer = mView.findViewById(R.id.cn_image_container);
+        if (imageFileNames == null || imageFileNames.size() < 1) {
+            imageContainer.setVisibility(View.GONE);
+        } else {
+            imageContainer.setVisibility(View.VISIBLE);
+        }
     }
 
     private void showOrHideSliderArrows(ArrayList<String> imageFileNames) {
         Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": ImageFileNames: " + imageFileNames);
+
         if (imageFileNames == null || imageFileNames.size() < 2) {
             mNextArrowView.setVisibility(View.INVISIBLE);
             mPreviousArrowView.setVisibility(View.INVISIBLE);

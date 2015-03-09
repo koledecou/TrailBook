@@ -3,39 +3,53 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="@dimen/details_panel_height_path_details"
-    android:id="@+id/summary_layout">
+    android:id="@+id/summary_layout"
+    android:background="@color/White">
 
     <LinearLayout
+        android:background="@color/PanelBackgroundColor"
+        style="?android:attr/buttonBarStyle"
         android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:weightSum="1">
 
         <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="47dp"
+            android:layout_height="61dp"
             android:id="@+id/pdv_more"
-            android:src="@drawable/ic_path_menu" />
+            android:src="@drawable/ic_path_menu_transparent"
+            android:scaleType="fitXY"
+            android:layout_weight="0.13"
+            android:background="@color/PanelBackgroundColor" />
 
         <Button
-            style="?android:attr/buttonStyleSmall"
+            android:textColor="@color/White"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/download"
-            android:id="@+id/pdv_button_download" />
+            android:id="@+id/pdv_button_download"
+            android:layout_gravity="center" />
 
         <Button
-            style="?android:attr/buttonStyleSmall"
+            android:textColor="@color/White"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/follow"
-            android:id="@+id/pdv_button_follow" />
+            android:id="@+id/pdv_button_follow"
+            android:layout_gravity="center" />
 
         <Button
-            style="?android:attr/buttonStyleSmall"
+            android:textColor="@color/White"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/to_start"
-            android:id="@+id/pdv_button_to_start" />
+            android:id="@+id/pdv_button_to_start"
+            android:layout_gravity="center" />
+
     </LinearLayout>
 
     <LinearLayout

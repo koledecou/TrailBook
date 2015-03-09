@@ -13,21 +13,27 @@
         android:imeOptions="actionDone" />
 
     <LinearLayout
+        style="?android:attr/buttonBarStyle"
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal">
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cpd_cancel"
-            android:id="@+id/cpd_b_cancel"/>
+            android:id="@+id/cpd_b_cancel"
+            android:layout_weight=".5" />
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:textColor="@color/ActionButtonTextColor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cpd_new_path"
-            android:id="@+id/cpd_b_ok"/>
+            android:id="@+id/cpd_b_ok"
+            android:layout_weight=".5" />
     </LinearLayout>
 </LinearLayout>

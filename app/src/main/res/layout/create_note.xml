@@ -5,40 +5,6 @@
     android:gravity="fill|top"
     android:orientation="vertical" >
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:measureWithLargestChild="false"
-        android:gravity="top"
-        android:textAlignment="viewStart">
-
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Delete"
-            android:id="@+id/cn_b_delete" />
-
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:id="@+id/cn_b_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cn_cancel"
-            android:gravity="center"
-            android:layout_weight="1" />
-
-
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:id="@+id/cn_b_ok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cn_ok"
-            android:layout_weight="1" />
-
-    </LinearLayout>
-
     <EditText
         android:id="@+id/cn_note_content"
         android:layout_width="fill_parent"
@@ -54,8 +20,10 @@
 
 
     <RelativeLayout
+        android:id="@+id/cn_image_container"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" >
+        android:layout_height="fill_parent"
+        android:layout_weight="1.0">
     <ImageView
         android:id="@+id/cn_image"
         android:layout_width="fill_parent"
@@ -78,4 +46,38 @@
         android:src="@drawable/swipe_right_3" />
     </RelativeLayout>
 
+    <LinearLayout
+        style="?android:attr/buttonBarStyle"
+        android:background="@color/PanelBackgroundColor"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:measureWithLargestChild="false"
+        android:gravity="top">
+
+        <Button
+            style="@style/btnStyleBeige"
+            android:id="@+id/cn_b_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cn_cancel"
+            android:gravity="center"
+            android:layout_weight=".33" />
+
+        <Button
+            style="@style/btnStyleBeige"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:id="@+id/cn_b_delete"
+            android:layout_weight=".33"/>
+
+        <Button
+            style="@style/btnStyleOlive"
+            android:id="@+id/cn_b_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cn_ok"
+            android:layout_weight=".34"/>
+
+    </LinearLayout>
 </LinearLayout>

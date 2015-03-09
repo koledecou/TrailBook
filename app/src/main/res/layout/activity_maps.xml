@@ -46,23 +46,69 @@
                     android:text=""
                     android:id="@+id/map_tv_message"
                     android:layout_gravity="bottom|center_horizontal"
-                    android:paddingBottom="@dimen/bottom_pad" />
+                    android:layout_marginBottom="20dp" />
 
-<!--                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
+                <LinearLayout
+                    android:id="@+id/edit_menu_button_layout"
+                    android:orientation="vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentTop="true"
-                    android:layout_marginLeft="23dp"
-                    android:layout_marginTop="20dp"
-                    android:indeterminate="false"
-                    android:max="100"
-                    android:minHeight="80dp"
-                    android:minWidth="150dp"
-                    android:layout_gravity="center_vertical|center_horizontal"
-                    android:paddingBottom="@dimen/bottom_pad"
-                    android:id="@+id/progressBar" />-->
+                    android:layout_gravity="right"
+                    android:layout_marginTop="50dp"
+                    android:layout_marginRight="5dp"
+                    android:visibility="invisible">
+
+                    <Button
+                        style="@style/btnStyleOlive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/done"
+                        android:id="@+id/b_done"
+                        android:layout_gravity="right"
+                        android:layout_margin="5dp" />
+
+                    <Button
+                        style="@style/btnStyleBeige"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/delete_selection"
+                        android:id="@+id/b_delete_point"
+                        android:layout_gravity="right"
+                        android:layout_margin="5dp" />
+
+                    <Button
+                        style="@style/btnStyleBeige"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/create_note"
+                        android:id="@+id/b_add_note"
+                        android:layout_gravity="right"
+                        android:layout_margin="5dp" />
+                    <Button
+                        style="@style/btnStyleBeige"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/create_climb"
+                        android:id="@+id/b_add_climb"
+                        android:layout_gravity="right"
+                        android:layout_margin="5dp" />
+                </LinearLayout>
+
+                <!--                <ProgressBar
+                                    style="?android:attr/progressBarStyleHorizontal"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentLeft="true"
+                                    android:layout_alignParentTop="true"
+                                    android:layout_marginLeft="23dp"
+                                    android:layout_marginTop="20dp"
+                                    android:indeterminate="false"
+                                    android:max="100"
+                                    android:minHeight="80dp"
+                                    android:minWidth="150dp"
+                                    android:layout_gravity="center_vertical|center_horizontal"
+                                    android:paddingBottom="@dimen/bottom_pad"
+                                    android:id="@+id/progressBar" />-->
             </FrameLayout>
             <LinearLayout
                 android:id="@+id/details_panel_container"

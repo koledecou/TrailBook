@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -259,12 +260,48 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void displayMessage(String message) {
-        TextView tvMapMessage = (TextView)(getActivity().findViewById(R.id.map_tv_message));
-        if (tvMapMessage == null) {
-            return;
+        TextView tvMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_message));
+        if (!ApplicationUtils.isCreateNoteDialogShowing(getFragmentManager())) {
+            if (tvMapMessage == null) {
+                return;
+            }
+            tvMapMessage.setVisibility(View.VISIBLE);
+            tvMapMessage.setText(message);
+        } else {
+            hideMapMessage();
         }
-        tvMapMessage.setVisibility(View.VISIBLE);
-        tvMapMessage.setText(message);
+    }
+
+    public void hideMapMessage() {
+        if (isAdded()) {
+            TextView tvMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_message));
+            if (tvMapMessage != null) {
+                tvMapMessage.setVisibility(View.INVISIBLE);
+            }
+
+            TextView tvTopMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_top_message));
+            if (tvTopMapMessage != null) {
+                tvTopMapMessage.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+    public void showEditMenuButtons() {
+        LinearLayout buttonsLayout = (LinearLayout)(getActivity().findViewById(R.id.edit_menu_button_layout));
+        Button bDone = (Button)buttonsLayout.findViewById(R.id.b_done);
+        Button bDeletePoint = (Button)buttonsLayout.findViewById(R.id.b_delete_point);
+        Button bAddNote = (Button)buttonsLayout.findViewById(R.id.b_add_note);
+        Button bAddClimb = (Button)buttonsLayout.findViewById(R.id.b_add_climb);
+        bDone.setOnClickListener(this);
+        bDeletePoint.setOnClickListener(this);
+        bAddNote.setOnClickListener(this);
+        bAddClimb.setOnClickListener(this);
+        buttonsLayout.setVisibility(View.VISIBLE);
+    }
+
+    public void hideEditMenuButtons() {
+        LinearLayout buttonsLayout = (LinearLayout)(getActivity().findViewById(R.id.edit_menu_button_layout));
+        buttonsLayout.setVisibility(View.INVISIBLE);
     }
 
     private void createMapObjects() {
@@ -362,6 +399,12 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
         setUpMapIfNeeded();
         hideMapMessage();
+        if (TrailBookState.getMode() == TrailBookState.MODE_EDIT
+                && !ApplicationUtils.isCreateNoteDialogShowing(getFragmentManager())) {
+            showEditMenuButtons();
+        } else
+            hideEditMenuButtons();
+
         mSlidingPanel = (SlidingUpPanelLayout) getActivity().findViewById(R.id.main_panel);
         processWaitingForViewEvents();
 
@@ -393,20 +436,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         } else {
             Log.v(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: not showing " + summary.getName());
             return false;
-        }
-    }
-
-    public void hideMapMessage() {
-        if (isAdded()) {
-            TextView tvMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_message));
-            if (tvMapMessage != null) {
-                tvMapMessage.setVisibility(View.INVISIBLE);
-            }
-
-            TextView tvTopMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_top_message));
-            if (tvTopMapMessage != null) {
-                tvTopMapMessage.setVisibility(View.INVISIBLE);
-            }
         }
     }
     
@@ -593,13 +622,14 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     @Override
     public void onMapClick(LatLng latLng) {
         Log.d(Constants.TRAILBOOK_TAG, "Clicked map, " + latLng.latitude + "," + latLng.longitude);
-        collapseSlidingPanelIfExpanded();
-        changeAllPathsToUnSelected();
 
         if (TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
             LatLng closestPointOnPath = TrailbookPathUtilities.getNearestPointOnPath(latLng, TrailBookState.getActivePathId());
             mSelectedLocation = closestPointOnPath;
             putSelectedMarkerOnMap(closestPointOnPath);
+        } else {
+            collapseSlidingPanelIfExpanded();
+            changeAllPathsToUnSelected();
         }
     }
 
@@ -616,7 +646,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": putting selected marker on map:" + point);
             mSelectedPointMarker = mMap.addMarker(new MarkerOptions()
                             .position(point)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.point_select))
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.point_select_2))
                             .anchor(.5f, .5f)
             );
             mSelectedPointMarker.setDraggable(true);
@@ -643,7 +673,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         }
         return false;
     }
-
 
     @Override
     public void onMarkerDragStart(Marker marker) {
@@ -676,6 +705,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     @Override
     public void onClick(View view) {
         if (isAdded()) {
+            TrailBookActivity parent = (TrailBookActivity) getActivity();
             Log.d(Constants.TRAILBOOK_TAG, "View clicked:" + view.getId() + ", " + view.getTag());
             if (view.getId() == R.id.nv_small_note_layout || view.getId() == R.id.vc_small_climb_layout || view.getId() == R.id.vn_button_expand) {
                 Log.d(Constants.TRAILBOOK_TAG, "Note clicked");
@@ -683,6 +713,16 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                 changeAllPathsToUnSelected();
 
                 ((TrailBookActivity) getActivity()).showFullObject(((PointAttachedObjectView) view).getPaoId());
+                hideMapMessage();
+                hideEditMenuButtons();
+            } else if (view.getId() == R.id.b_done) {
+                parent.switchToSearchMode();
+            } else if (view.getId() == R.id.b_add_note) {
+                parent.onCreateNoteSelected();
+            } else if (view.getId() == R.id.b_add_climb) {
+                parent.onCreateClimbSelected();
+            } else if (view.getId() == R.id.b_delete_point) {
+                parent.onDeletePointSelected();
             }
         }
     }
@@ -767,6 +807,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             if (v.getId() == mDetailView.getMoreButton().getId()) {
                 PathSummary summary = mPathManager.getPathSummary(mDetailView.getPathId());
                 if (summary != null) {
+                    Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": getting menu for " + summary.getName());
                     menu.setHeaderTitle(summary.getName());
                     ApplicationUtils.addPathActionMenuItems(menu, summary.getId());
                 }
@@ -1155,12 +1196,12 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
                         }
                     }
                 }
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(l.getLatitude(), l.getLongitude() )));
+                //mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(l.getLatitude(), l.getLongitude() )));
             } catch (Exception e) {
                 Log.e(Constants.TRAILBOOK_TAG, "Exception updating note markers.  map may not have been initialized", e);
             }
         } else if (mode == TrailBookState.MODE_LEAD) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(l.getLatitude(), l.getLongitude() )));
+            //mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(l.getLatitude(), l.getLongitude() )));
         }
     }
 
@@ -1300,6 +1341,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             prepareMapForLeadMode();
         } else if (event.getNewMode() == TrailBookState.MODE_EDIT) {
             prepareMapForEditMode();
+        } else if (event.getNewMode() == TrailBookState.MODE_FOLLOW) {
+            prepareMapForFollowMode();
         }
         displayMessage();
     }
@@ -1341,6 +1384,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         removeSelectedMarker();
         setAllPAOMarkersToMovable();
         zoomToPath(TrailBookState.getActivePathId());
+        showEditMenuButtons();
     }
 
     private void setAllPAOMarkersToMovable() {
@@ -1364,6 +1408,16 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         removeSelectedMarker();
         setAllPAOMarkersToNotMovable();
         zoomToCurrentLocation();
+        hideEditMenuButtons();
+    }
+
+    private void prepareMapForFollowMode() {
+        showOnlyPath(TrailBookState.getActivePathId());
+        setVisibilityForAllEndMarkers(false);
+        removeSelectedMarker();
+        setAllPAOMarkersToNotMovable();
+        zoomToCurrentLocation();
+        hideEditMenuButtons();
     }
 
     private void prepareMapForSearchMode() {
@@ -1372,6 +1426,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         setVisibilityForAllStartMarkers(false);
         removeSelectedMarker();
         setAllPAOMarkersToNotMovable();
+        hideEditMenuButtons();
     }
 
     private void queueEventIfMapNotAvailable(Object event) {

@@ -8,8 +8,6 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
 import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.data.Path;
-import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
@@ -28,7 +26,6 @@ import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 import java.io.File;
-import java.util.ArrayList;
 
 import retrofit.RestAdapter;
 
@@ -128,10 +125,6 @@ public class WorkerFragment extends Fragment {
     }
 
     public void startPathUploadMongo(PathSummary summary) {
-        ArrayList<PathSegment> segments2 = PathManager.getInstance().getSegmentsForPath(summary.getId());
-        ArrayList<PointAttachedObject> paObjects = PathManager.getInstance().getPointObjectsForPath(summary.getId());
-        Path pathContainer = new Path(summary, segments2, paObjects);
-
         Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: uploading path " + summary.getName());
         Intent intent = new Intent(getActivity(), UploadPathService.class);
         intent.putExtra(UploadPathService.PATH_ID_KEY, summary.getId());
