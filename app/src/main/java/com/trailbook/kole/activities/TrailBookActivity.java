@@ -112,8 +112,6 @@ public class TrailBookActivity extends Activity
     public static final String PATH_DETAILS_DIALOG_TAG = "path_details_dialog";
     public static final String FILTER_DIALOG_TAG = "FILTER_DIALOG";
     public static final String INITIAL_PATH_ID_KEY = "INITIAL_PATH_ID";
-    private static final long SPLASH_DISPLAY_LENGTH = 2000;
-    public static final String TAG_SPLASH_SCREEN = "SPLASH_FRAG";
 
     private CharSequence mTitle; // Used to store the last screen title. For use in {@link #restoreActionBar()}.
     private TrailBookMapFragment mMapFragment;
