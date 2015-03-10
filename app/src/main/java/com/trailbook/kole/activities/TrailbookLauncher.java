@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.Menu;
 
 import com.trailbook.kole.data.Constants;
+import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 /**
@@ -20,18 +21,7 @@ public class TrailbookLauncher extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.splash);
-
-        /* New Handler to start the Menu-Activity
-         * and close this Splash-Screen after some seconds.*/
-        new Handler().postDelayed(new Runnable(){
-            @Override
-            public void run() {
-                /* Create an Intent that will start the Menu-Activity. */
-                launchMap();
-            }
-        }, SPLASH_DISPLAY_LENGTH);
-
+        launchMap();
     }
 
     private void launchMap() {
