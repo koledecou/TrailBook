@@ -24,7 +24,7 @@
             sothree:umanoFadeColor="@android:color/transparent">
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent" xmlns:ads="http://schemas.android.com/apk/res-auto">
                 <FrameLayout
                     android:id="@+id/map_container"
                     android:layout_width="match_parent"
@@ -47,6 +47,21 @@
                     android:id="@+id/map_tv_message"
                     android:layout_gravity="bottom|center_horizontal"
                     android:layout_marginBottom="20dp" />
+
+
+                <com.google.android.gms.ads.AdView
+                    android:id="@+id/adView"
+                    android:layout_gravity="bottom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_alignParentBottom="true"
+                    ads:adSize="BANNER"
+                    ads:adUnitId="@string/banner_ad_unit_id"
+                    android:maxWidth="320dp"
+                    android:layout_marginBottom="25dp">
+                </com.google.android.gms.ads.AdView>
+
 
                 <LinearLayout
                     android:id="@+id/edit_menu_button_layout"
@@ -118,6 +133,7 @@
                 android:gravity="center|top"
                 tools:layout="@layout/path_details" />
          </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+
     </FrameLayout>
 
     <!-- android:layout_gravity="start" tells DrawerLayout to treat
