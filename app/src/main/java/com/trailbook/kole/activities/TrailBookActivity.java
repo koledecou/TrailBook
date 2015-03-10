@@ -29,7 +29,8 @@ import android.view.Window;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Toast;
-
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.maps.model.LatLng;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
@@ -149,7 +150,7 @@ public class TrailBookActivity extends Activity
         setUpNavDrawerFragment();
         setUpPreferencesFragment();
         setUpWorkFragmentIfNeeded();
-
+        setUpAds();
         String launchedPathId = getLaunchPathId();
         if (launchedPathId == null || launchedPathId.equals(TrailBookState.NO_START_PATH)) {
             launchFromRestoredState();
@@ -162,6 +163,14 @@ public class TrailBookActivity extends Activity
             refreshPaths(false);
             requestShowPathDetails(launchedPathId);
         }
+    }
+
+    private void setUpAds() {
+
+        AdView mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
     }
 
     private void restoreFragments(Bundle savedInstanceState) {
