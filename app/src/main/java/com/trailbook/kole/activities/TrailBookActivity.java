@@ -16,8 +16,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
@@ -128,6 +126,7 @@ public class TrailBookActivity extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_PROGRESS);
         Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " OnCreate");
@@ -333,12 +332,12 @@ public class TrailBookActivity extends Activity
         } else if (action == ApplicationUtils.MENU_CONTEXT_DOWNLOAD_ID) {
             onDownloadRequested(pathId);
         } else if (action == ApplicationUtils.MENU_CONTEXT_DELETE_FROM_CLOUD_ID) {
-            if (isNetworkConnected()) {
+            if (ApplicationUtils.isNetworkConnected(this)) {
                 Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Confirming delete path:" + pathId);
                 deleteFromCloud(pathId);
             } else {
                 Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
-                showNoNetworkStatusDialog();
+                ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
             }
         } else if (action == ApplicationUtils.MENU_CONTEXT_RESUME_ID) {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": resuming path " + pathId);
@@ -755,13 +754,13 @@ public class TrailBookActivity extends Activity
 
     @Override
     public void onDownloadRequested(String pathId) {
-        if (isNetworkConnected()) {
+        if (ApplicationUtils.isNetworkConnected(this)) {
             mWorkFragment.startDownloadPath(pathId);
             mMapFragment.displayMessage(getString(R.string.download_in_progress));
             collapseSlidingPanel();
         }else {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
-            showNoNetworkStatusDialog();
+            ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
         }
     }
 
@@ -977,7 +976,7 @@ public class TrailBookActivity extends Activity
     }
 
     private void refreshFromCloudIfConnectedToNetwork() {
-        if (isNetworkConnected()) {
+        if (ApplicationUtils.isNetworkConnected(this)) {
             Log.d(Constants.TRAILBOOK_TAG, getLocalClassName() + ": refreshing from cloud");
             mWorkFragment.startGetPathSummariesRemote(null, 0);
         } else {
@@ -1030,27 +1029,6 @@ public class TrailBookActivity extends Activity
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.confirm_exit_title), reason, getString(R.string.exit_confirm), getString(R.string.cn_cancel));
     }
 
-    private boolean isNetworkConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager)
-                getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public void showNoNetworkStatusDialog() {
-        DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": dismissing no paths dialog");
-            }
-        };
-        ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.no_network_title), getString(R.string.no_network_message), getString(R.string.OK), null);
-    }
-
-
     private void showErrorParsingKMLAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
@@ -1084,6 +1062,7 @@ public class TrailBookActivity extends Activity
 
     private void toastNoNetwork() {
         Toast.makeText(this, getString(R.string.no_network_toast), Toast.LENGTH_LONG).show();
+        ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_at_startup));
     }
 
     @Override
@@ -1108,7 +1087,7 @@ public class TrailBookActivity extends Activity
     }
 
     public void upload(String pathId) {
-        if (isNetworkConnected()) {
+        if (ApplicationUtils.isNetworkConnected(this)) {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Uploading path:" + pathId);
             //TODO: update path details and confirm
             Action uploadAction = new PathUploaderAction(mWorkFragment, mPathManager.getPathSummary(pathId));
@@ -1123,7 +1102,7 @@ public class TrailBookActivity extends Activity
             }
         } else {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
-            showNoNetworkStatusDialog();
+            ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
         }
     }
 
@@ -1159,7 +1138,7 @@ public class TrailBookActivity extends Activity
         mPathManager.saveComment(comment);
         BusProvider.getInstance().post(new PathCommentAddedEvent(comment));
         if (mPathManager.isPathInCloudCache(comment.getPathId())) {
-            if (isNetworkConnected()) {
+            if (ApplicationUtils.isNetworkConnected(this)) {
                 Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Uploading comment:" + comment);
                 //TODO: show progress dialog
                 Action uploadAction = new CommentUploaderAction(mWorkFragment, comment);
@@ -1176,14 +1155,14 @@ public class TrailBookActivity extends Activity
             } else {
                 //todo: create service to upload when back on line
                 Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
-                showNoNetworkStatusDialog();
+                ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
             }
         }
     }
 
     @Override
     public void onNewAttachedCommentClick(TrailBookComment comment) {
-        if (isNetworkConnected()) {
+        if (ApplicationUtils.isNetworkConnected(this)) {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Uploading comment:" + comment);
             //TODO: show progress dialog
             PointAttachedObject paoComment = attachNoteToCurrentLocation(comment);
@@ -1199,7 +1178,7 @@ public class TrailBookActivity extends Activity
             }
         } else {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
-            showNoNetworkStatusDialog();
+            ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
         }
     }
 

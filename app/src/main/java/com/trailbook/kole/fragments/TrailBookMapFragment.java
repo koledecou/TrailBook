@@ -1,5 +1,7 @@
 package com.trailbook.kole.fragments;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
