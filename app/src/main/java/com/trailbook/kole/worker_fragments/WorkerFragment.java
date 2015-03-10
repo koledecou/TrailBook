@@ -20,14 +20,11 @@ import com.trailbook.kole.services.async_tasks.AsyncUploadAttachedComment;
 import com.trailbook.kole.services.async_tasks.AsyncUploadComment;
 import com.trailbook.kole.services.download.DownloadPathService;
 import com.trailbook.kole.services.upload.UploadPathService;
-import com.trailbook.kole.services.web.TrailbookPathServices;
 import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.state_objects.PathManager;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 import java.io.File;
-
-import retrofit.RestAdapter;
 
 /**
  * This background fragment has no UI. It gets path summaries from a web service call
@@ -35,8 +32,6 @@ import retrofit.RestAdapter;
  */
 public class WorkerFragment extends Fragment {
     private Bus bus;
-    private RestAdapter mRestAdapter;
-    private TrailbookPathServices mService;
     private PathManager pathManager = PathManager.getInstance();
 
     public WorkerFragment () {
@@ -44,7 +39,7 @@ public class WorkerFragment extends Fragment {
 
         bus=BusProvider.getInstance();
         bus.register(this);
-        initializeRestAdaptor();
+//        initializeRestAdaptor();
     }
 
     /**
@@ -56,12 +51,12 @@ public class WorkerFragment extends Fragment {
         setRetainInstance(true);
     }
 
-    private void initializeRestAdaptor() {
-        mRestAdapter = new RestAdapter.Builder()
+/*    private void initializeRestAdaptor() {
+        RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(Constants.BASE_CGIBIN_URL)
                 .build();
-        mService = mRestAdapter.create(TrailbookPathServices.class);
-    }
+        restAdapter.create(TrailbookPathServices.class);
+    }*/
 
     /**
      * This is called when the Fragment's Activity is ready to go, after

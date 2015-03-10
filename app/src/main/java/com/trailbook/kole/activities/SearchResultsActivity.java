@@ -29,7 +29,6 @@ import java.util.ArrayList;
 public class SearchResultsActivity extends Activity implements AdapterView.OnItemClickListener {
 
     private static final String CLASS_NAME = "SearchResultsActivity";
-    private ArrayList<KeyWord> mResults;
     private KeyWordArrayAdapter mAdapter;
 
     @Override
@@ -74,8 +73,8 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " searching for " + query);
-            mResults = getSearchResults(query);
-            displayResults(mResults);
+            ArrayList<KeyWord> results = getSearchResults(query);
+            displayResults(results);
         } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             String pathId = intent.getStringExtra(SearchManager.EXTRA_DATA_KEY);
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " path id is " + pathId);
@@ -92,11 +91,11 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
         finish();
     }
 
-    private void displayResults(ArrayList<KeyWord> mResults) {
+    private void displayResults(ArrayList<KeyWord> results) {
         setContentView(R.layout.search_results_list);
 
         ListView listView = (ListView)findViewById(R.id.lv_results);
-        mAdapter = new KeyWordArrayAdapter(this, mResults);
+        mAdapter = new KeyWordArrayAdapter(this, results);
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(this);
         //registerForContextMenu(listView);
@@ -184,7 +183,7 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
             TextView textView1 = (TextView) rowView.findViewById(R.id.text1);
             textView1.setText(ApplicationUtils.getLabelForKeywordType(keyWord.type) + keyWord.keyWord);
             TextView textView2 = (TextView) rowView.findViewById(R.id.text2);
-            textView2.setText("  Path: " + keyWord.pathName);
+            textView2.setText(getString(R.string.path_results_activity_path) + keyWord.pathName);
 
             return rowView;
         }

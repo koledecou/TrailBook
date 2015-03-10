@@ -59,7 +59,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Name"
+                    android:text="@string/create_climb_name"
                     android:id="@+id/vc_name_label"
                     android:layout_gravity="top|left"
                     android:textColor="@color/Black" />
@@ -86,7 +86,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Grade"
+                    android:text="@string/create_climb_grade"
                     android:id="@+id/vc_text_grade_label"
                     android:layout_gravity="top|left"
                     android:textColor="@color/Black" />
@@ -113,7 +113,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Description"
+                    android:text="@string/create_climb_description"
                     android:id="@+id/vc_text_description_label"
                     android:layout_gravity="top|left"
                     android:textColor="@color/Black" />

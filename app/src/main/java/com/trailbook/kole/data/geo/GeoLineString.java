@@ -95,7 +95,7 @@ public class GeoLineString {
     }*/
 
     private int getCoordinateIndexForPoint(LatLng point) {
-        if (coordinates == null && coordinates.size() < 1)
+        if (coordinates != null && coordinates.size() < 1)
             return -1;
 
         double[] coordsPoint = new double[]{point.longitude, point.latitude};

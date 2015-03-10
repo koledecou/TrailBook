@@ -7,5 +7,5 @@ public class ButtonActions {
     public boolean mCanFollowPath;
     public boolean mCanDownloadPath;
     public ButtonActions () {
-    };
+    }
 }

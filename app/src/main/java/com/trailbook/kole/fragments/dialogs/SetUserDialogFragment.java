@@ -23,16 +23,12 @@ import com.trailbook.kole.events.UserUpdatedEvent;
 import com.trailbook.kole.state_objects.BusProvider;
 
 public class SetUserDialogFragment extends DialogFragment implements View.OnClickListener {
-    private Bus bus;
 
     public interface SetUserDialogListener {
         public void onUserUpdated(User user);
     }
 
     private EditText mEditTextUserName;
-    private ImageButton mPickAccountButton;
-    private Button mOkButton;
-    private Button mCancelButton;
     private TextView mTextViewUserId;
     private static SetUserDialogListener mListener;
 
@@ -63,7 +59,7 @@ public class SetUserDialogFragment extends DialogFragment implements View.OnClic
         mUser = new User();
         mUser.userName = getArguments().getString("user_name");
         mUser.userId = getArguments().getString("user_id");
-        bus = BusProvider.getInstance();
+        Bus bus = BusProvider.getInstance();
         bus.register(this);
     }
 
@@ -89,13 +85,13 @@ public class SetUserDialogFragment extends DialogFragment implements View.OnClic
     }
 
     private void setButtons(View v) {
-        mPickAccountButton = (ImageButton) v.findViewById(R.id.sud_b_pick_account);
+        ImageButton mPickAccountButton = (ImageButton) v.findViewById(R.id.sud_b_pick_account);
         mPickAccountButton.setOnClickListener(this);
 
-        mOkButton = (Button)v.findViewById(R.id.sud_b_ok);
+        Button mOkButton = (Button) v.findViewById(R.id.sud_b_ok);
         mOkButton.setOnClickListener(this);
 
-        mCancelButton = (Button)v.findViewById(R.id.sud_b_cancel);
+        Button mCancelButton = (Button) v.findViewById(R.id.sud_b_cancel);
         mCancelButton.setOnClickListener(this);
     }
 

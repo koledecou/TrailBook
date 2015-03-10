@@ -4,7 +4,7 @@
     android:layout_height="match_parent">
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="fill|top"
         android:orientation="vertical"
         android:id="@+id/nv_full_note_layout">

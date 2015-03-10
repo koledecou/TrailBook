@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/path_name"
-            android:textSize="17dp"
+            android:textSize="17sp"
             android:textColor="#ff573921"
             android:id="@+id/name_label" />
 
@@ -30,7 +30,7 @@
 
     <ExpandableListView
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_weight="1.0"
         android:id="@+id/lvExp"
         android:background="@color/White" />

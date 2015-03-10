@@ -21,7 +21,7 @@ public class AsyncUploadComment extends AsyncTask<TrailBookComment, Void, TrailB
                 comment = comments[0];
             }
 
-            Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadComment: uploading " + comment.comment);
+            Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadComment: uploading " + (comment != null ? comment.comment : null));
             db.uploadComment(comment);
             return comment;
 

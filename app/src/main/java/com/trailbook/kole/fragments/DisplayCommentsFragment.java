@@ -36,7 +36,6 @@ public class DisplayCommentsFragment extends Fragment implements View.OnClickLis
     public static final String  PATH_ID_ARG="PATH_ID";
     public String mPathId;
 
-    private Button mAddCommentButton;
     private TableLayout mCommentsContainer;
 
     public static DisplayCommentsFragment newInstance(String pathId) {
@@ -84,8 +83,8 @@ public class DisplayCommentsFragment extends Fragment implements View.OnClickLis
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.comment_list, container, false);
-        mAddCommentButton = (Button) view.findViewById(R.id.b_add_comment);
-        mAddCommentButton.setOnClickListener(this);
+        Button addCommentButton = (Button) view.findViewById(R.id.b_add_comment);
+        addCommentButton.setOnClickListener(this);
         mCommentsContainer = (TableLayout)view.findViewById(R.id.comments_container);
         putCommentsInContainer(inflater, mCommentsContainer, mPathId);
 

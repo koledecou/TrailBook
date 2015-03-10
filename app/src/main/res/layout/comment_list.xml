@@ -12,7 +12,7 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Comment"
+            android:text="@string/add_comment"
             android:id="@+id/b_add_comment" />
     </LinearLayout>
 
@@ -24,7 +24,7 @@
 
         <TableLayout
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:id="@+id/comments_container"></TableLayout>
     </ScrollView>
 

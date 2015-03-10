@@ -1,6 +1,5 @@
 package com.trailbook.kole.helpers;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -23,7 +22,7 @@ public class MapUtilities {
             Intent i = new Intent(android.content.Intent.ACTION_VIEW,uri);
             callingContext.startActivity(i);
         } catch (Exception e) {
-            Toast.makeText(callingContext, "Maps Failed to Launch", Toast.LENGTH_SHORT);
+            Toast.makeText(callingContext, "Maps Failed to Launch", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -66,7 +66,6 @@ public class ReceiveStartStopLocationUpdatesCommand extends BroadcastReceiver {
             String title = String.format(context.getString(R.string.leading_trail_title), PathManager.getInstance().getPathSummary(pathId).getName());
             String content = context.getString(R.string.leading_trail_notification_content);
             NotificationCompat.Builder builder = NotificationUtils.createListeningNotifyBuilder(context, title, content, pathId, remoteViews);
-;
             notificationManager.notify(
                     LocationProcessor.LISTENING_NOTIFICATION_ID,
                     builder.build());

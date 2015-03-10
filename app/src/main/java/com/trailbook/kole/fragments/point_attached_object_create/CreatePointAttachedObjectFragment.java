@@ -52,8 +52,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
     private ImageView mImageView;
     private ImageView mNextArrowView;
     private ImageView mPreviousArrowView;
-    private Button mOkButton;
-    private Button mCancelButton;
     private Button mDeleteButton;
     protected String mNoteId;
 
@@ -112,11 +110,11 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
     public void createViewObjects() {
         mImageView = (ImageView) mView.findViewById(R.id.cn_image);
 
-        mOkButton = (Button)mView.findViewById(R.id.cn_b_ok);
-        mOkButton.setOnClickListener(this);
+        Button okButton = (Button) mView.findViewById(R.id.cn_b_ok);
+        okButton.setOnClickListener(this);
 
-        mCancelButton = (Button)mView.findViewById(R.id.cn_b_cancel);
-        mCancelButton.setOnClickListener(this);
+        Button cancelButton = (Button) mView.findViewById(R.id.cn_b_cancel);
+        cancelButton.setOnClickListener(this);
 
         mDeleteButton = (Button)mView.findViewById(R.id.cn_b_delete);
         mDeleteButton.setOnClickListener(this);
@@ -249,9 +247,9 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
             if (resultCode == getActivity().RESULT_OK) {
                 try {
                     Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "picture uri after capture:" + mLastPictureUri);
-                    if (data == null && mLastPictureUri != null) {
+                    if (mLastPictureUri != null) {
                         imageUri = mLastPictureUri;
-                    } else {
+                    } else if (data != null) {
                         imageUri = data.getData();
                     }
                 } catch (Exception e) {

@@ -9,16 +9,13 @@ import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWordDAO;
-import com.trailbook.kole.helpers.TrailbookSQLLiteHelper;
 
 
 public class TrailbookKeywordContentProvider extends ContentProvider {
     private static final String CLASS_NAME = "TrailbookKeywordContentProvider";
-    private TrailbookSQLLiteHelper mDatabaseHelper;
 
     @Override
     public boolean onCreate() {
-        mDatabaseHelper = new TrailbookSQLLiteHelper(getContext());
         return true;
     }
 

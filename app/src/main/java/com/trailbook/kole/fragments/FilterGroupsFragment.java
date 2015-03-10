@@ -27,7 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class FilterGroupsFragment extends DialogFragment implements View.OnClickListener {
-    private Button mUnlockGroupButton;
     private ScrollView mGroupsContainer;
     private ArrayList<PathGroup> mGroups;
 
@@ -63,8 +62,8 @@ public class FilterGroupsFragment extends DialogFragment implements View.OnClick
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.filter_dialog, container, false);
 
-        mUnlockGroupButton = (Button) view.findViewById(R.id.fd_b_add_group);
-        mUnlockGroupButton.setOnClickListener(this);
+        Button unlockGroupButton = (Button) view.findViewById(R.id.fd_b_add_group);
+        unlockGroupButton.setOnClickListener(this);
 
         TextView tvNoGroupsMessage=(TextView)view.findViewById(R.id.tv_no_groups);
         if (mGroups == null || mGroups.size()<1)
@@ -92,7 +91,7 @@ public class FilterGroupsFragment extends DialogFragment implements View.OnClick
         groupsContainer.removeAllViews();
         if (groups != null && groups.size()>0) {
             for (PathGroup group : groups) {
-                putGroupInContainer(inflater, groupsContainer, group);
+                /*putGroupInContainer(inflater, groupsContainer, group);*/
             }
         } else {
             putEmptyMessageInContainer();
@@ -104,22 +103,22 @@ public class FilterGroupsFragment extends DialogFragment implements View.OnClick
         //todo: give some message here
     }
 
-    private void putGroupInContainer(LayoutInflater inflater, ScrollView groupsContainer, PathGroup group) {
+ /*   private void putGroupInContainer(LayoutInflater inflater, ScrollView groupsContainer, PathGroup group) {
         View singleGropView = inflateSingleGroupView(inflater, groupsContainer);
         populateGroupView(singleGropView, group);
         groupsContainer.addView(singleGropView);
-    }
+    }*/
 
-    private View inflateSingleGroupView(LayoutInflater inflater, ScrollView groupsContainer) {
+/*    private View inflateSingleGroupView(LayoutInflater inflater, ScrollView groupsContainer) {
         View singleGroupView = inflater.inflate(R.layout.single_group, groupsContainer, false);
         return singleGroupView;
-    }
+    }*/
 
-    private void populateGroupView(View singleGroupView, PathGroup group) {
+/*    private void populateGroupView(View singleGroupView, PathGroup group) {
         TextView tvGroupName = (TextView)singleGroupView.findViewById(R.id.tv_group_name);
         tvGroupName.setText(group.groupName);
         singleGroupView.setTag(group.groupId);
-    }
+    }*/
 
     @Override
     public void onClick(View v) {

@@ -22,7 +22,7 @@
     <RelativeLayout
         android:id="@+id/cn_image_container"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="0dp"
         android:layout_weight="1.0">
     <ImageView
         android:id="@+id/cn_image"
@@ -67,7 +67,7 @@
             style="@style/btnStyleBeige"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Delete"
+            android:text="@string/delete_pao"
             android:id="@+id/cn_b_delete"
             android:layout_weight=".33"/>
 

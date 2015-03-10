@@ -89,7 +89,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private static final LatLng DEFAULT_MAP_CENTER = new LatLng( 34.8326509,-111.7693473);
     private PathDetailsView mDetailView;
 
-    private SharedPreferences savedStatePrefs;
     private LatLng mSelectedLocation = null;
     private boolean mMapLoaded = false;
 
@@ -194,7 +193,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     private void restoreState(Bundle savedInstanceState) {
         Log.d(Constants.TRAILBOOK_TAG, "restoring map");
-        savedStatePrefs = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences savedStatePrefs = getActivity().getPreferences(Context.MODE_PRIVATE);
         Gson gson = new Gson();
 //deleteme        String startBoundsJson = gson.toJson(startBounds, LatLngBounds.class);
 //        String jsonLastBounds = savedStatePrefs.getString(SAVED_LAT_LNG_BOUNDS_GSON, startBoundsJson);

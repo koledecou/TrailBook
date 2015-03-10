@@ -195,4 +195,11 @@
     <string name="start_upload">Start Upload</string>
     <string name="download_failed">Download Failed</string>
     <string name="download_failed_notification_title">Download Failed</string>
+    <string name="add">Add</string>
+    <string name="add_comment">Add Comment</string>
+    <string name="pitch_count_descriptions">Add Pitch Descriptions</string>
+    <string name="delete_pao">Delete</string>
+    <string name="path_results_activity_path">Path:</string>
+    <string name="user_name_label">User Name</string>
+    <string name="anonymous">Anonymous</string>
 </resources>

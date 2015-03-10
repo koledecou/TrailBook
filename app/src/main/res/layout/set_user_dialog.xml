@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="User Name"
+            android:text="@string/user_name_label"
             android:id="@+id/tv_label_user_name"
             android:layout_column="0"
             android:layout_row="0" />
@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:inputType="textPersonName"
-            android:text="Anonymous"
+            android:text="@string/anonymous"
             android:ems="10"
             android:id="@+id/sud_et_user_name"
             android:layout_column="1"
@@ -75,14 +75,14 @@
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancel"
+            android:text="@string/cn_cancel"
             android:id="@+id/sud_b_cancel" />
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="OK"
+            android:text="@string/OK"
             android:id="@+id/sud_b_ok" />
 
     </LinearLayout>

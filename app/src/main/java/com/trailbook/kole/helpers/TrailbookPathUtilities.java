@@ -272,7 +272,6 @@ public class TrailbookPathUtilities {
                             summary.addPao(noteId);
                         } catch (Exception e) {
                             Log.e(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: Error getting note", e);
-                            continue;
                         }
                     }
                 }

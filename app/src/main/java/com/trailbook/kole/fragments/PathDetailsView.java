@@ -8,7 +8,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,16 +26,12 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
 
     // the fragment initialization parameters
     private static final String ARG_PARAM1 = "path_id";
-    private PathManager mPathManager;
 
     private String mPathId = "1";
-    private String mDescription = "This is a sample path";
     private String mName = "Sample Path";
     private Image mImage = null;
     private TextView mNameView;
     private TextView mDescriptionView;
-    private ImageView mImageView;
-    private Button mNavToStartButton;
     private Button mDownloadButton;
     private Button mFollowButton;
     private Button mZoomButton;
@@ -60,22 +55,22 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
 
     public void setPathId(String pathId) {
         mPathId=pathId;
-        mPathManager = PathManager.getInstance();
-        PathSummary summary = mPathManager.getPathSummary(pathId);
+        PathManager pathManager = PathManager.getInstance();
+        PathSummary summary = pathManager.getPathSummary(pathId);
         if (summary == null) {
             Log.d(Constants.TRAILBOOK_TAG, "PathDetailsView: summary is null");
             return;
         }
-        mDescription=summary.getDescription();
+        String description = summary.getDescription();
         mName=summary.getName();
         //TODO: add summary image
         if (mName != null)
             mNameView.setText(mName);
-        if (mDescription != null) {
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": description is " + mDescription);
-            mDescriptionView.setText(mDescription);
+        if (description != null) {
+            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": description is " + description);
+            mDescriptionView.setText(description);
         }
-        buildButtonBar(mPathManager.getButtonActions(pathId));
+        buildButtonBar(pathManager.getButtonActions(pathId));
         invalidate();
     }
 
@@ -85,7 +80,6 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
 
         mNameView=(TextView)findViewById(R.id.summary_name);
         mDescriptionView=(TextView)findViewById(R.id.summary_description);
-        mImageView=(ImageView)findViewById(R.id.summary_image);
         
         mDownloadButton = (Button)findViewById(R.id.pdv_button_download);
         mDownloadButton.setOnClickListener(this);
@@ -93,12 +87,8 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
         mFollowButton = (Button)findViewById(R.id.pdv_button_follow);
         mFollowButton.setOnClickListener(this);
 
-        mNavToStartButton = (Button)findViewById(R.id.pdv_button_to_start);
-        mNavToStartButton.setOnClickListener(this);
-
-        /*
-        mZoomButton = (Button)findViewById(R.id.pdv_zoom);
-        mZoomButton.setOnClickListener(this);*/
+        Button navToStartButton = (Button) findViewById(R.id.pdv_button_to_start);
+        navToStartButton.setOnClickListener(this);
 
         mMoreButton = (ImageButton)findViewById(R.id.pdv_more);
         mMoreButton.setOnClickListener(this);

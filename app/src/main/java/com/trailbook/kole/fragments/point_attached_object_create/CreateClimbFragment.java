@@ -44,7 +44,6 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
     private Spinner mSpinnerGradingSystem;
     private ArrayList<String> mPitchDescriptions;
     private EditText mEditTextPitchCount;
-    private Button mAddPitchDescriptionButton;
 
     public static CreateClimbFragment newInstance(String paoId) {
         CreateClimbFragment fragment = new CreateClimbFragment();
@@ -100,8 +99,8 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
         mEditTextGrade = (EditText)view.findViewById(R.id.cc_et_grade);
         mEditTextRackDescription = (EditText)view.findViewById(R.id.cc_et_rack);
         mEditTextPitchCount = (EditText)view.findViewById(R.id.cc_et_pitch_count);
-        mAddPitchDescriptionButton = (Button)view.findViewById(R.id.cc_b_add_pitch_descriptions);
-        mAddPitchDescriptionButton.setOnClickListener(this);
+        Button addPitchDescriptionButton = (Button) view.findViewById(R.id.cc_b_add_pitch_descriptions);
+        addPitchDescriptionButton.setOnClickListener(this);
 
         if (savedInstanceState == null) {
             populateValues(PathManager.getInstance().getPointAttachedObject(mNoteId));

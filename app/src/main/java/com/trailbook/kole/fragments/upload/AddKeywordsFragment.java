@@ -40,7 +40,6 @@ public class AddKeywordsFragment extends Fragment implements View.OnClickListene
     private ArrayList<EditText> mEditTextArrayKeywords;
 
     private static KeywordsAddedListener mListener;
-    private ArrayList<String> mKeyWords;
     private int mType;
     private String mPathId;
 
@@ -175,15 +174,15 @@ public class AddKeywordsFragment extends Fragment implements View.OnClickListene
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.b_ok) {
-            mKeyWords = new ArrayList<String>();
+            ArrayList<String> keyWords = new ArrayList<String>();
             for (EditText et:mEditTextArrayKeywords) {
                 String word = et.getText().toString();
                 if (word != null && word.trim().length()>0) {
                     Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " adding keyword " + word);
-                    mKeyWords.add(word);
+                    keyWords.add(word);
                 }
             }
-            mListener.keywordsAdded(mPathId, mKeyWords, mType);
+            mListener.keywordsAdded(mPathId, keyWords, mType);
             getFragmentManager().popBackStackImmediate();
         } else if (v.getId() == R.id.b_cancel) {
             getFragmentManager().popBackStackImmediate();

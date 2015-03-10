@@ -15,7 +15,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -77,7 +76,6 @@ import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
 import com.trailbook.kole.location_processors.NotificationUtils;
 import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
-import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathFromLocalDevice;
 import com.trailbook.kole.services.download.DownloadPathService;
 import com.trailbook.kole.services.upload.UploadPathService;
@@ -123,11 +121,6 @@ public class TrailBookActivity extends Activity
     //private LocationServicesFragment mLocationServicesFragment;
     private TBPreferenceFragment mPreferencesFragment;
     private Bus bus;
-    private Resources mResources;
-    private SlidingUpPanelLayout mSlidingUpPanel;
-    private Fragment mPathSelectorFragment;
-    private Fragment mContent;
-    private TrailBookLocationReceiver mLocationReceiver;
     private ProgressDialog mWaitingForLocationDialog;
     private  String mActionPath = null;
     private WebServiceStateReceiver receiver;
@@ -137,11 +130,7 @@ public class TrailBookActivity extends Activity
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_PROGRESS);
-
         Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " OnCreate");
-
-        mLocationReceiver = new TrailBookLocationReceiver();
-        mResources = this.getResources();
 
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
         bus.register(this);

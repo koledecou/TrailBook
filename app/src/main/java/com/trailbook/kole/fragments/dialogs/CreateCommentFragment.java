@@ -28,7 +28,6 @@ public class CreateCommentFragment extends DialogFragment implements View.OnClic
     }
 
     private boolean mIsAttached;
-    private String mComment;
     private String mPathId;
     private EditText mEditText;
     private CheckBox mCheckBoxAttach;
@@ -78,7 +77,7 @@ public class CreateCommentFragment extends DialogFragment implements View.OnClic
             mIsAttached = savedInstanceState.getBoolean(IS_ATTACHED);
             mCheckBoxAttach.setChecked(mIsAttached);
 
-            mComment = savedInstanceState.getString(COMMENT);
+            String mComment = savedInstanceState.getString(COMMENT);
             mEditText.setText(mComment);
             mPathId = savedInstanceState.getString(PATH_ID);
         }

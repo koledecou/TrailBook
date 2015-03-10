@@ -24,12 +24,4 @@
         android:id="@+id/fd_b_add_group"
         android:layout_gravity="center_horizontal" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="606dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp">
-
-    </LinearLayout>
-
 </LinearLayout>
