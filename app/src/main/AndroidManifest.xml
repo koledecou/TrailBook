@@ -56,6 +56,14 @@
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.trailbook.kole.services.download.DownloadPathService.BROADCAST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.trailbook.kole.services.upload.UploadPathService.BROADCAST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <activity android:name="com.trailbook.kole.activities.SearchResultsActivity"

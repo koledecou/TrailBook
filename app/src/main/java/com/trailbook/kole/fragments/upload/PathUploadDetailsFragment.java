@@ -39,7 +39,6 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     private static final String PATH_ID_KEY = "PATH_ID";
     private static final String KEY_WORDS_KEY = "KEY_WORDS";
 
-    public static final String PATH_ID = "path_id";
     private static final String CLASSNAME = "PathUploadDetailsFragment";
     public static final String CLIMBS = "Climbs";
     public static final String REGIONS = "Regions";
@@ -68,7 +67,7 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     public static PathUploadDetailsFragment newInstance(String pathId) {
         PathUploadDetailsFragment frag = new PathUploadDetailsFragment();
         Bundle args = new Bundle();
-        args.putString(PATH_ID, pathId);
+        args.putString(PATH_ID_KEY, pathId);
         frag.setArguments(args);
         return frag;
     }
@@ -122,7 +121,7 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mPathId = getArguments().getString(PATH_ID);
+        mPathId = getArguments().getString(PATH_ID_KEY);
         if (mPathId == null) {
             getActivity().getFragmentManager().beginTransaction().remove(this).commit();
         }

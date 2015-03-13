@@ -28,7 +28,7 @@ public class Constants {
     public static final String commentsDir = "comments";
     public static final String keyHashFile = "keys.txt";
     public static final String TRAILBOOK_TAG = "trailbook";
-    public static final long CLOUD_REFRESH_DEFAULT_TIME_DELTA = 5*60*1000;
+    public static final long CLOUD_REFRESH_DEFAULT_TIME_DELTA = 24*60*60*1000; //24 hours
 
     private static final int UPDATE_INTERVAL_IN_SECONDS = 0;
     public static final long UPDATE_INTERVAL = 1000 * UPDATE_INTERVAL_IN_SECONDS;

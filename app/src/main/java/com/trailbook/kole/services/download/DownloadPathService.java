@@ -31,10 +31,9 @@ public class DownloadPathService extends IntentService {
     public static final String EXTENDED_DATA_STATUS_KEY = "STATUS";
     public static final int STATUS_COMPLETE = 100;
     public static final int STATUS_FAILURE = -1;
+    public static final int STATUS_INTERMEDIATE = 200;
 
-    private int mTotalOfItems = 0;
-    private int mNumberOfItemsUploaded = 0;
-    private String mPathId;
+    private ArrayList<String> mPathIds;
 
     public DownloadPathService() {
         super(SERVICE_NAME);
@@ -44,13 +43,17 @@ public class DownloadPathService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Path pathContainer = null;
         try {
-            mPathId = intent.getStringExtra(PATH_ID_KEY);
-            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: downloading path " + mPathId);
+            mPathIds = intent.getStringArrayListExtra(PATH_ID_KEY);
+            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: downloading path " + mPathIds);
             TrailbookRemoteDatabase db = TrailbookRemoteDatabase.getInstance();
-            pathContainer = db.getPath(mPathId);
-            PathManager.getInstance().onPathReceived(pathContainer);
-
-            getImages(pathContainer);
+            for (String pathId:mPathIds) {
+                pathContainer = db.getPath(pathId);
+                PathManager.getInstance().onPathReceived(pathContainer);
+                getImages(pathContainer);
+                Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: sending completed path broadcast.");
+                sendCompletedPathBroadcast(pathId);
+            }
+            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: sending completed broadcast.");
             sendCompletedBroadcast();
         } catch (Exception e) {
             Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: exception getting path summaries.  DB may not be available or there may be a problem with data", e);
@@ -92,7 +95,7 @@ public class DownloadPathService extends IntentService {
             InputStream in = new java.net.URL(webServerImageFileName).openStream();
             bitmap = BitmapFactory.decodeStream(in);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, e.getMessage());
+            Log.e(Constants.TRAILBOOK_TAG, "DownloadPathService: exception getting remote image.", e);
         }
         return bitmap;
     }
@@ -136,12 +139,22 @@ public class DownloadPathService extends IntentService {
         sendBroadcast(broadcastIntent);
     }
 
+    private void sendCompletedPathBroadcast(String pathId) {
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(BROADCAST_ACTION);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent.putExtra(EXTENDED_DATA_STATUS_KEY, STATUS_INTERMEDIATE);
+        broadcastIntent.putExtra(PATH_ID_KEY, pathId);
+
+        sendBroadcast(broadcastIntent);
+    }
+
     private Intent getBroadcastIntent(int percentComplete) {
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(BROADCAST_ACTION);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent.putExtra(EXTENDED_DATA_STATUS_KEY, percentComplete);
-        broadcastIntent.putExtra(PATH_ID_KEY, mPathId);
+        broadcastIntent.putExtra(PATH_ID_KEY, mPathIds);
         return broadcastIntent;
     }
 }

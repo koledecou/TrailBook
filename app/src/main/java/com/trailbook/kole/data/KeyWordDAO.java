@@ -52,7 +52,7 @@ public class KeyWordDAO {
 
     public long insertUpdateKeyWord(KeyWord keyWord) {
         long existingId = getExistingKeywordId(keyWord);
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " existing id " + existingId);
+        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " existing id " + existingId);
         if (existingId >= 0) {
             return updateKeyWord(existingId, keyWord);
         } else {
@@ -63,7 +63,7 @@ public class KeyWordDAO {
     private long updateKeyWord(long existingId, KeyWord keyWord) {
         ContentValues values = createAllColumnsContentValues(keyWord);
 
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " updating " + keyWord.keyWord);
+        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " updating " + keyWord.keyWord);
         String selection = TrailbookSQLLiteHelper.COLUMN_ID + " = ?";
         String[] selectionArgs = { String.valueOf(keyWord._id) };
 
@@ -78,7 +78,7 @@ public class KeyWordDAO {
 
     private long insertKeyWord(KeyWord keyWord) {
         ContentValues values = createAllColumnsContentValues(keyWord);
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " inserting " + keyWord.keyWord);
+        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " inserting " + keyWord.keyWord);
         long insertId = database.insert(TrailbookSQLLiteHelper.TABLE_KEY_WORDS, null, values);
 
         return insertId;
@@ -100,7 +100,7 @@ public class KeyWordDAO {
                 null, null, orderBy);
         if (cursor != null && cursor.moveToFirst() ) {
             existingId = cursor.getLong(0);
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " existing Key word found : " + keyWord.keyWord + " path= " + keyWord.pathId + " type= " + keyWord.type);
+            Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " existing Key word found : " + keyWord.keyWord + " path= " + keyWord.pathId + " type= " + keyWord.type);
         }
 
         cursor.close();
@@ -155,8 +155,8 @@ public class KeyWordDAO {
     }
 
     public Cursor getSuggestions(String search){
-        logAllKeywords();
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " getting suggestions for " + search);
+        //logAllKeywords();
+        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " getting suggestions for " + search);
 
         Cursor suggestedPathsCursor = getPathNameMatches(search);
         Cursor suggestedClimbsCursor = getSearchMatches(search, KeyWord.CLIMB);
@@ -281,7 +281,7 @@ public class KeyWordDAO {
     }
 
     private void logAllKeywords() {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + "Logging key words ");
+        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + "Logging key words ");
         List<KeyWord> words = getAllKeyWords();
         for (KeyWord word:words) {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " word " + word.keyWord);

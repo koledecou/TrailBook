@@ -35,17 +35,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""
-                    android:id="@+id/map_tv_top_message"
-                    android:layout_gravity="top|left"
-                    android:paddingBottom="@dimen/bottom_pad" />
-
-                <TextView
-                    style="@style/MapMessage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
                     android:id="@+id/map_tv_message"
-                    android:layout_gravity="bottom|center_horizontal"
+                    android:layout_gravity="top|left"
                     android:layout_marginBottom="20dp" />
 
 

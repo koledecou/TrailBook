@@ -159,6 +159,7 @@
     <string name="set_user_title">Configure User</string>
     <string name="path_uploading">Upload in Progress</string>
     <string name="download_completed">Download completed</string>
+    <string name="download_completed_for_path">Download completed for path \u0025s</string>
     <string name="title_paths_in_view">Paths in Current Map View</string>
     <string name="title_downloaded_paths">Your Downloaded Paths</string>
     <string name="delete_selection">Delete Point</string>

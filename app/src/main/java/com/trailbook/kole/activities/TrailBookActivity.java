@@ -29,8 +29,7 @@ import android.view.Window;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Toast;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
@@ -52,6 +51,7 @@ import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.PathCommentAddedEvent;
 import com.trailbook.kole.events.PathDetailRequestEvent;
 import com.trailbook.kole.events.PathReceivedEvent;
+import com.trailbook.kole.events.PathSummariesReceivedFromCloudEvent;
 import com.trailbook.kole.events.RefreshMessageEvent;
 import com.trailbook.kole.events.ZoomRequestEvent;
 import com.trailbook.kole.fragments.DisplayCommentsFragment;
@@ -60,6 +60,7 @@ import com.trailbook.kole.fragments.NavigationDrawerFragment;
 import com.trailbook.kole.fragments.PathDetailsActionListener;
 import com.trailbook.kole.fragments.TBPreferenceFragment;
 import com.trailbook.kole.fragments.TrailBookMapFragment;
+import com.trailbook.kole.fragments.UpdatePathFragment;
 import com.trailbook.kole.fragments.dialogs.AlertDialogFragment;
 import com.trailbook.kole.fragments.dialogs.CreateCommentFragment;
 import com.trailbook.kole.fragments.dialogs.CreatePathDialogFragment;
@@ -94,7 +95,8 @@ public class TrailBookActivity extends Activity
         CreatePathDialogFragment.CreatePathDialogListener,
         CreatePointObjectListener,
         PathSelectorFragment.OnPathSelectorFragmentInteractionListener,
-        PopupMenu.OnMenuItemClickListener, CreateCommentFragment.CreateCommentDialogListener, PathUploadDetailsFragment.UploadPathDialogListener {
+        PopupMenu.OnMenuItemClickListener, CreateCommentFragment.CreateCommentDialogListener, PathUploadDetailsFragment.UploadPathDialogListener,
+        UpdatePathFragment.UpdatePathsDialogListener {
 
     private static final String CLASS_NAME = "TrailBookActivity";
 
@@ -105,6 +107,7 @@ public class TrailBookActivity extends Activity
     public static final String ADD_NOTE_FRAG_TAG = "ADD_NOTE_FRAG";
     public static final String PREF_FRAG_TAG = "PREF_FRAG";
     public static final String PATH_SELECT_UPLOAD_TAG = "PATH_SELECT_UPLOAD";
+    public static final String UPDATE_PATH_TAG = "UPDATE_PATH_TAG";
     public static final String PATH_SELECT_TAG = "PATH_SELECT_UPLOAD";
     public static final String SHOW_PATH_COMMENTS_TAG = "SHOW_PATH_COMMENTS";
     public static final String NEW_PATH_DIALOG_ID = "new_path_dialog";
@@ -150,7 +153,6 @@ public class TrailBookActivity extends Activity
         setUpNavDrawerFragment();
         setUpPreferencesFragment();
         setUpWorkFragmentIfNeeded();
-        setUpAds();
         String launchedPathId = getLaunchPathId();
         if (launchedPathId == null || launchedPathId.equals(TrailBookState.NO_START_PATH)) {
             launchFromRestoredState();
@@ -163,14 +165,6 @@ public class TrailBookActivity extends Activity
             refreshPaths(false);
             requestShowPathDetails(launchedPathId);
         }
-    }
-
-    private void setUpAds() {
-
-        AdView mAdView = (AdView) findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
-
     }
 
     private void restoreFragments(Bundle savedInstanceState) {
@@ -339,7 +333,7 @@ public class TrailBookActivity extends Activity
         } else if (action == ApplicationUtils.MENU_CONTEXT_ZOOM_ID) {
             onZoomRequested(pathId);
         } else if (action == ApplicationUtils.MENU_CONTEXT_DOWNLOAD_ID) {
-            onDownloadRequested(pathId);
+            onDownloadRequested(ApplicationUtils.StringToArrayList(pathId));
         } else if (action == ApplicationUtils.MENU_CONTEXT_DELETE_FROM_CLOUD_ID) {
             if (ApplicationUtils.isNetworkConnected(this)) {
                 Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Confirming delete path:" + pathId);
@@ -594,6 +588,7 @@ public class TrailBookActivity extends Activity
                 ADD_NOTE_FRAG_TAG);
         invalidateOptionsMenu();
         mMapFragment.hideMapMessage();
+        mMapFragment.hideBannerAd();
         mMapFragment.hideEditMenuButtons();
     }
 
@@ -762,10 +757,10 @@ public class TrailBookActivity extends Activity
     public TrailBookActivity() {}
 
     @Override
-    public void onDownloadRequested(String pathId) {
+    public void onDownloadRequested(ArrayList<String> pathIds) {
         if (ApplicationUtils.isNetworkConnected(this)) {
-            mWorkFragment.startDownloadPath(pathId);
             mMapFragment.displayMessage(getString(R.string.download_in_progress));
+            mWorkFragment.startDownloadPaths(pathIds);
             collapseSlidingPanel();
         }else {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
@@ -977,6 +972,29 @@ public class TrailBookActivity extends Activity
             cancelWaitForLocationDialog();
     }
 
+    @Subscribe
+    public void onPathSummariesReceivedFromCloudEvent(PathSummariesReceivedFromCloudEvent event) {
+        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ":onPathSummariesReceivedFromCloudEvent");
+        ArrayList<PathSummary> cloudSummaries = event.getPathSummaries();
+        ArrayList<String> outOfDatePaths = new ArrayList<String>();
+        for (PathSummary cloudSummary:cloudSummaries) {
+            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ":onPathSummariesReceivedFromCloudEvent checking " + cloudSummary.getName());
+            if (mPathManager.isStoredLocally(cloudSummary.getId())) {
+                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": onPathSummariesReceivedFromCloudEvent " + cloudSummary.getName() + " is local, checking for update.");
+                PathSummary localSummary = mPathManager.getPathSummary(cloudSummary.getId());
+                if (cloudSummary.getLastUpdatedTime() > localSummary.getLastUpdatedTime()) {
+                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + "onPathSummariesReceivedFromCloudEvent " + cloudSummary.getName() + " is out of date.");
+                    outOfDatePaths.add(cloudSummary.getId());
+                }
+            }
+        }
+        if (outOfDatePaths.size()>0) {
+            UpdatePathFragment updatePathFragment = UpdatePathFragment.newInstance(outOfDatePaths);
+            mMapFragment.hideBannerAd();
+            switchFragmentAndAddToBackstack(updatePathFragment, UPDATE_PATH_TAG);
+        }
+    }
+
     public void refreshPaths(boolean forceCloudRefresh) {
         mWorkFragment.startGetPathSummariesLocal();
         if (forceCloudRefresh || isTimeToRereshFromCloud()) {
@@ -989,7 +1007,7 @@ public class TrailBookActivity extends Activity
             Log.d(Constants.TRAILBOOK_TAG, getLocalClassName() + ": refreshing from cloud");
             mWorkFragment.startGetPathSummariesRemote(null, 0);
         } else {
-            toastNoNetwork();
+            showNoNetworkOnStartup();
         }
     }
 
@@ -1069,8 +1087,7 @@ public class TrailBookActivity extends Activity
         ApplicationUtils.showAlert(this, clickListenerOK, title, message, getString(R.string.OK), null);
     }
 
-    private void toastNoNetwork() {
-        Toast.makeText(this, getString(R.string.no_network_toast), Toast.LENGTH_LONG).show();
+    private void showNoNetworkOnStartup() {
         ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_at_startup));
     }
 
@@ -1195,9 +1212,18 @@ public class TrailBookActivity extends Activity
     public void onUploadPathClick(String pathId) {
         getFragmentManager().popBackStackImmediate();
         invalidateOptionsMenu();
+        mMapFragment.hideBannerAd();
 
         upload(pathId);
         collapseSlidingPanel();
+    }
+
+    @Override
+    public void onUpdatePathsClick(ArrayList<String> pathIds) {
+        getFragmentManager().popBackStackImmediate();
+        if (pathIds != null ) {
+            onDownloadRequested(pathIds);
+        }
     }
 
     private class WebServiceStateReceiver extends BroadcastReceiver
@@ -1209,10 +1235,10 @@ public class TrailBookActivity extends Activity
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Recieved intent for " + action);
+            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: Recieved intent for " + action);
             if (UploadPathService.BROADCAST_ACTION.equalsIgnoreCase(action)) {
                 int progress = intent.getIntExtra(UploadPathService.EXTENDED_DATA_STATUS_KEY, 0);
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " upload progress is  " + progress);
+                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: upload progress is  " + progress);
                 if (progress == UploadPathService.STATUS_FAILURE) {
                     Toast.makeText(TrailBookActivity.this, getString(R.string.upload_failed), Toast.LENGTH_LONG).show();
                     //todo: send failure notification
@@ -1235,25 +1261,37 @@ public class TrailBookActivity extends Activity
                 }
             } else if (DownloadPathService.BROADCAST_ACTION.equalsIgnoreCase(action)) {
                 int progress = intent.getIntExtra(DownloadPathService.EXTENDED_DATA_STATUS_KEY, 0);
-                String pathId =  intent.getStringExtra(DownloadPathService.PATH_ID_KEY);
+                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: download progress is  " + progress);
                 if (progress == DownloadPathService.STATUS_COMPLETE) {
-                    //ApplicationUtils.toastGreen(TrailBookActivity.this, R.string.download_completed);
-                    Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();
+                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: download complete. ");
+/*                    ArrayList<String> pathIds =  intent.getStringArrayListExtra(DownloadPathService.PATH_ID_KEY);
+                    Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();*/
                     setProgressBarIndeterminateVisibility(false);
                     mMapFragment.hideMapMessage();
-                    Path path = mPathManager.getPath(pathId);
-                    bus.post(new PathReceivedEvent(path));
+                    /*for (String pathId:pathIds) {
+                        Path path = mPathManager.getPath(pathId);
+                        bus.post(new PathReceivedEvent(path));
+                    }*/
                 } else if (progress == UploadPathService.STATUS_FAILURE) {
+                    ArrayList<String> pathIds =  intent.getStringArrayListExtra(DownloadPathService.PATH_ID_KEY);
                     Toast.makeText(TrailBookActivity.this, getString(R.string.download_failed), Toast.LENGTH_LONG).show();
                     //todo: send failure notification
                     mMapFragment.hideMapMessage();
                     setProgressBarIndeterminateVisibility(false);
-                    sendNetworkOperationFailedNotification(pathId, getString(R.string.download_failed_notification_title));
+                    for (String pathId:pathIds) {
+                        sendNetworkOperationFailedNotification(pathId, getString(R.string.download_failed_notification_title));
+                    }
+                } else if (progress == DownloadPathService.STATUS_INTERMEDIATE) {
+                    String pathId =  intent.getStringExtra(DownloadPathService.PATH_ID_KEY);
+                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: downloaded path " + pathId);
+                    Path path = mPathManager.getPath(pathId);
+                    String message = String.format(getString(R.string.download_completed_for_path), path.summary.getName());
+                    Toast.makeText(TrailBookActivity.this, message, Toast.LENGTH_LONG).show();
+                    bus.post(new PathReceivedEvent(path));
                 }
             }
         }
     }
-
 
     private void sendNetworkOperationFailedNotification(String pathId, String message) {
         PathSummary summary = PathManager.getInstance().getPathSummary(pathId);

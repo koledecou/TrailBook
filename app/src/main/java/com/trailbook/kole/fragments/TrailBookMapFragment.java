@@ -1,7 +1,5 @@
 package com.trailbook.kole.fragments;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -21,6 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -274,15 +274,31 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     public void hideMapMessage() {
+        Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": hiding map message");
         if (isAdded()) {
             TextView tvMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_message));
             if (tvMapMessage != null) {
-                tvMapMessage.setVisibility(View.INVISIBLE);
+                tvMapMessage.setVisibility(View.GONE);
             }
+        } else {
+            Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": no activity attached???");
+        }
+    }
 
-            TextView tvTopMapMessage = (TextView) (getActivity().findViewById(R.id.map_tv_top_message));
-            if (tvTopMapMessage != null) {
-                tvTopMapMessage.setVisibility(View.INVISIBLE);
+    public void hideBannerAd() {
+        if (isAdded()) {
+            AdView ad = (AdView) (getActivity().findViewById(R.id.adView));
+            if (ad != null) {
+                ad.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    public void showBannerAd() {
+        if (isAdded()) {
+            AdView ad = (AdView) (getActivity().findViewById(R.id.adView));
+            if (ad != null) {
+                ad.setVisibility(View.VISIBLE);
             }
         }
     }
@@ -409,8 +425,24 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         mSlidingPanel = (SlidingUpPanelLayout) getActivity().findViewById(R.id.main_panel);
         processWaitingForViewEvents();
 
+        setUpAds();
+
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment Mode:" + TrailBookState.getMode());
         return v;
+    }
+
+    private void setUpAds() {
+        AdView mAdView = (AdView) getActivity().findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+        if (!shouldShowAdd()) {
+            hideBannerAd();
+        }
+    }
+
+    private boolean shouldShowAdd() {
+        //todo: show if no fragments are showing that don't work with the add
+        return true;
     }
 
     private void drawLoadedPaths() {
@@ -715,6 +747,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
                 ((TrailBookActivity) getActivity()).showFullObject(((PointAttachedObjectView) view).getPaoId());
                 hideMapMessage();
+                hideBannerAd();
                 hideEditMenuButtons();
             } else if (view.getId() == R.id.b_done) {
                 parent.switchToSearchMode();
@@ -1148,7 +1181,8 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     public void zoomToCurrentLocation() {
         Location currentLocation = TrailBookState.getCurrentLocation();
 
-        zoomToLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
+        if (currentLocation != null)
+            zoomToLocation(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()));
     }
 
     private void zoomToLocation(LatLng loc) {

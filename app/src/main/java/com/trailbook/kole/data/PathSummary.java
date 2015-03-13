@@ -141,4 +141,8 @@ public class PathSummary implements Comparable<PathSummary> {
         Log.d(Constants.TRAILBOOK_TAG, " compared " + this.name + " to " + another.name + ": " + result);
         return result;
     }
+
+    public long getLastUpdatedTime() {
+        return lastUpdatedTimestamp;
+    }
 }

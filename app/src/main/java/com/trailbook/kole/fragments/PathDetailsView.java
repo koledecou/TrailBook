@@ -16,6 +16,7 @@ import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
+import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.PathManager;
 
 
@@ -114,7 +115,7 @@ public class PathDetailsView extends LinearLayout implements View.OnClickListene
     public void onClick(View v) {
         if (v.getId() == R.id.pdv_button_download) {
             Toast.makeText(getContext(), "downloading " + mName, Toast.LENGTH_LONG).show();
-            actionListener.onDownloadRequested(mPathId);
+            actionListener.onDownloadRequested(ApplicationUtils.StringToArrayList(mPathId));
         } else if (v.getId() == R.id.pdv_button_follow) {
             Toast.makeText(getContext(), "following " + mName, Toast.LENGTH_LONG).show();
             actionListener.onFollowRequested(mPathId);

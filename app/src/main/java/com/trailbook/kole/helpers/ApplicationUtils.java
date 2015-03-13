@@ -29,6 +29,7 @@ import com.trailbook.kole.data.KeyWord;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -269,4 +270,9 @@ public class ApplicationUtils {
                 activity.getString(R.string.OK), null);
     }
 
+    public static ArrayList<String> StringToArrayList(String string) {
+        ArrayList result = new ArrayList<String>();
+        result.add(string);
+        return result;
+    }
 }

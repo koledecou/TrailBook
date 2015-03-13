@@ -22,6 +22,7 @@ import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
+import com.trailbook.kole.state_objects.TrailBookState;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -152,13 +153,31 @@ public class TrailbookRemoteDatabase {
     }
 
     public ArrayList<PathSummary> getAllPaths() {
+        return getPathSummaries(null);
+    }
+
+    public ArrayList<PathSummary> getNewPathSummaries(ArrayList<String> pathsInCloudCache) {
+        long lastRefreshedTime = TrailBookState.getLastRefreshedFromCloudTimeStamp();
+        BasicDBObject query = new BasicDBObject("lastUpdatedTimestamp", new BasicDBObject("$gt", lastRefreshedTime))
+                                        .append("_id", new BasicDBObject("$in", pathsInCloudCache));
+
+        ArrayList<PathSummary> summaries = getPathSummaries(query);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: number of paths requiring update is " + summaries.size());
+        return summaries;
+    }
+
+    public ArrayList<PathSummary> getPathSummaries(DBObject query) {
         if (!connect())
             return null;
 
         ArrayList<PathSummary> paths = new ArrayList<PathSummary>();
         DBCollection pathsCollection = db.getCollection(DBConstants.pathCollectionName);
-        DBCursor pathsCursor = pathsCollection.find();
-        Log.d(Constants.TRAILBOOK_TAG, "Mongo: number of paths is " + pathsCollection.getCount());
+        DBCursor pathsCursor = null;
+        if (query != null)
+            pathsCursor = pathsCollection.find(query);
+        else
+            pathsCursor = pathsCollection.find();
+
         try {
             while (pathsCursor.hasNext()) {
                 DBObject pathObject = pathsCursor.next();
@@ -176,6 +195,17 @@ public class TrailbookRemoteDatabase {
             pathsCursor.close();
         }
         return paths;
+    }
+
+    public ArrayList<PathSummary> getAllPathSummariesExcluding(ArrayList<String> excludeList) {
+        if (excludeList == null)
+            excludeList = new ArrayList<String>();
+
+        BasicDBObject query = new BasicDBObject("_id", new BasicDBObject("$nin", excludeList));
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: getting paths not in " + excludeList);
+        ArrayList<PathSummary> summaries = getPathSummaries(query);
+        Log.d(Constants.TRAILBOOK_TAG, "Mongo: number of paths not yet in cache is " + summaries.size());
+        return summaries;
     }
 
     public boolean uploadPathContainer(Path pathContainer) {

@@ -53,6 +53,8 @@ public class PathManager {
     private static Hashtable<String,PathSegment> mSegments;
     private static Hashtable<String,TrailBookComment> mPathComments;
     private static Hashtable<String, PathGroup> mGroups;
+    private static ArrayList<String> mOutOfDatePaths;
+
     private static Bus bus;
 
     private static Gson gson = new Gson();
@@ -62,6 +64,7 @@ public class PathManager {
         mSegments = new Hashtable<String, PathSegment>();
         mPathComments = new Hashtable<String, TrailBookComment>();
         mPointAttachedObjects = new Hashtable<String, PointAttachedObject>();
+        mOutOfDatePaths = new ArrayList<String>();
         bus = BusProvider.getInstance();
         bus.register(this);
     }
@@ -78,7 +81,7 @@ public class PathManager {
     }
 
     public static void hashKeywords(PathSummary summary) {
-        Log.d(Constants.TRAILBOOK_TAG, "PathManager: hashing key words for " + summary.getName());
+        Log.v(Constants.TRAILBOOK_TAG, "PathManager: hashing key words for " + summary.getName());
         KeyWordGroup keyWords = summary.getKeyWordGroup();
         KeyWordDAO keyWordDAO = new KeyWordDAO(TrailBookState.getInstance());
         keyWordDAO.open();
@@ -151,7 +154,8 @@ public class PathManager {
     }
 
     @Subscribe
-    public void onPathSummariesReceivedEvent(PathSummariesReceivedFromCloudEvent event){
+    public void onPathSummariesReceivedFromCloudEvent (PathSummariesReceivedFromCloudEvent event){
+        Log.d(Constants.TRAILBOOK_TAG,"PathManager:onPathSummariesReceivedFromCloudEvent");
         ArrayList<PathSummary> summaries = event.getPathSummaries();
         for (PathSummary summary:summaries) {
             //only add the path from the cloud if it's not stored locally.
@@ -161,8 +165,23 @@ public class PathManager {
                 savePathSummaryToCloudCache(summary);
             } else {
                 Log.d(Constants.TRAILBOOK_TAG, "PathManager: path " + summary.getName() + " is local, not adding from cloud.");
+/*                PathSummary localSummary = getPathSummary(summary.getId());
+                if (summary.getLastUpdatedTime() > localSummary.getLastUpdatedTime()) {
+                    Log.d(Constants.TRAILBOOK_TAG, "PathManager: path " + summary.getName() + " is out of date.");
+                    mOutOfDatePaths.add(summary.getId());
+                }*/
             }
         }
+        TrailBookState.resetLastRefreshedFromCloudTimeStamp();
+    }
+
+    public ArrayList<String> getPathIdsInCloudCache() {
+        ArrayList<String> cloudPathIds = new ArrayList<String>();
+        for (PathSummary p:mPaths.values()) {
+            if (isPathInCloudCache(p.getId()))
+                cloudPathIds.add(p.getId());
+        }
+        return cloudPathIds;
     }
 
     public boolean isStoredLocally(String pathId) {
@@ -879,5 +898,15 @@ public class PathManager {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "PathManager: failed to delete cache file:" +cacheFile, e );
         }
+    }
+
+    public ArrayList<PathSummary> getPathSummariesFromPathIds(ArrayList<String> pathIds) {
+        ArrayList<PathSummary> summaries = new ArrayList<PathSummary>();
+        for (String pathId:pathIds) {
+            PathSummary summary = getPathSummary(pathId);
+            if (summary != null)
+                summaries.add(summary);
+        }
+        return summaries;
     }
 }

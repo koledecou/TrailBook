@@ -22,9 +22,9 @@ import com.trailbook.kole.services.download.DownloadPathService;
 import com.trailbook.kole.services.upload.UploadPathService;
 import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.state_objects.PathManager;
-import com.trailbook.kole.state_objects.TrailBookState;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * This background fragment has no UI. It gets path summaries from a web service call
@@ -97,7 +97,6 @@ public class WorkerFragment extends Fragment {
     public void startGetPathSummariesRemote(LatLng center, long radius) {
         AsyncGetPathSummariesFromRemoteDB asyncGetPathSummaries = new AsyncGetPathSummariesFromRemoteDB();
         asyncGetPathSummaries.execute();
-        TrailBookState.resetLastRefreshedFromCloudTimeStamp();
     }
 
     public void startGetPathSummariesLocal() {
@@ -129,13 +128,10 @@ public class WorkerFragment extends Fragment {
         pathManager.savePathSummaryToCloudCache(summary);
     }
 
-    public void startDownloadPath(String pathId) {
-/*        DownloadPathService asyncGetPathFromRemoteDB = new DownloadPathService();
-        asyncGetPathFromRemoteDB.execute(pathId);*/
-
-        Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading path " + pathId);
+    public void startDownloadPaths(ArrayList<String> pathIds) {
+        Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading path " + pathIds);
         Intent intent = new Intent(getActivity(), DownloadPathService.class);
-        intent.putExtra(DownloadPathService.PATH_ID_KEY, pathId);
+        intent.putExtra(DownloadPathService.PATH_ID_KEY, pathIds);
         getActivity().startService(intent);
         getActivity().setProgressBarIndeterminateVisibility(true);
     }
