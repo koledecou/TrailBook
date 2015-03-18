@@ -1,6 +1,5 @@
 package com.trailbook.kole.state_objects;
 
-import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
@@ -10,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import com.trailbook.kole.data.Attachment;
 import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWord;
@@ -184,6 +184,65 @@ public class PathManager {
         return cloudPathIds;
     }
 
+    public boolean isPathComplete(String pathId) {
+        if (!isStoredLocally(pathId))
+            return false;
+
+        try {
+            PathSummary summary = loadPathSummaryFromDevice(pathId);
+            if (summary != null) {
+                if (!allSegmentsAreStoredLocally(summary))
+                    return false;
+
+                if (!allPAOsAreStoredLocally(summary))
+                    return false;
+
+                if (!allImagesAreStoredLocally(summary))
+                    return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean allImagesAreStoredLocally(PathSummary summary) {
+        for (String paoId:summary.getObjectIdList()) {
+            PointAttachedObject pao = loadPointAttachedObject(paoId);
+            Attachment attachment = pao.getAttachment();
+            ArrayList<String> imageFileNames = attachment.getImageFileNames();
+            if (imageFileNames == null || imageFileNames.size()<1)
+                return true;
+            else {
+                for (String imageFileName:imageFileNames) {
+                    File deviceImageFile = TrailbookFileUtilities.getInternalImageFile(imageFileName);
+                    if (!deviceImageFile.exists()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean allPAOsAreStoredLocally(PathSummary summary) {
+        for (String paoId:summary.getObjectIdList()) {
+            if (!isPOAStoredLocally(paoId))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean allSegmentsAreStoredLocally(PathSummary summary) {
+        ArrayList<String> segmentIds = summary.getSegmentIdList();
+        for (String segmentId:segmentIds) {
+            if (!isSegmentStoredLocally(segmentId))
+                return false;
+        }
+        return true;
+    }
+
     public boolean isStoredLocally(String pathId) {
         return isPathInDirectory(pathId, new File(TrailbookFileUtilities.getInternalPathDirectory()));
     }
@@ -210,10 +269,12 @@ public class PathManager {
     }
 
     public void onPathReceived(Path path){
+        deletePath(path.summary.getId(), false);
         ArrayList<PointAttachedObject> paObjects = path.paObjects;
         ArrayList<PathSegment> segments = path.segments;
         ArrayList<TrailBookComment> comments = path.comments;
 
+        mPaths.put(path.summary.getId(), path.summary);
         for (PointAttachedObject pao:paObjects) {
             Log.d(Constants.TRAILBOOK_TAG, "PathManager: received pao " + pao.getAttachment().toString());
             mPointAttachedObjects.put(pao.getId(), pao);
@@ -259,16 +320,6 @@ public class PathManager {
         }
         bus.post(new SegmentUpdatedEvent(thisSegment));
     }
-
-/*deleteme    public void addNoteToSegment(PathSegment s, PointAttachedObject<Note> paoNote) {
-        Log.d(Constants.TRAILBOOK_TAG, "adding note: " + paoNote.getLocation() + "   " + paoNote.getAttachment().getNoteContent());
-        s.addPointNote(paoNote);
-        bus.post(new NoteAddedEvent(paoNote));
-    }*/
-
-/*deleteme    public Path2 getPath(String pathId) {
-        return mPaths != null? mPaths.get(pathId) : null;
-    }*/
 
     public PathSegment getSegment(String segmentId) {
         return mSegments!= null ? mSegments.get(segmentId) : null;
@@ -319,6 +370,11 @@ public class PathManager {
         } catch (Exception e) {
             Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + summary.getId(), e);
         }
+    }
+
+    private boolean isPOAStoredLocally(String paoId) {
+        File paoFile = TrailbookFileUtilities.getInternalPAOFile(paoId);
+        return paoFile.exists();
     }
 
     private PointAttachedObject loadPointAttachedObject(String paoId) {
@@ -414,19 +470,22 @@ public class PathManager {
     }
 
     public Path loadPathFromDevice(String pathId) {
-        File summaryFile = TrailbookFileUtilities.getInternalPathSummaryFile(pathId);
-        String summaryFileContents = null;
         PathSummary summary = null;
         try {
-            summaryFileContents = FileUtils.readFileToString(summaryFile);
-            summary = getSummaryFromString(summaryFileContents);
+            summary = loadPathSummaryFromDevice(pathId);
             addPathSummary(summary);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "PathManager Error: can't load summary file for path " + pathId + " " + summary.getName(), e);
+            Log.e(Constants.TRAILBOOK_TAG, "PathManager Error: can't load summary file for path " + pathId, e);
             return null;
         }
 
         return loadPathFromSummary(summary);
+    }
+
+    public PathSummary loadPathSummaryFromDevice(String pathId) throws IOException {
+        File summaryFile = TrailbookFileUtilities.getInternalPathSummaryFile(pathId);
+        String summaryFileContents = FileUtils.readFileToString(summaryFile);
+        return getSummaryFromString(summaryFileContents);
     }
 
     private PathSummary getSummaryFromString(String summaryFileContents) {
@@ -507,6 +566,11 @@ public class PathManager {
             mSegments.remove(id);
 
         mSegments.put(id, segment);
+    }
+
+    public boolean isSegmentStoredLocally(String segId) {
+        File segmentPointsFile = TrailbookFileUtilities.getInternalSegmentPointsFile(segId);
+        return segmentPointsFile.exists();
     }
 
     public PathSegment loadSegment(String segId) {
@@ -605,7 +669,6 @@ public class PathManager {
     }
 
     private void updatePathSummaryStartAndEndPoints(LatLng point, PathSummary summary) {
-//deleteme        PathSummary summary = path.getSummary();
         summary.setEnd(point);
         if (summary.getStart() == null) {
             summary.setStart(point);
@@ -613,13 +676,6 @@ public class PathManager {
     }
 
     public PointAttachedObject getPointAttachedObject(String objectId) {
-/*        Collection<PathSegment> segmentColl = mSegments.values();
-        for (PathSegment s: segmentColl) {
-            HashMap<String,PointAttachedObject<Note>> notes = s.getPointNotes();
-            PointAttachedObject<Note> paoNote = notes.get(noteId);
-            if (paoNote != null)
-                return paoNote;
-        }*/
         return mPointAttachedObjects.get(objectId);
     }
 
@@ -700,17 +756,17 @@ public class PathManager {
         return summary.getStart();
     }
 
-    public void deletePath(String pathId, Context c) {
+    public void deletePath(String pathId, boolean postDeletedEvents) {
         try {
-            deletePointAttachedObjects(pathId, c);
-            deleteSegments(pathId, c);
-            deletePaths(pathId, c);
+            deletePointAttachedObjects(pathId);
+            deleteSegments(pathId, postDeletedEvents);
+            deletePaths(pathId, postDeletedEvents);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG,"Error saving path:" + pathId, e);
+            Log.e(Constants.TRAILBOOK_TAG,"Error deleting path:" + pathId, e);
         }
     }
 
-    public void deleteSegments(String pathId, Context c) {
+    public void deleteSegments(String pathId, boolean postDeletedEvents) {
         PathSummary p = getPathSummary(pathId);
         ArrayList<String> segmentIds = p.getSegmentIdList();
         for (String segmentId:segmentIds) {
@@ -721,14 +777,16 @@ public class PathManager {
                     continue;
                 }
 
-                deleteSegment(segmentId, c);
-                bus.post(new SegmentDeletedEvent(segment));
+                deleteSegment(segmentId);
+                if (postDeletedEvents)
+                    bus.post(new SegmentDeletedEvent(segment));
+
                 mSegments.remove(segmentId);
             }
         }
     }
 
-    public void deletePointAttachedObjects(String pathId, Context c) {
+    public void deletePointAttachedObjects(String pathId) {
         ArrayList<PointAttachedObject> pointAttachedObjects = getPointObjectsForPath(pathId);
         if (pointAttachedObjects != null) {
             for (PointAttachedObject pao : pointAttachedObjects) {
@@ -753,8 +811,12 @@ public class PathManager {
         for (String fileName:imageFileNames) {
             File file = TrailbookFileUtilities.getInternalImageFile(fileName);
             try {
-                Log.d(Constants.TRAILBOOK_TAG, "deleteing image file: " + file);
-                FileUtils.forceDelete(file);
+                if (file.isFile()) {
+                    Log.d(Constants.TRAILBOOK_TAG, "deleteing image file: " + file);
+                    FileUtils.forceDelete(file);
+                } else {
+                    Log.d(Constants.TRAILBOOK_TAG, "image file: " + file + " NOT A FILE!?");
+                }
             } catch (IOException e) {
                 Log.e(Constants.TRAILBOOK_TAG, "Cannot delete image file:" + file, e);
             }
@@ -779,7 +841,7 @@ public class PathManager {
         return pathsWithSegment;
     }
 
-    public void deleteSegment(String segmentId, Context c) {
+    public void deleteSegment(String segmentId) {
         Log.d(Constants.TRAILBOOK_TAG, "delete segment " + segmentId);
         File segmentDir = new File(TrailbookFileUtilities.getInternalSegmentDirectory(segmentId));
         try {
@@ -790,7 +852,7 @@ public class PathManager {
         }
     }
 
-    public void deletePaths (String pathId, Context c) {
+    public void deletePaths (String pathId, boolean postDeletedEvents) {
         String pathDir = TrailbookFileUtilities.getInternalPathDirectory(pathId);
         try {
             FileUtils.deleteDirectory(new File(pathDir));
@@ -798,7 +860,8 @@ public class PathManager {
         } catch (IOException e) {
             Log.e(Constants.TRAILBOOK_TAG, "Cannot delete Path:" + pathId, e);
         }
-        bus.post(new PathDeletedEvent(getPathSummary(pathId)));
+        if (postDeletedEvents)
+            bus.post(new PathDeletedEvent(getPathSummary(pathId)));
         mPaths.remove(pathId);
     }
 

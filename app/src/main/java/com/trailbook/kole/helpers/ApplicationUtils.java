@@ -17,6 +17,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -274,5 +275,12 @@ public class ApplicationUtils {
         ArrayList result = new ArrayList<String>();
         result.add(string);
         return result;
+    }
+
+    public static void hideSoftKeyboard(Activity a) {
+        if(a.getCurrentFocus()!=null) {
+            InputMethodManager inputMethodManager = (InputMethodManager) a.getSystemService(Activity.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(a.getCurrentFocus().getWindowToken(), 0);
+        }
     }
 }

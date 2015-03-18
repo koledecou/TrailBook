@@ -18,6 +18,7 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -26,6 +27,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -77,6 +79,7 @@ import com.trailbook.kole.helpers.TrailbookPathUtilities;
 import com.trailbook.kole.location_processors.NotificationUtils;
 import com.trailbook.kole.location_processors.PathFollowerLocationProcessor;
 import com.trailbook.kole.services.async_tasks.AsyncGetPathFromLocalDevice;
+import com.trailbook.kole.services.async_tasks.PollForCompletedDownload;
 import com.trailbook.kole.services.download.DownloadPathService;
 import com.trailbook.kole.services.upload.UploadPathService;
 import com.trailbook.kole.state_objects.Authenticator;
@@ -133,6 +136,7 @@ public class TrailBookActivity extends Activity
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_PROGRESS);
+        ApplicationUtils.hideSoftKeyboard(this);
         Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " OnCreate");
 
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
@@ -318,7 +322,7 @@ public class TrailBookActivity extends Activity
             openPathDetailsDialog(pathId);
         } else if (action == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Deleting path:" + pathId);
-            mPathManager.deletePath(pathId, this);
+            mPathManager.deletePath(pathId, true);
             refreshFromCloudIfConnectedToNetwork();
         } else if (action == ApplicationUtils.MENU_CONTEXT_FOLLOW_ID ) {
             getFragmentManager().popBackStackImmediate();
@@ -413,6 +417,15 @@ public class TrailBookActivity extends Activity
         ComponentName cn = new ComponentName(this, SearchResultsActivity.class);
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(cn));
+        searchView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    Log.d(Constants.TRAILBOOK_TAG, "on focus");
+                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+                }
+            }
+        });
     }
 
     @Override
@@ -761,6 +774,7 @@ public class TrailBookActivity extends Activity
         if (ApplicationUtils.isNetworkConnected(this)) {
             mMapFragment.displayMessage(getString(R.string.download_in_progress));
             mWorkFragment.startDownloadPaths(pathIds);
+            startPollingForCompletedDownload(pathIds);
             collapseSlidingPanel();
         }else {
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
@@ -1226,6 +1240,20 @@ public class TrailBookActivity extends Activity
         }
     }
 
+    private void startPollingForCompletedDownload(final ArrayList<String> pathIds) {
+        Handler handler = new Handler();
+        Runnable resultUpdater = new Runnable() {
+            public void run() {
+                setProgressBarIndeterminateVisibility(false);
+                mMapFragment.hideMapMessage();
+                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": download completed for " + pathIds);
+            }
+        };
+
+        PollForCompletedDownload pollForCompletedDownload = new PollForCompletedDownload(pathIds, handler, resultUpdater);
+        pollForCompletedDownload.start();
+    }
+
     private class WebServiceStateReceiver extends BroadcastReceiver
     {
         // Prevents instantiation
@@ -1268,10 +1296,6 @@ public class TrailBookActivity extends Activity
                     Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();*/
                     setProgressBarIndeterminateVisibility(false);
                     mMapFragment.hideMapMessage();
-                    /*for (String pathId:pathIds) {
-                        Path path = mPathManager.getPath(pathId);
-                        bus.post(new PathReceivedEvent(path));
-                    }*/
                 } else if (progress == UploadPathService.STATUS_FAILURE) {
                     ArrayList<String> pathIds =  intent.getStringArrayListExtra(DownloadPathService.PATH_ID_KEY);
                     Toast.makeText(TrailBookActivity.this, getString(R.string.download_failed), Toast.LENGTH_LONG).show();
@@ -1295,6 +1319,8 @@ public class TrailBookActivity extends Activity
 
     private void sendNetworkOperationFailedNotification(String pathId, String message) {
         PathSummary summary = PathManager.getInstance().getPathSummary(pathId);
+        if (summary == null)
+            return;
 
         Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": sending upload failed notification for path " + summary.getName());
         NotificationCompat.Builder builder = NotificationUtils.createUploadFailedNotifyBuilder(this, pathId, message);

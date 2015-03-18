@@ -60,6 +60,7 @@ public class TrailBookState extends Application {
     private static final String SAVED_PROFILE_PIC_URL = "SAVED_USER_PROFILE_PIC";
     private static final String SAVED_GOOD_TO_SAVE_LOCATIONS = "SAVED_GOOD_TO_SAVE_LOCATIONS";
     public static final String NO_START_PATH = "NONE";
+    private static final String ZOOM_TO_ID = "ZOOM_TO_ID";
 
     private static int mMode = MODE_SEARCH;
     private static String mCurrentPathId;
@@ -120,15 +121,24 @@ public class TrailBookState extends Application {
     }
 
     public static void setZoomToPathId(String zoomToPathId) {
-        TrailBookState.mZoomToPathId = zoomToPathId;
+        SharedPreferences.Editor editor = prefs.edit();
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: setting zoom to path id: " + zoomToPathId);
+        editor.putString(ZOOM_TO_ID, zoomToPathId);
+        editor.commit();
+        //TrailBookState.mZoomToPathId = zoomToPathId;
     }
 
     public static void resetZoomToPathId() {
-        TrailBookState.mZoomToPathId = NO_START_PATH;
+        SharedPreferences.Editor editor = prefs.edit();
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: setting zoom to path id none: " + NO_START_PATH);
+        editor.putString(ZOOM_TO_ID, NO_START_PATH);
+        editor.commit();
+        //TrailBookState.mZoomToPathId = NO_START_PATH;
     }
 
     public static String getZoomToPathId() {
-        return mZoomToPathId;
+        return prefs.getString(ZOOM_TO_ID, NO_START_PATH);
+        //return mZoomToPathId;
     }
 
     public static PathManager getPathManager() {

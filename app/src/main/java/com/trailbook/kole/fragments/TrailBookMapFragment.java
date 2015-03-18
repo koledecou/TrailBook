@@ -687,8 +687,9 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     }
 
     private void collapseSlidingPanelIfExpanded() {
-        if (mSlidingPanel != null && mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED)
+        if (mSlidingPanel != null && mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        }
     }
 
     @Override
@@ -769,11 +770,6 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         paoId = paoId.substring(0,paoId.length());
 
         if (mSlidingPanel != null) {
-/*
-            int height = getFullWindowHeight();
-            mSlidingPanel.setPanelHeight(height/2);
-            mSlidingPanel.requestLayout();
-*/
             expandSlidingPanelIfCollapsed();
             PointAttachedObjectView v = NoteFactory.getPaoSmallView(PathManager.getInstance().getPointAttachedObject(paoId));
             v.setOnClickListener(this);
@@ -785,6 +781,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     private void expandSlidingPanelIfCollapsed() {
         Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + " " + mSlidingPanel.getPanelState());
         Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + " expanding panel");
+        hideBannerAd();
         mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
     }
 
@@ -932,6 +929,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         if (requestedPathId == null || requestedPathId.equals(TrailBookState.NO_START_PATH)) {
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         } else {
+            Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + " request to zoom to " + requestedPathId);
             zoomToPath(requestedPathId);
             requestShowPathDetails(requestedPathId);
         }

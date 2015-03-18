@@ -125,6 +125,7 @@ public class TrailbookFileUtilities {
 
     public static File getInternalImageFile(String imageFileName) {
         String fullDirectory = TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
+        Log.d(Constants.TRAILBOOK_TAG, "internal image dir:" + fullDirectory);
         return new File(fullDirectory, imageFileName);
     }
 

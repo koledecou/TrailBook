@@ -87,6 +87,7 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
         launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         launchTrailbookIntent.putExtra(TrailBookActivity.INITIAL_PATH_ID_KEY, pathId);
         startActivity(launchTrailbookIntent);*/
+        ApplicationUtils.hideSoftKeyboard(this);
         TrailBookState.setZoomToPathId(pathId);
         finish();
     }

@@ -90,6 +90,7 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
     public void populateFieldsFromObject(PointAttachedObject pao) {
         Attachment a = pao.getAttachment();
         mImageFileNames = a.getImageFileNames();
+        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " image file names " + mImageFileNames);
         if (mImageFileNames != null && mImageFileNames.size()>0) {
             mCurrentImageIndex = 0;
             mImageView.setVisibility(VISIBLE);
