@@ -54,7 +54,7 @@ public class CreateNoteFragment extends CreatePointAttachedObjectFragment {
         } else {
             restoreInstance(savedInstanceState);
         }
-
+        //showSoftKeyboard();
         return view;
     }
 
@@ -93,6 +93,7 @@ public class CreateNoteFragment extends CreatePointAttachedObjectFragment {
     @Override
     protected void showSoftKeyboard() {
         InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Service.INPUT_METHOD_SERVICE);
+        //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         imm.showSoftInput(mEditTextContent, 0);
     }
 }

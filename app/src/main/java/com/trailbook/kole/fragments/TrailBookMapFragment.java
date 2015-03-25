@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -33,7 +34,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.gson.Gson;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
@@ -78,17 +78,15 @@ import java.util.Set;
 /**
  * Created by Fistik on 6/30/2014.
  */
-public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener, GoogleMap.OnMarkerDragListener, View.OnClickListener, GoogleMap.OnMapLoadedCallback, GoogleMap.OnMapLongClickListener {
+public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnCameraChangeListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener, GoogleMap.OnMarkerDragListener, View.OnClickListener, GoogleMap.OnMapLoadedCallback, GoogleMap.OnMapLongClickListener {
     private static final String LOG_CLASS_NAME = "TrailBookMapFragment";
     private static final float THICK = 10;
     private static final float MEDIUM = 6;
-    private static final String SAVED_ZOOM_LEVEL = "ZOOM";
-    private static final String SAVED_SELECTED_LOCATION = "SELECTED_LOC";
-    private static final String SAVED_MAP_CENTER = "MAP_CENTER";
+
     private static final String SAVED_MAP_LOADED_STATE = "MAP_LOADED";
 
-    private static final float DEFAULT_ZOOM_LEVEL = 16;
-    private static final LatLng DEFAULT_MAP_CENTER = new LatLng( 34.8326509,-111.7693473);
+    public static final float DEFAULT_ZOOM_LEVEL = 16;
+    public static final LatLng DEFAULT_MAP_CENTER = new LatLng( 34.8326509,-111.7693473);
     private PathDetailsView mDetailView;
 
     private LatLng mSelectedLocation = null;
@@ -111,6 +109,13 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
     public void hideEndMarker(String pathId) {
         Marker endMarker = mEndMarkers.get(pathId);
         endMarker.setVisible(false);
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        Log.d(Constants.TRAILBOOK_TAG, "Camera changed.");
+        TrailBookState.saveMapCenterPoint(cameraPosition.target);
+        TrailBookState.saveMapZoomLevel(cameraPosition.zoom);
     }
 
     public enum MarkerType {START,END,NOTE,POINT,UNKNOWN}
@@ -195,25 +200,16 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
 
     private void restoreState(Bundle savedInstanceState) {
         Log.d(Constants.TRAILBOOK_TAG, "restoring map");
-        SharedPreferences savedStatePrefs = getActivity().getPreferences(Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-//deleteme        String startBoundsJson = gson.toJson(startBounds, LatLngBounds.class);
-//        String jsonLastBounds = savedStatePrefs.getString(SAVED_LAT_LNG_BOUNDS_GSON, startBoundsJson);
 
-        String defaultCenterPointJson = gson.toJson(DEFAULT_MAP_CENTER, LatLng.class);
-        String centerPointJson = savedStatePrefs.getString(SAVED_MAP_CENTER, defaultCenterPointJson);
-        mCenterPoint = gson.fromJson(centerPointJson, LatLng.class);
+        mCenterPoint = TrailBookState.getMapCenterPoint();
         Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: restored center:" + mCenterPoint);
 
-        mZoomLevel = savedStatePrefs.getFloat(SAVED_ZOOM_LEVEL, DEFAULT_ZOOM_LEVEL);
+        mZoomLevel = TrailBookState.getMapZoomLevel();
         Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": restored zoom level "+mZoomLevel);
 
-        String jsonSelectedLocation = savedStatePrefs.getString(SAVED_SELECTED_LOCATION, null);
-        if (jsonSelectedLocation != null && TrailBookState.getMode()==TrailBookState.MODE_EDIT) {
-            mSelectedLocation = gson.fromJson(jsonSelectedLocation, LatLng.class);
-        }
-
-        mMapLoaded = savedStatePrefs.getBoolean(SAVED_MAP_LOADED_STATE, false);
+        mSelectedLocation = TrailBookState.getSelectedMapLocation();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TrailBookState.getInstance());
+        mMapLoaded = prefs.getBoolean(SAVED_MAP_LOADED_STATE, false);
     }
 
     public void refreshSegmentsForActivePath() {
@@ -502,10 +498,10 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         SharedPreferences.Editor editor = sharedPref.edit();
 
         Log.d(Constants.TRAILBOOK_TAG, "saving map fragment instance state");
-
-        saveCenterPoint(editor);
-        saveZoomLevel(editor);
-        saveSelectedLocation(editor);
+        mCenterPoint = mMap.getCameraPosition().target;
+        //TrailBookState.saveMapCenterPoint(mCenterPoint);
+        //TrailBookState.saveMapZoomLevel(mMap.getCameraPosition().zoom);
+        TrailBookState.saveSelectedMapLocation(mSelectedLocation);
         saveMapLoaded(editor);
 
         editor.commit();
@@ -515,36 +511,13 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         editor.putBoolean(SAVED_MAP_LOADED_STATE, mMapLoaded);
     }
 
-    private void saveZoomLevel(SharedPreferences.Editor editor) {
-        mZoomLevel = mMap.getCameraPosition().zoom;
-        editor.putFloat(SAVED_ZOOM_LEVEL, mZoomLevel);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: Saved zoom level " + mZoomLevel);
-    }
 
-    private void saveSelectedLocation(SharedPreferences.Editor editor) {
-        Gson gson = new Gson();
-        String jsonSelectedLocation = gson.toJson(mSelectedLocation, LatLng.class);
-        editor.putString(SAVED_SELECTED_LOCATION, jsonSelectedLocation);
-    }
 
     private boolean isBoundsValid(String jsonBounds) {
         return !jsonBounds.contains("\"latitude\":0.0,\"longitude\":0.0");
     }
 
-    private void saveCenterPoint(SharedPreferences.Editor editor) {
-        String jsonCenter = getJsonCenter();
-        editor.putString(SAVED_MAP_CENTER, jsonCenter);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: Saved ceter " + jsonCenter);
-    }
 
-    private String getJsonCenter() {
-//        mBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
-        mCenterPoint = mMap.getCameraPosition().target;
-        Gson gson = new Gson();
-        String jsonCenter = gson.toJson(mCenterPoint);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: center," + jsonCenter);
-        return jsonCenter;
-    }
 
     public void showOnlyPath(String pathId) {
         hideAllPaths();
@@ -915,19 +888,22 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         mMap.setOnMarkerDragListener(this);
         mMap.setOnMapClickListener(this);
         mMap.setOnMapLongClickListener(this);
+        mMap.setOnCameraChangeListener(this);
         mMap.setMyLocationEnabled(true);
         //mMap.setInfoWindowAdapter(new MapPointSelectedAdaptor(getActivity().getLayoutInflater()));
         setMapTypeToUserPreference();
 
+        mCenterPoint = TrailBookState.getMapCenterPoint();
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(mCenterPoint)
                 .zoom(mZoomLevel)
                 .build();                   // Creates a CameraPosition from the builder
-        Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": zooming to " + mCenterPoint + " at zoom level " + mZoomLevel);
         String requestedPathId = TrailBookState.getZoomToPathId();
         TrailBookState.resetZoomToPathId();
         if (requestedPathId == null || requestedPathId.equals(TrailBookState.NO_START_PATH)) {
+            Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": zooming to previous location: " + mCenterPoint + " at zoom level " + mZoomLevel);
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            //TrailBookState.saveMapCenterPoint(mMap.getCameraPosition().target);
         } else {
             Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + " request to zoom to " + requestedPathId);
             zoomToPath(requestedPathId);
@@ -1149,6 +1125,7 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
         ArrayList<Polyline> segmentLines = getPolylinesForPath(pathId);
         if (segmentLines != null && segmentLines.size()>0) {
             LatLngBounds bounds = MapUtilities.getBoundsForPolylineArray(segmentLines);
+            Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": zoom bounds are " + bounds);
             try {
                 mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 200));
             } catch(IllegalStateException e) {
@@ -1156,9 +1133,12 @@ public class TrailBookMapFragment extends MapFragment implements GoogleMap.OnMar
             }
         } else {
             PathSummary summary = mPathManager.getPathSummary(pathId);
-            if (summary != null && summary.getEnd() != null)
+            if (summary != null && summary.getEnd() != null) {
+                Log.d(Constants.TRAILBOOK_TAG, LOG_CLASS_NAME + ": zoom to end of path: " + summary.getEnd());
                 zoomToLocation(summary.getEnd());
+            }
         }
+        TrailBookState.saveMapCenterPoint(mMap.getCameraPosition().target);
     }
 
     private ArrayList<Polyline> getPolylinesForPath(String pathId) {

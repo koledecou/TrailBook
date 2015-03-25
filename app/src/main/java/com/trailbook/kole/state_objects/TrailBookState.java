@@ -12,6 +12,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ViewConfiguration;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
@@ -26,6 +27,7 @@ import com.trailbook.kole.events.MapObjectAddedEvent;
 import com.trailbook.kole.events.ModeChangedEvent;
 import com.trailbook.kole.events.PathSummaryAddedEvent;
 import com.trailbook.kole.events.SegmentUpdatedEvent;
+import com.trailbook.kole.fragments.TrailBookMapFragment;
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.location_processors.BackgroundLocationService;
 import com.trailbook.kole.location_processors.LocationProcessor;
@@ -61,6 +63,9 @@ public class TrailBookState extends Application {
     private static final String SAVED_GOOD_TO_SAVE_LOCATIONS = "SAVED_GOOD_TO_SAVE_LOCATIONS";
     public static final String NO_START_PATH = "NONE";
     private static final String ZOOM_TO_ID = "ZOOM_TO_ID";
+    private static final String SAVED_ZOOM_LEVEL = "ZOOM";
+    private static final String SAVED_SELECTED_LOCATION = "SELECTED_LOC";
+    private static final String SAVED_MAP_CENTER = "MAP_CENTER";
 
     private static int mMode = MODE_SEARCH;
     private static String mCurrentPathId;
@@ -88,13 +93,9 @@ public class TrailBookState extends Application {
         INSTANCE = this;
         bus = BusProvider.getInstance();
         bus.register(this);
-
         mPathManager = PathManager.getInstance();
-
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
         ACRA.init(this);
-
         forceOverflowMenu();
     }
 
@@ -172,16 +173,6 @@ public class TrailBookState extends Application {
         editor.putInt(SAVED_MODE, mMode);
         editor.commit();
     }
-/*
-
-    public static NotificationCompat.Builder getListeningNotifyBuilder() {
-        return mListeningNotifyBuilder;
-    }
-
-    public static void setListeningNotifyBuilder(NotificationCompat.Builder listeningNotifyBuilder) {
-        mListeningNotifyBuilder = listeningNotifyBuilder;
-    }
-*/
 
     public static int getMode() {
         return mMode;
@@ -291,6 +282,58 @@ public class TrailBookState extends Application {
         String jsonLocation = getJsonLocation(mCurrentLocation);
         //Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving json location," + jsonLocation);
         editor.putString(SAVED_LOCATION, jsonLocation);
+        editor.commit();
+    }
+
+    private static String getJsonFromPoint(LatLng point) {
+        Gson gson = new Gson();
+        String jsonCenter = gson.toJson(point);
+        return jsonCenter;
+    }
+
+    public static LatLng getMapCenterPoint() {
+        Gson gson = new Gson();
+        String defaultCenterPointJson = gson.toJson(TrailBookMapFragment.DEFAULT_MAP_CENTER, LatLng.class);
+        String centerPointJson = prefs.getString(SAVED_MAP_CENTER, defaultCenterPointJson);
+        LatLng center = gson.fromJson(centerPointJson, LatLng.class);
+        Log.d(Constants.TRAILBOOK_TAG, "TrailbookState: got center," + center);
+        return center;
+    }
+
+    public static void saveMapCenterPoint(LatLng center) {
+        SharedPreferences.Editor editor = prefs.edit();
+        String jsonCenter = getJsonFromPoint(center);
+        editor.putString(SAVED_MAP_CENTER, jsonCenter);
+        editor.commit();
+        Log.d(Constants.TRAILBOOK_TAG, "TrailbookState: Saved center " + jsonCenter);
+    }
+
+    public static float getMapZoomLevel() {
+        float zoomLevel = prefs.getFloat(SAVED_ZOOM_LEVEL, TrailBookMapFragment.DEFAULT_ZOOM_LEVEL);
+        return zoomLevel;
+    }
+
+    public static LatLng getSelectedMapLocation() {
+        Gson gson = new Gson();
+        String jsonSelectedLocation = prefs.getString(SAVED_SELECTED_LOCATION, null);
+        if (jsonSelectedLocation != null && TrailBookState.getMode()==TrailBookState.MODE_EDIT) {
+            return gson.fromJson(jsonSelectedLocation, LatLng.class);
+        } else {
+            return  null;
+        }
+    }
+
+    public static void saveSelectedMapLocation(LatLng selectedLoc) {
+        SharedPreferences.Editor editor = prefs.edit();
+        String jsonSelectedLocation = getJsonFromPoint(selectedLoc);
+        editor.putString(SAVED_SELECTED_LOCATION, jsonSelectedLocation);
+        editor.commit();
+    }
+
+    public static void saveMapZoomLevel(float zoomLevel) {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putFloat(SAVED_ZOOM_LEVEL, zoomLevel);
+        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: Saved zoom level " + zoomLevel);
         editor.commit();
     }
 

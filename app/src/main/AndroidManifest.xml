@@ -52,6 +52,7 @@
 
         <activity
             android:name=".TrailBookActivity"
+            android:launchMode= "singleTask"
             android:label="@string/title_activity_main"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
@@ -65,6 +66,8 @@
                 <action android:name="com.trailbook.kole.services.upload.UploadPathService.BROADCAST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="android.app.default_searchable"
+                android:value="com.trailbook.kole.activities.SearchResultsActivity" />
         </activity>
 
         <activity android:name="com.trailbook.kole.activities.SearchResultsActivity"

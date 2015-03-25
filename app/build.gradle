@@ -3,6 +3,12 @@ apply plugin: 'com.android.application'
 android {
 
     signingConfigs {
+        config {
+            keyAlias 'MyAndroidKey'
+            keyPassword 'yurtle'
+            storeFile file('C:/Users/kole/AndroidStudioProjects/KeyStores/android.jks')
+            storePassword 'yurtle'
+        }
     }
     compileSdkVersion 21
     buildToolsVersion '20.0.0'
@@ -21,6 +27,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
         debug {
             debuggable true

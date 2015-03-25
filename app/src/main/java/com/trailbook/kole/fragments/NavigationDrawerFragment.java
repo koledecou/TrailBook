@@ -1,16 +1,16 @@
 package com.trailbook.kole.fragments;
 
 
-import android.app.Activity;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,9 +20,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import com.trailbook.kole.activities.R;
 
 /**
@@ -42,6 +40,7 @@ public class NavigationDrawerFragment extends Fragment {
      * expands it. This shared preference tracks this.
      */
     private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+    private static final int DEFAULT_ITEM = -1;
 
     /**
      * A pointer to the current callbacks instance (the Activity).
@@ -78,7 +77,7 @@ public class NavigationDrawerFragment extends Fragment {
             mFromSavedInstanceState = true;
         } else {
             // Select either the default item (0) or the last selected item.
-            selectItem(0);
+            selectItem(DEFAULT_ITEM);
         }
 
 

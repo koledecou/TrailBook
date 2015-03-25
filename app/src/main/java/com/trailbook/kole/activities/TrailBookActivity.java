@@ -606,6 +606,7 @@ public class TrailBookActivity extends Activity
     }
 
     private void switchFragmentAndAddToBackstack(Fragment frag, String tag) {
+        mMapFragment.hideBannerAd();
         FragmentManager fm = getFragmentManager();
         if (!ApplicationUtils.isFragmentShowing(fm, tag)) {
             fm.beginTransaction()
@@ -614,8 +615,6 @@ public class TrailBookActivity extends Activity
                     .commit();
         }
     }
-
-
 
     private void setUpWorkFragmentIfNeeded() {
         FragmentManager fm = getFragmentManager();
@@ -641,9 +640,11 @@ public class TrailBookActivity extends Activity
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         Fragment newFrag;
-        if (position == 0) { // find paths
-            //todo: show info dialog on how to search first time.
+        if (position == -1) { //default selection: switch to search mode, but don't show the search dialog.
             switchToSearchMode();
+        } if (position == 0) { //show the search dialog
+            switchToSearchMode();
+            onSearchRequested();
         } else if (position == 1) { // follow path
             if (mPathManager.hasDownloadedPaths())
                 switchFragmentAndAddToBackstack(getFollowPathSelectorFragment(), PATH_SELECT_UPLOAD_TAG);
@@ -660,6 +661,9 @@ public class TrailBookActivity extends Activity
         } else if (position == 4) { // import
             launchFileChooserForKmlImport();
         } else if (position == 5) { // prefs
+            mMapFragment.hideBannerAd();
+            mMapFragment.hideEditMenuButtons();
+            mMapFragment.hideMapMessage();
             switchFragmentAndAddToBackstack(mPreferencesFragment, PREF_FRAG_TAG);
         } else { // unknown selection, go to search mode
             switchToSearchMode();
@@ -918,7 +922,6 @@ public class TrailBookActivity extends Activity
     }
 
     private PathSelectorFragment getPathSelectorFragmentForDownloadedPaths() {
-        //return PathsOnDeviceSelectorFragment.newInstance();
         ArrayList<String> downloadedPathIds = mPathManager.getDownloadedPathIds();
         return PathSelectorFragment.newInstance(downloadedPathIds, getString(R.string.title_downloaded_paths));
     }
