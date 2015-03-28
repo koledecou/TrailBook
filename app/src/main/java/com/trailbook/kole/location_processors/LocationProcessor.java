@@ -4,9 +4,6 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.location.Location;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
 
 /**
  * Created by kole on 9/15/2014.
@@ -26,7 +23,6 @@ public abstract class LocationProcessor {
     }
 
     public void removeAllNotifications() {
-        Log.d(Constants.TRAILBOOK_TAG, "LocationProcessor: removing all notifications");
         mNotificationManager.cancelAll();
     }
 

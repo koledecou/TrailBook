@@ -3,11 +3,9 @@ package com.trailbook.kole.worker_fragments;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.squareup.otto.Bus;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
@@ -107,19 +105,13 @@ public class WorkerFragment extends Fragment {
     private void startGetImage(String imageFileName) {
         File deviceImageFile = TrailbookFileUtilities.getInternalImageFile(imageFileName);
 
-        Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading to: " + deviceImageFile);
         String webServerImageDir=TrailbookFileUtilities.getWebServerImageDir();
         String webServerImageFileName = webServerImageDir + "/" + imageFileName;
 
-        Log.d(Constants.TRAILBOOK_TAG, "webserver image file name: " + webServerImageFileName);
         new DownloadImageTask(deviceImageFile).execute(webServerImageFileName);
-
-        //TODO: use picasso to get the image?
-//        Picasso.with(getActivity()).load(webServerImageFileName).into(new BitmapFileTarget(imageFile));
     }
 
     public void startPathUploadMongo(PathSummary summary) {
-        Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: uploading path " + summary.getName());
         Intent intent = new Intent(getActivity(), UploadPathService.class);
         intent.putExtra(UploadPathService.PATH_ID_KEY, summary.getId());
         getActivity().startService(intent);
@@ -129,7 +121,6 @@ public class WorkerFragment extends Fragment {
     }
 
     public void startDownloadPaths(ArrayList<String> pathIds) {
-        Log.d(Constants.TRAILBOOK_TAG, "WorkerFragment: downloading path " + pathIds);
         Intent intent = new Intent(getActivity(), DownloadPathService.class);
         intent.putExtra(DownloadPathService.PATH_ID_KEY, pathIds);
         getActivity().startService(intent);

@@ -1,9 +1,5 @@
 package com.trailbook.kole.helpers;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -35,10 +31,7 @@ public class Zipper
             FileOutputStream fos = new FileOutputStream(mDestinationFileName);
             ZipOutputStream zos = new ZipOutputStream(fos);
 
-            Log.d(Constants.TRAILBOOK_TAG, "Output to Zip : " + mDestinationFileName);
-
             for(String file : this.fileList){
-                Log.d(Constants.TRAILBOOK_TAG, "File Added : " + file);
                 ZipEntry ze= new ZipEntry(file);
                 zos.putNextEntry(ze);
 
@@ -54,10 +47,7 @@ public class Zipper
             }
 
             zos.closeEntry();
-            //remember close it
             zos.close();
-
-            Log.d(Constants.TRAILBOOK_TAG, "Done.");
         }catch(IOException ex){
             ex.printStackTrace();
         }

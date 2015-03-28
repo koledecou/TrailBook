@@ -9,7 +9,6 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
 
@@ -30,7 +29,6 @@ public class ImageUtil {
 
         try {
             if (cursor.moveToFirst()) {
-                Log.d(Constants.TRAILBOOK_TAG, "Orientatin: " + cursor.getInt(0));
                 return cursor.getInt(0);
             } else {
                 return -1;
@@ -112,8 +110,6 @@ public class ImageUtil {
      * //sylvana.net/jpegcrop/exif_orientation.html
      */
     public static Bitmap rotateBitmap(Bitmap bitmap, int orientation)  throws IOException {
-        Log.d(Constants.TRAILBOOK_TAG, "rotating bitmap. orientation:" + orientation);
-
         if (orientation == 1) {
             return bitmap;
         }
@@ -206,7 +202,6 @@ public class ImageUtil {
 
         int rotatedWidth, rotatedHeight;
         int orientation = getOrientation(context, photoUri);
-        Log.d(Constants.TRAILBOOK_TAG, "orientation is : " + orientation);
 
         if (orientation == 90 || orientation == 270) {
             rotatedWidth = dbo.outHeight;

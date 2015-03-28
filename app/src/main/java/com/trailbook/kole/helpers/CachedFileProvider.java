@@ -6,7 +6,6 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,7 +22,6 @@ public class CachedFileProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        Log.d(CLASS_NAME + "- onCreate", "calling on create");
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
         // Add a URI to the matcher which will match against the form
@@ -37,11 +35,6 @@ public class CachedFileProvider extends ContentProvider {
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode)
             throws FileNotFoundException {
-
-        String LOG_TAG = CLASS_NAME + " - openFile";
-
-        Log.d(LOG_TAG,
-                "Called with uri: '" + uri + "'." + uri.getLastPathSegment());
 
         // Check incoming Uri against the matcher
         switch (uriMatcher.match(uri)) {
@@ -66,7 +59,6 @@ public class CachedFileProvider extends ContentProvider {
 
             // Otherwise unrecognised Uri
             default:
-                Log.d(LOG_TAG, "Unsupported uri: '" + uri + "'.");
                 throw new FileNotFoundException("Unsupported uri: "
                         + uri.toString());
         }

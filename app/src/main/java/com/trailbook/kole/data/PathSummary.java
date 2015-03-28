@@ -1,7 +1,5 @@
 package com.trailbook.kole.data;
 
-import android.util.Log;
-
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.data.geo.GeoPoint;
 
@@ -138,7 +136,6 @@ public class PathSummary implements Comparable<PathSummary> {
     @Override
     public int compareTo(PathSummary another) {
         int result = this.name.compareToIgnoreCase(another.name);
-        Log.d(Constants.TRAILBOOK_TAG, " compared " + this.name + " to " + another.name + ": " + result);
         return result;
     }
 

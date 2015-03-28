@@ -1,9 +1,7 @@
 package com.trailbook.kole.services.async_tasks;
 
 import android.os.Handler;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.util.ArrayList;
@@ -42,11 +40,9 @@ public class PollForCompletedDownload extends Thread {
             try {
                 Thread.sleep(5000);
                 if (allPathsAreComplete()) {
-                    Log.d(Constants.TRAILBOOK_TAG, "PollForCompletedDownload: done.");
                     mHandler.post(mUpdateResultsRunnable);
                     return;
                 }
-                Log.d(Constants.TRAILBOOK_TAG, "PollForCompletedDownload: not done yet");
             } catch (InterruptedException e) {
                 mHandler.post(mUpdateResultsRunnable);
                 return;

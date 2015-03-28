@@ -5,9 +5,7 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWordDAO;
 
 
@@ -27,9 +25,7 @@ public class TrailbookKeywordContentProvider extends ContentProvider {
             String[] selectionArgs,
             String sortOrder) {
 
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " uri is " + uri);
         String query = uri.getLastPathSegment().toLowerCase();
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " getting suggestions for " + query);
 
         if (SearchManager.SUGGEST_URI_PATH_QUERY.equals(query)) {
             return null;
@@ -41,7 +37,6 @@ public class TrailbookKeywordContentProvider extends ContentProvider {
             try {
                 c = keyWordDAO.getSuggestionsForSearchManager(query);
             }catch (Exception e) {
-                Log.e(Constants.TRAILBOOK_TAG, CLASS_NAME + " exception getting suggestion", e);
             } finally {
                 keyWordDAO.close();
             }

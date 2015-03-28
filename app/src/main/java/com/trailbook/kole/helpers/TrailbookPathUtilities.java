@@ -4,7 +4,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
@@ -170,25 +169,16 @@ public class TrailbookPathUtilities {
 
     public static String getCommentJsonString(TrailBookComment comment) {
         Gson gson = new GsonBuilder().create();
-        if (gson == null) {
-            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
-        }
         return gson.toJson(comment);
     }
 
     public static String getPathSummaryJSONString(PathSummary summary) {
         Gson gson = new GsonBuilder().setExclusionStrategies(new PathExclusionStrategy()).create();
-        if (gson == null) {
-            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
-        }
         return gson.toJson(summary);
     }
 
     public static String getKeyHashJSON(KeyWordHashCollection hash) {
         Gson gson = new GsonBuilder().create();
-        if (gson == null) {
-            Log.d(Constants.TRAILBOOK_TAG, "error creating gson");
-        }
         return gson.toJson(hash);
     }
 
@@ -222,7 +212,6 @@ public class TrailbookPathUtilities {
     }
 
     public static Path parseXML(String pathXML) {
-        Log.d("path xml", pathXML);
         Document pathXMLDoc = TrailbookPathUtilities.XMLfromString(pathXML);
         pathXMLDoc.getDocumentElement ().normalize ();
 
@@ -240,7 +229,6 @@ public class TrailbookPathUtilities {
                 //if line string exists, then this placemark is the path coords.
                 //the path name is in the name item, the coords is in coordinates.
                 if (getPlaceMarkType(placeMarkElement) == PLACEMARK_TYPE_LINE) {
-                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: importing segment");
                     NodeList lineStringList = placeMarkElement.getElementsByTagName("LineString");
                     NodeList markNameList = placeMarkElement.getElementsByTagName("name");
                     ArrayList<LatLng> points = getLatLngArrayFromLineStringList(lineStringList);
@@ -252,7 +240,6 @@ public class TrailbookPathUtilities {
                         summary.setEnd(points.get(points.size() - 1));
                     }
                 } else if (getPlaceMarkType(placeMarkElement) == PLACEMARK_TYPE_NOTE) {
-                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: importing note");
                     NodeList pointList = placeMarkElement.getElementsByTagName("Point");
                     Element pointElement = (Element) pointList.item(0);
                     NodeList coordsNodeList = pointElement.getElementsByTagName("coordinates");
@@ -271,7 +258,6 @@ public class TrailbookPathUtilities {
                             paoNotes.add(paoNote);
                             summary.addPao(noteId);
                         } catch (Exception e) {
-                            Log.e(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: Error getting note", e);
                         }
                     }
                 }
@@ -288,7 +274,6 @@ public class TrailbookPathUtilities {
         Node placeMarkNameNode = (Node)markNameList.item(0);
         try {
             name = placeMarkNameNode.getFirstChild().getNodeValue();
-            Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities: name is " + name);
         } catch (Exception e) {
             name = "";
         }
@@ -368,7 +353,6 @@ public class TrailbookPathUtilities {
             doc = db.parse(is);
 
         } catch (ParserConfigurationException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error parsing kml: ", e);
             return null;
         } catch (SAXException e) {
             e.printStackTrace();
@@ -389,7 +373,6 @@ public class TrailbookPathUtilities {
         if (TrailBookState.getCurrentUser() == null || TrailBookState.getCurrentUser().userId == null || TrailBookState.getCurrentUser().userId.length() < 1)
             return false;
 
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookPathUtilities: has edit permissions " + summary.getOwnerId() + "," +TrailBookState.getCurrentUser().userId);
         if (summary.getOwnerId() == null
              || summary.getOwnerId().length() < 1
              || summary.getOwnerId().equals(TrailBookState.getCurrentUser().userId)) {
@@ -409,9 +392,6 @@ public class TrailbookPathUtilities {
         filters.showMyPaths =  preferences.getBoolean(Constants.FILTER_PREFS_SHOW_MY_PATHS_KEY, true);
         filters.showOtherPaths =  preferences.getBoolean(Constants.FILTER_PREFS_SHOW_OTHER_PATHS_KEY, true);
         filters.groupIdsToShow = preferences.getStringSet(Constants.FILTER_PREFS_GROUPS_TO_SHOW_KEY, new LinkedHashSet<String>());
-
-        Log.v(Constants.TRAILBOOK_TAG, "Filters: " + filters);
-
         return filters;
     }
 

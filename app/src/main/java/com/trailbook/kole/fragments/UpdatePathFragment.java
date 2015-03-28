@@ -3,7 +3,6 @@ package com.trailbook.kole.fragments;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +10,6 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.fragments.list_content.CheckablePathAdapter;
 import com.trailbook.kole.state_objects.PathManager;
@@ -70,14 +68,12 @@ public class UpdatePathFragment extends Fragment implements View.OnClickListener
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": Saving state");
 
         outState.putStringArrayList(PATH_IDS_KEY, mPathIds);
         //todo: save checkbox states
     }
 
     public void restoreState(Bundle savedState) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + "Restoring state. ");
         mPathIds = savedState.getStringArrayList(PATH_IDS_KEY);
     }
 

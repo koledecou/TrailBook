@@ -1,8 +1,5 @@
 package com.trailbook.kole.activities.utils;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.data.User;
@@ -23,7 +20,6 @@ public class AttachedCommentUploaderAction implements Action {
 
     public void execute() {
         User user = TrailBookState.getInstance().getCurrentUser();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got user id " + user.userId);
         TrailBookComment comment = (TrailBookComment)paoComment.getAttachment();
         comment.user = user;
         workerFragment.startAttachedCommentUploadMongo(paoComment);

@@ -6,7 +6,6 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,7 +20,6 @@ import android.widget.TextView;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
 import com.trailbook.kole.data.Attachment;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWordGroup;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.data.PointAttachedObject;
@@ -100,7 +98,6 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": Saving state");
         if (mEditTextPathName != null)
             outState.putString(PATH_NAME_KEY, mEditTextPathName.getText().toString());
 
@@ -109,7 +106,6 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     }
 
     public void restoreState(Bundle savedState) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + "Restoring state. ");
         mPathId = savedState.getString(PATH_ID_KEY);
         mClimbsFromPathHaveBeenAdded = savedState.getBoolean(CLIMBS_ADDED_KEY);
     }
@@ -150,11 +146,8 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " creating context menu");
         if (v.getId() == R.id.lvExp) {
             ExpandableListView.ExpandableListContextMenuInfo info  = (ExpandableListView.ExpandableListContextMenuInfo) menuInfo;
-            Log.d(Constants.TRAILBOOK_TAG,CLASSNAME + " packed position=" + info.packedPosition);
-
             menu.setHeaderTitle("");
             menu.add(Menu.NONE, MENU_CONTEXT_DELETE_ID, Menu.NONE, getString(R.string.delete_key_word));
         }
@@ -165,12 +158,9 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
         ExpandableListView.ExpandableListContextMenuInfo info  = (ExpandableListView.ExpandableListContextMenuInfo) item.getMenuInfo();
         int groupPosition = ExpandableListView.getPackedPositionGroup(info.packedPosition);
         int childPosition = ExpandableListView.getPackedPositionChild(info.packedPosition);
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " group position=" + groupPosition);
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " child position=" + childPosition);
 
         if (item.getItemId() == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
             String keyWord = (String) mListAdapter.getChild(groupPosition, childPosition);
-            Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " deleting " + keyWord);
             String groupName = (String) mListAdapter.getGroup(groupPosition);
             removeKeyword(keyWord, groupName);
             savePathSummaryKeywordGroup(mPathId, mKeyWords);
@@ -225,14 +215,11 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     }
 
     private void populateClimbsFromPath(String pathId) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": populating climbs for path " + pathId);
         ArrayList<PointAttachedObject> pointAttachedObjects = PathManager.getInstance().getPointObjectsForPath(pathId);
         for (PointAttachedObject pao:pointAttachedObjects) {
             if (pao != null) {
                 Attachment a = pao.getAttachment();
-                Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": type="+a.getType());
                 if (a.getType().equals(NoteFactory.CLIMB)) {
-                    Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": adding climb "+a.getShortContent());
                     mKeyWords.addClimb(a.getShortContent());
                 }
             }
@@ -277,15 +264,12 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     }
 
     private void addKeyWordToGroup(HashMap<String, List<String>> listDataChild, String groupName, String keyWord) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME +  " adding key word " + keyWord + " to " + groupName );
         List<String> keyWords = listDataChild.get(groupName);
         if (keyWords == null) {
             keyWords = new ArrayList<String>();
             listDataChild.put(groupName, keyWords);
         }
         keyWords.add(keyWord);
-
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " added key word " + keyWord + " to " + groupName );
     }
 
 
@@ -330,8 +314,6 @@ public class PathUploadDetailsFragment extends Fragment implements View.OnClickL
     @Override
     public boolean onChildClick(ExpandableListView parent, View view, int groupPosition, int childPosition, long id) {
         String keyWord = (String) mListAdapter.getChild(groupPosition, childPosition);
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " word clicked: " + keyWord + " position " + childPosition);
-        //parent.showContextMenuForChild(view);
         if (childPosition == 0) {
             String groupName = (String) mListAdapter.getGroup(groupPosition);
             if (groupName.equals(CLIMBS)) {

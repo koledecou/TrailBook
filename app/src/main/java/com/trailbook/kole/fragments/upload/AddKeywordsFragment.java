@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,6 @@ import android.widget.TextView;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
-import com.trailbook.kole.data.Constants;
 
 import java.util.ArrayList;
 
@@ -90,7 +88,6 @@ public class AddKeywordsFragment extends Fragment implements View.OnClickListene
             }
             outState.putStringArrayList(KEYWORDS_KEY, words);
         }
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": Saved key words");
 
         outState.putString(PATH_ID_KEY, mPathId);
         outState.putInt(TYPE_KEY, mType);
@@ -178,7 +175,6 @@ public class AddKeywordsFragment extends Fragment implements View.OnClickListene
             for (EditText et:mEditTextArrayKeywords) {
                 String word = et.getText().toString();
                 if (word != null && word.trim().length()>0) {
-                    Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " adding keyword " + word);
                     keyWords.add(word);
                 }
             }

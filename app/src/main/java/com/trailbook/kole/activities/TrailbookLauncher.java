@@ -3,12 +3,7 @@ package com.trailbook.kole.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
-import android.view.Menu;
 
-import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.state_objects.TrailBookState;
 
 /**
@@ -25,7 +20,6 @@ public class TrailbookLauncher extends Activity {
     }
 
     private void launchMap() {
-        Log.d(Constants.TRAILBOOK_TAG, "Launching TrailBook");
         Intent launchTrailbookIntent = new Intent(this, TrailBookActivity.class);
         launchTrailbookIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         launchTrailbookIntent.putExtra(TrailBookActivity.INITIAL_PATH_ID_KEY, TrailBookState.NO_START_PATH);

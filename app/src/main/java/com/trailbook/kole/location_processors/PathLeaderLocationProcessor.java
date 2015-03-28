@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.R;
@@ -48,8 +47,6 @@ public class PathLeaderLocationProcessor extends LocationProcessor {
             if (mLastLocation.distanceTo(newLocation) < Constants.MIN_DISTANCE_BETWEEN_POINTS)
                 return;
         }
-        Log.d(Constants.TRAILBOOK_TAG, "adding point to segment " + mSegmentId + " " + newLocation.toString());
-        Log.d(Constants.TRAILBOOK_TAG, "PathLeaderLocationProcessor: accuracy is " + newLocation.getAccuracy());
         if (isGoodStateToRecord(newLocation)) {
             mPathManager.addPointToSegment(mSegmentId, mPathId, newLocation);
             mPathManager.savePath(mPathId);

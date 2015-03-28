@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.ViewConfiguration;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -89,7 +88,6 @@ public class TrailBookState extends Application {
     public void onCreate() {
         super.onCreate();
 
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: TrailBookState.onCreate()");
         INSTANCE = this;
         bus = BusProvider.getInstance();
         bus.register(this);
@@ -123,7 +121,6 @@ public class TrailBookState extends Application {
 
     public static void setZoomToPathId(String zoomToPathId) {
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: setting zoom to path id: " + zoomToPathId);
         editor.putString(ZOOM_TO_ID, zoomToPathId);
         editor.commit();
         //TrailBookState.mZoomToPathId = zoomToPathId;
@@ -131,7 +128,6 @@ public class TrailBookState extends Application {
 
     public static void resetZoomToPathId() {
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: setting zoom to path id none: " + NO_START_PATH);
         editor.putString(ZOOM_TO_ID, NO_START_PATH);
         editor.commit();
         //TrailBookState.mZoomToPathId = NO_START_PATH;
@@ -157,19 +153,16 @@ public class TrailBookState extends Application {
 
     private static void saveLastRefreshedFromCloudTimeStamp() {
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving time," + mLastRefreshedFromCloudTimeStamp);
         editor.putLong(CLOUD_REFRESH_TS, mLastRefreshedFromCloudTimeStamp);
         editor.commit();
     }
 
     private static void restoreLastRefreshedFromCloudTimeStamp() {
         mLastRefreshedFromCloudTimeStamp = prefs.getLong(CLOUD_REFRESH_TS, 0l);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored time," + mLastRefreshedFromCloudTimeStamp);
     }
 
     private static void saveMode() {
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving mode," + mMode);
         editor.putInt(SAVED_MODE, mMode);
         editor.commit();
     }
@@ -202,25 +195,18 @@ public class TrailBookState extends Application {
 
     public static void saveActiveSegmentId() {
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving active segment," + mCurrentSegmentId);
         editor.putString(SAVED_ACTIVE_SEGMENT, mCurrentSegmentId);
         editor.commit();
     }
 
     public void restoreActivePath() {
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: current path is " + mPathManager.getPathSummary(mCurrentPathId));
         if (mPathManager.getPathSummary(mCurrentPathId) == null) {
-            Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: re-loading active path: " + mCurrentPathId);
-            //doing this sycronously because it is critical that we have the path in time.
             Path path = mPathManager.loadPathFromDevice( mCurrentPathId);
             postEventsForAddedPath(path);
         }
     }
 
     private void postEventsForAddedPath(Path p) {
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: posting summary:" + p.summary.getName());
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: posting segments:" + p.segments.size());
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: posting paobjects:" + p.paObjects.size());
         bus.post(new PathSummaryAddedEvent(p.summary));
         for (PathSegment segment:p.segments) {
             bus.post(new SegmentUpdatedEvent(segment));
@@ -233,19 +219,16 @@ public class TrailBookState extends Application {
 
     public static void restoreActiveSegmentId() {
         mCurrentSegmentId = prefs.getString(SAVED_ACTIVE_SEGMENT, null);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored active segment," + mCurrentSegmentId);
     }
 
     public static void saveActivePathId() {
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: saving active path," + mCurrentPathId);
         editor.putString(SAVED_ACTIVE_PATH, mCurrentPathId);
         editor.commit();
     }
 
     public static void restoreActivePathId() {
         mCurrentPathId = prefs.getString(SAVED_ACTIVE_PATH, null);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored active path," + mCurrentPathId);
     }
 
 
@@ -259,7 +242,6 @@ public class TrailBookState extends Application {
             Gson gson = new Gson();
             String jsonLastLocation = prefs.getString(SAVED_LOCATION, null);
             if (jsonLastLocation != null) {
-                Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored json location," + jsonLastLocation);
                 mCurrentLocation = gson.fromJson(jsonLastLocation, Location.class);
             }
         }
@@ -296,7 +278,6 @@ public class TrailBookState extends Application {
         String defaultCenterPointJson = gson.toJson(TrailBookMapFragment.DEFAULT_MAP_CENTER, LatLng.class);
         String centerPointJson = prefs.getString(SAVED_MAP_CENTER, defaultCenterPointJson);
         LatLng center = gson.fromJson(centerPointJson, LatLng.class);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailbookState: got center," + center);
         return center;
     }
 
@@ -305,7 +286,6 @@ public class TrailBookState extends Application {
         String jsonCenter = getJsonFromPoint(center);
         editor.putString(SAVED_MAP_CENTER, jsonCenter);
         editor.commit();
-        Log.d(Constants.TRAILBOOK_TAG, "TrailbookState: Saved center " + jsonCenter);
     }
 
     public static float getMapZoomLevel() {
@@ -333,7 +313,6 @@ public class TrailBookState extends Application {
     public static void saveMapZoomLevel(float zoomLevel) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putFloat(SAVED_ZOOM_LEVEL, zoomLevel);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookMapFragment: Saved zoom level " + zoomLevel);
         editor.commit();
     }
 
@@ -345,18 +324,14 @@ public class TrailBookState extends Application {
             float accuracy = location.getAccuracy();
             if (accuracy < Constants.MIN_ACCURACY_TO_START_LEADING) {
                 incrementConsecutiveGoodLocations();
-                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: got good location: " + location.getAccuracy());
-                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: consecutive good locations: " + TrailBookState.getConsecutiveGoodLocations());
                 if (TrailBookState.getConsecutiveGoodLocations() >= Constants.MIN_CONNSECUTIVE_GOOD_LOCATIONS_TO_LEAD) {
                     setAlreadGotEnoughGoodLocations(true);
                 } else
                     setAlreadGotEnoughGoodLocations(false);
             } else {
-                Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: location not accurate enough: " + location.getAccuracy());
                 TrailBookState.resetConsecutiveGoodLocations();
             }
         } else {
-            Log.d(Constants.TRAILBOOK_TAG, "TrailbookPathUtilities.isAccurateEnoughToRecordUpdateEvents: no accuracy on device");
             setAlreadGotEnoughGoodLocations(true);
         }
     }
@@ -369,7 +344,6 @@ public class TrailBookState extends Application {
 
     public static void restoreMode() {
         mMode = prefs.getInt(SAVED_MODE, MODE_SEARCH);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored mode," + mMode);
     }
 
     private static void restoreUser() {
@@ -377,7 +351,6 @@ public class TrailBookState extends Application {
         mUser.userId = prefs.getString(SAVED_USER_ID, "-1");
         mUser.userName = prefs.getString(SAVED_USER_NAME, "");
         mUser.profilePhotoUrl = prefs.getString(SAVED_PROFILE_PIC_URL, "");
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: restored user id," + mUser.userId);
     }
 
     public static void restoreState() {
@@ -400,14 +373,12 @@ public class TrailBookState extends Application {
     }
 
     public void startLocationUpdates() {
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: startLocationUpdates()");
         ComponentName comp = new ComponentName(this.getPackageName(), BackgroundLocationService.class.getName());
         ComponentName service = startService(new Intent().setComponent(comp));
         enableLocationReceiver();
 
         if (null == service){
             // something really wrong here
-            Log.e(Constants.TRAILBOOK_TAG, "Could not start service " + comp.toString());
         }
         mIsListeningToLocationUpdates = true;
     }
@@ -426,7 +397,6 @@ public class TrailBookState extends Application {
         pm.setComponentEnabledSetting(receiver,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP);
-        Log.d(Constants.TRAILBOOK_TAG, "enabled location reciever");
     }
 
     public void disableLocationReceiver(){
@@ -435,7 +405,6 @@ public class TrailBookState extends Application {
         pm.setComponentEnabledSetting(receiver,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP);
-        Log.d(Constants.TRAILBOOK_TAG, "disabled location reciever");
     }
 
     public void switchToSearchMode() {
@@ -458,7 +427,6 @@ public class TrailBookState extends Application {
     }
 
     public void switchToLeadMode(String pathId, String segmentId) {
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookState: switchingToLeadMode " + pathId + "," + segmentId);
         int oldMode = mMode;
         mCurrentPathId=pathId;
         mCurrentSegmentId=segmentId;
@@ -501,7 +469,6 @@ public class TrailBookState extends Application {
     public void setUser(User user) {
         mUser = user;
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": saving user id " + mUser.userId);
         editor.putString(SAVED_USER_ID, mUser.userId);
         editor.putString(SAVED_USER_NAME, mUser.userName);
         editor.putString(SAVED_PROFILE_PIC_URL, mUser.profilePhotoUrl);
@@ -533,7 +500,6 @@ public class TrailBookState extends Application {
         this.mAlreadyGotEnoughGoodLocations = gotEnough;
 
         SharedPreferences.Editor editor = prefs.edit();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ":setAlreadGotEnoughGoodLocations " + gotEnough);
         editor.putBoolean(SAVED_GOOD_TO_SAVE_LOCATIONS, gotEnough);
         editor.commit();
     }

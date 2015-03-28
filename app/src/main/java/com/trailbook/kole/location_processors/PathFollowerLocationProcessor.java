@@ -8,14 +8,12 @@ import android.location.Location;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.ApproachingObjectNotificationReceiverActivity;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.PreferenceUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
@@ -79,7 +77,7 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     private NotificationCompat.Builder createApproachingNoteNotifyBuilder() {
         return new NotificationCompat.Builder(mContext)
-                .setSmallIcon(R.drawable.trail_book_logo)
+                .setSmallIcon(R.drawable.notification)
                 .setContentTitle("Trail Note Nearby")
                 .setContentText("There is a path note nearby.")
                 .setSound(getApproachingNoteSoundURI())
@@ -88,7 +86,7 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     private NotificationCompat.Builder createOffRouteNotifyBuilder() {
        return new NotificationCompat.Builder(mContext)
-                .setSmallIcon(R.drawable.trail_book_logo)
+                .setSmallIcon(R.drawable.notification)
                 .setContentTitle("Off Route Notification")
                 .setContentText("You are off route.")
                 .setOnlyAlertOnce(true)
@@ -108,7 +106,6 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
         try {
             alertUri = Uri.parse(ringTone);
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: Exception getting ring tone!", e);
             alertUri = Uri.parse("android.resource://"
                     + TrailBookState.getInstance().getPackageName() + "/" + R.raw.knock);
             //alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -118,16 +115,13 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     @Override
     public void process(Location newLocation) {
-        Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: following " + mPathId + " "  + newLocation.toString() );
         try {
             processOffRouteNotification(newLocation);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: error processing off route notification", e);
         }
         try {
             processApproachingObjectNotifications(newLocation);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: error processing note notification", e);
         }
     }
 
@@ -135,7 +129,6 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
         ArrayList<PointAttachedObject> pointObjects = PathManager.getInstance().getPointObjectsForPath(mPathId);
         for (PointAttachedObject paObject:pointObjects) {
             double distanceToNote = TrailbookPathUtilities.getDistanceToNote(paObject, newLocation);
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: distance to note " + paObject.getId()+ " : " + distanceToNote);
             if (distanceToNote < PreferenceUtilities.getNoteAlertDistanceInMeters(mContext)) {
                 sendApproachingObjectNotification(paObject.getId(), paObject, distanceToNote);
             } else {
@@ -146,20 +139,14 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     private void processOffRouteNotification(Location newLocation) {
         double currentDistanceFromPath = TrailbookPathUtilities.getNearestDistanceFromPointToPath(TrailbookPathUtilities.locationToLatLon(newLocation), mPathId);
-        Log.d(Constants.TRAILBOOK_TAG,"PathFollowerLocationProcessor: distance to path : " + currentDistanceFromPath );
         if (currentDistanceFromPath > PreferenceUtilities.getStrayFromPathTriggerDistanceInMeters(mContext) ) {
             if (!hasAlertBeenPlayedRecently()) {
-                Log.d(Constants.TRAILBOOK_TAG, "Notify again.");
                 mStrayFromPathAlertLastPlayedTime = new Date().getTime();
                 cancelNotification(OFF_ROUTE_NOTIFICATION_ID);
-            } else {
-                Log.d(Constants.TRAILBOOK_TAG, "Upate distance on existing notification");
             }
             playStrayedFromPathAlert(currentDistanceFromPath);
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: sent off route notification.");
         } else {
             cancelNotification(OFF_ROUTE_NOTIFICATION_ID);
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: back on route.");
         }
     }
 
@@ -171,9 +158,7 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     private void playStrayedFromPathAlert(double currentDistanceFromPath) {
         sendOffRouteNotification(currentDistanceFromPath);
-        //Toast.makeText(mContext, "Strayed from path", Toast.LENGTH_SHORT).show();
         //todo: display this in the map view and change color of path.  remove the toast.
-        Log.d(Constants.TRAILBOOK_TAG, "Strayed");
     }
 
     private void sendListeningNotification() {
@@ -194,26 +179,21 @@ public class PathFollowerLocationProcessor extends LocationProcessor {
 
     private void sendApproachingObjectNotification(String noteId, PointAttachedObject paObject, double distance) {
         int notificationId = NotificationUtils.getNotificationId(noteId);
-        Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notificationid" + notificationId);
-        Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: title: " + mContext.getString(R.string.note_notification_title));
         //todo: change this for other types
         String notificationContent = String.format(mContext.getString(R.string.note_notification_title), PreferenceUtilities.getDistString(mContext, distance));
         mApproachingPointObjectNotificationBuilder.setContentTitle(notificationContent);
         mApproachingPointObjectNotificationBuilder.setContentText(paObject.getAttachment().getNotificationString());
         mApproachingPointObjectNotificationBuilder.setContentIntent(getApproachingObjectNotificationPendingIntent(noteId, notificationId));
         updateApproachingNoteRingtone();
-        Log.d(Constants.TRAILBOOK_TAG,  "PathFollowerLocationProcessor: notification text: " + PreferenceUtilities.getDistString(mContext, distance) + ": " + paObject.toString());
 
         mNotificationManager.notify(
                 notificationId,
                 mApproachingPointObjectNotificationBuilder.build());
-        Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: sent approaching object notification.");
     }
 
     private boolean hasAlertBeenPlayedRecently() {
         long currentTime = new Date().getTime();
         long deltaMilliSeconds = currentTime - mStrayFromPathAlertLastPlayedTime;
-        Log.d(Constants.TRAILBOOK_TAG, "Alert last played " + deltaMilliSeconds + " milliseconds ago.");
         if (mStrayFromPathAlertLastPlayedTime == 0 || (deltaMilliSeconds > ONE_MINUTE) ){
             return false;
         } else {

@@ -2,11 +2,9 @@ package com.trailbook.kole.fragments.point_attched_object_view.note;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.fragments.point_attched_object_view.PointAttachedObjectView;
@@ -33,8 +31,6 @@ public class NoteView extends PointAttachedObjectView {
         super.populateFieldsFromObject(pao);
         Note note = (Note)pao.getAttachment();
         mContent=note.getNoteContent();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": populating note content " + mContent);
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": text view is " + mTextViewContent);
         if (mTextViewContent != null)
             mTextViewContent.setText(mContent);
     }

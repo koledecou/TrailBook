@@ -1,7 +1,6 @@
 package com.trailbook.kole.fragments.list_content;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +8,6 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 
 import java.util.ArrayList;
@@ -42,8 +40,6 @@ public class CheckablePathAdapter extends ArrayAdapter<PathSummary> {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         ViewHolder holder = null;
-        Log.d(Constants.TRAILBOOK_TAG, "CheckablePathAdapter item at:" + position +":" + String.valueOf(position));
-
         if (convertView == null) {
             LayoutInflater vi = (LayoutInflater)this.getContext().getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
@@ -57,9 +53,6 @@ public class CheckablePathAdapter extends ArrayAdapter<PathSummary> {
                 public void onClick(View v) {
                     CheckBox cb = (CheckBox) v ;
                     PathSummary summary = (PathSummary) cb.getTag();
-                    Log.d(Constants.TRAILBOOK_TAG,
-                            "Clicked on Checkbox: " + cb.getText() +
-                                    " is " + cb.isChecked());
                     if (cb.isChecked()) {
                         mPathSummariesToUpdate.add(summary.getId());
                     } else {

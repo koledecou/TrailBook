@@ -14,7 +14,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -25,8 +24,13 @@ import android.widget.Toast;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWord;
+import com.trailbook.kole.data.Path;
+import com.trailbook.kole.data.PathSegment;
+import com.trailbook.kole.data.PointAttachedObject;
+import com.trailbook.kole.events.MapObjectAddedEvent;
+import com.trailbook.kole.events.SegmentUpdatedEvent;
+import com.trailbook.kole.state_objects.BusProvider;
 import com.trailbook.kole.state_objects.PathManager;
 
 import java.io.File;
@@ -125,12 +129,10 @@ public class ApplicationUtils {
 
     public static void addPathActionMenuItems(Menu menu, String id) {
         if (PathManager.getInstance().isStoredLocally(id)) {
-            Log.d(Constants.TRAILBOOK_TAG, "adding local menu items");
             addDownloadedPathMenuItems(menu, id);
         }
 
         if (PathManager.getInstance().isPathInCloudCache(id)){
-            Log.d(Constants.TRAILBOOK_TAG, "adding cloud menu items");
             addCloudPathMenuItems(menu,id);
         }
     }
@@ -187,12 +189,9 @@ public class ApplicationUtils {
     public static void sendFileViaEmail(Context c, File file) {
         try
         {
-            Log.d(Constants.TRAILBOOK_TAG, "full file " + file.getAbsolutePath());
             file.setReadable(true, false);
             Uri uri = Uri.fromFile(file);
-            Log.d(Constants.TRAILBOOK_TAG, "uri file: " + uri);
 
-            Log.d(Constants.TRAILBOOK_TAG, "ApplicationUtils: sending URI:" + uri);
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("text/plain");
             i.putExtra(Intent.EXTRA_EMAIL, "");
@@ -281,6 +280,20 @@ public class ApplicationUtils {
         if(a.getCurrentFocus()!=null) {
             InputMethodManager inputMethodManager = (InputMethodManager) a.getSystemService(Activity.INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(a.getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    public static void postPathEvents(Path path) {
+        if (path.paObjects != null) {
+            for (PointAttachedObject pao : path.paObjects) {
+                BusProvider.getInstance().post(new MapObjectAddedEvent(pao));
+            }
+        }
+
+        if (path.segments != null) {
+            for (PathSegment segment : path.segments) {
+                BusProvider.getInstance().post(new SegmentUpdatedEvent(segment));
+            }
         }
     }
 }

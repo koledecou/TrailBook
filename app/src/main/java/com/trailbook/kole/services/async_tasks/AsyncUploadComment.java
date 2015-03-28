@@ -1,9 +1,7 @@
 package com.trailbook.kole.services.async_tasks;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.services.database.TrailbookRemoteDatabase;
 
@@ -21,14 +19,10 @@ public class AsyncUploadComment extends AsyncTask<TrailBookComment, Void, TrailB
                 comment = comments[0];
             }
 
-            Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadComment: uploading " + (comment != null ? comment.comment : null));
             db.uploadComment(comment);
             return comment;
 
         } catch (Exception e) {
-            if (comment != null)
-                Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadPath: upload failed for comment " + comment.comment, e);
-
             //todo: create failure notification
             return null;
         }
@@ -36,9 +30,6 @@ public class AsyncUploadComment extends AsyncTask<TrailBookComment, Void, TrailB
 
     @Override
     protected void onPostExecute(TrailBookComment comment) {
-        if (comment != null)
-            Log.d(Constants.TRAILBOOK_TAG, "AsyncUploadPath: upload completed for comment " + comment.comment);
-
         super.onPostExecute(comment);
     }
 }

@@ -1,9 +1,5 @@
 package com.trailbook.kole.helpers;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-
 import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.io.FileUtils;
 
@@ -32,7 +28,6 @@ public class TrailBookDirectoryWalker extends DirectoryWalker {
     }
 
     private boolean isValidFile(File file) {
-        Log.d(Constants.TRAILBOOK_TAG, "file = " + file);
         if (file.getName().endsWith(suffix))
             return true;
         else
@@ -46,7 +41,6 @@ public class TrailBookDirectoryWalker extends DirectoryWalker {
             walk(rootPathDir, paths);
         }
         catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Problem finding paths!", e);
         }
 
         return paths;

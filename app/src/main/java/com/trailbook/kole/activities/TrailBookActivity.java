@@ -21,7 +21,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -137,7 +136,6 @@ public class TrailBookActivity extends Activity
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         requestWindowFeature(Window.FEATURE_PROGRESS);
         ApplicationUtils.hideSoftKeyboard(this);
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " OnCreate");
 
         bus = BusProvider.getInstance(); //create the event bus that will be used by fragments interested in sharing events.
         bus.register(this);
@@ -145,7 +143,6 @@ public class TrailBookActivity extends Activity
         if (savedInstanceState != null) {
             restoreFragments(savedInstanceState);
         } else {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " creating map fragment");
             mMapFragment = TrailBookMapFragment.newInstance();
             getFragmentManager().beginTransaction().add(R.id.map_container, mMapFragment, "map_fragment").commit();
         }
@@ -161,7 +158,6 @@ public class TrailBookActivity extends Activity
         if (launchedPathId == null || launchedPathId.equals(TrailBookState.NO_START_PATH)) {
             launchFromRestoredState();
         } else {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " launching path " + launchedPathId);
             TrailBookState.setMode(TrailBookState.MODE_SEARCH);
             AsyncGetPathFromLocalDevice asyncGetPath = new AsyncGetPathFromLocalDevice();
             asyncGetPath.execute(launchedPathId);
@@ -172,7 +168,6 @@ public class TrailBookActivity extends Activity
     }
 
     private void restoreFragments(Bundle savedInstanceState) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " restoring map fragment");
         mMapFragment = (TrailBookMapFragment) getFragmentManager().findFragmentByTag("map_fragment");
     }
 
@@ -191,7 +186,6 @@ public class TrailBookActivity extends Activity
 
     private void launchFromRestoredState() {
         TrailBookState.restoreState();
-        Log.d(Constants.TRAILBOOK_TAG, getLocalClassName() + ": activity onCreate() mode:" + TrailBookState.getMode());
         if (TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
             TrailBookState.getInstance().resumeLeadingActivePath(true);
         } else if (TrailBookState.getMode()== TrailBookState.MODE_FOLLOW) {
@@ -248,7 +242,6 @@ public class TrailBookActivity extends Activity
                 paoNote = attachNoteToCurrentLocation(newAttachment);
             else if (TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
                 LatLng location = mMapFragment.getSelectedLocation();
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " creating pao note for location " + location);
                 paoNote = attachNoteToLocation(location, newAttachment);
                 mMapFragment.removeSelectedMarker();
             }
@@ -256,7 +249,6 @@ public class TrailBookActivity extends Activity
             paoNote.setAttachment(newAttachment);
         }
         addNoteToActivePath(paoNote);
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " added note: " + paoNote.getId() + " contnt: " + newAttachment.getShortContent() + " at " + paoNote.getLocation() + " to path " + TrailBookState.getActivePathId());
     }
 
     @Override
@@ -313,15 +305,12 @@ public class TrailBookActivity extends Activity
 
         PathSummary summary = mPathManager.getPathSummary(pathId);
         if (summary == null) {
-            Log.e(Constants.TRAILBOOK_TAG, CLASS_NAME + " onPathSelectorFragmentResult can't find path:" + pathId);
             return;
         }
 
-        Log.d(Constants.TRAILBOOK_TAG, getLocalClassName() + ": pathId=" + pathId + " action= " + action);
         if (action == ApplicationUtils.MENU_CONTEXT_UPLOAD_ID) {
             openPathDetailsDialog(pathId);
         } else if (action == ApplicationUtils.MENU_CONTEXT_DELETE_ID) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Deleting path:" + pathId);
             mPathManager.deletePath(pathId, true);
             refreshFromCloudIfConnectedToNetwork();
         } else if (action == ApplicationUtils.MENU_CONTEXT_FOLLOW_ID ) {
@@ -340,19 +329,15 @@ public class TrailBookActivity extends Activity
             onDownloadRequested(ApplicationUtils.StringToArrayList(pathId));
         } else if (action == ApplicationUtils.MENU_CONTEXT_DELETE_FROM_CLOUD_ID) {
             if (ApplicationUtils.isNetworkConnected(this)) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Confirming delete path:" + pathId);
                 deleteFromCloud(pathId);
             } else {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
                 ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
             }
         } else if (action == ApplicationUtils.MENU_CONTEXT_RESUME_ID) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": resuming path " + pathId);
             String newSegmentId = mPathManager.addNewSegmentToPath(pathId);
             TrailBookState.setActiveSegmentId(newSegmentId);
             startLeading(pathId, newSegmentId);
         } else if (action == ApplicationUtils.MENU_CONTEXT_SHARE_ID) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": sharing path " + pathId);
             Path path = mPathManager.getPath(pathId);
             File file = TrailbookFileUtilities.zipPathToTempFile(path);
             ApplicationUtils.sendFileViaEmail(this, file);
@@ -369,7 +354,6 @@ public class TrailBookActivity extends Activity
     }
 
     private void setUpNavDrawerFragment() {
-        Log.d(Constants.TRAILBOOK_TAG, "Setting up nav drawer fragment");
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
@@ -409,7 +393,6 @@ public class TrailBookActivity extends Activity
     }
 
     private void configureSearchManager(Menu menu) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " configuring search manager");
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView =
@@ -421,7 +404,6 @@ public class TrailBookActivity extends Activity
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    Log.d(Constants.TRAILBOOK_TAG, "on focus");
                     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
                 }
             }
@@ -466,7 +448,6 @@ public class TrailBookActivity extends Activity
             onCreateClimbSelected();
         } else if (id == R.id.quick_note_left || id == R.id.quick_note_right || id == R.id.quick_note_straight) {
             collapseSlidingPanel();
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " creating quicknote contextmenu");
             createQuickNote(id);
             invalidateOptionsMenu();
         } else if (id == R.id.action_bar_stop_following) {
@@ -482,10 +463,8 @@ public class TrailBookActivity extends Activity
             Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " show filter dialog");
             showFilterDialog(); */
         } else if (id == R.id.action_list) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " listing paths within the view");
             displayPathSelectorForPathsInMapView();
         } else if (id == R.id.action_refresh_map) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " refreshing paths the view");
             refreshPaths(true);
         }/* else if (id == R.id.action_bar_add_comment) {
             showComments();
@@ -750,7 +729,6 @@ public class TrailBookActivity extends Activity
         TrailBookState.setActivePathId(newPathId);
         Fragment f = getFragmentManager().findFragmentByTag(NEW_PATH_DIALOG_ID);
         if (f != null) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " removing dialog");
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.remove(f);
             ft.commit();
@@ -781,7 +759,6 @@ public class TrailBookActivity extends Activity
             startPollingForCompletedDownload(pathIds);
             collapseSlidingPanel();
         }else {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
             ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
         }
     }
@@ -862,7 +839,6 @@ public class TrailBookActivity extends Activity
             collapseSlidingPanel();
         } else {
             int backStackEntryCount = getFragmentManager().getBackStackEntryCount();
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": backstack count:" + backStackEntryCount);
             if(backStackEntryCount == 0) {
                 if (TrailBookState.getMode() == TrailBookState.MODE_LEAD)
                     showExitAlert(getString(R.string.exit_confirm_lead_mesage));
@@ -895,7 +871,6 @@ public class TrailBookActivity extends Activity
                 }
             }
             addNoteToActivePath(paoNote);
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": added quick note:" + content + " at " + paoNote.getLocation() + " to segment " + TrailBookState.getActiveSegmentId());
         }
     }
 
@@ -915,9 +890,7 @@ public class TrailBookActivity extends Activity
     }
 
     private PathUploadDetailsFragment getPathUploadDetailsFragment(String pathId) {
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookActivit: making path details fragment for path: " + pathId);
         PathUploadDetailsFragment frag = PathUploadDetailsFragment.newInstance(pathId);
-        Log.d(Constants.TRAILBOOK_TAG, "TrailBookActivit: finished making path details fragment for path: " + pathId);
         return frag;
     }
 
@@ -944,35 +917,28 @@ public class TrailBookActivity extends Activity
                 Uri uri = null;
                 if (resultData != null) {
                     uri = resultData.getData();
-                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": Chosen file Uri: " + uri.toString());
                     String pathKml = TrailbookFileUtilities.readTextFromUri(this, uri);
                     Path pathContainer = TrailbookPathUtilities.parseXML(pathKml);
-                    String pathName = pathContainer.summary.getName();
 
-                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": parsed path:" + pathName);
                     mPathManager.savePath(pathContainer);
                     mPathManager.addPath(pathContainer);
                 }
             } catch (Exception e) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": Exception getting kml file", e);
                 showErrorParsingKMLAlert();
             }
         } else if (requestCode == Authenticator.REQUEST_CODE_SIGN_IN ) {
             if (resultCode == RESULT_OK) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " back from authentication intent.  result is " + resultCode + " resultData = " + resultData);
                 Authenticator.getInstance().onReturnFromIntent();
             } else {
                 //todo: failed
             }
         } else if (requestCode == Authenticator.REQUEST_CODE_PICK_ACCOUNT) {
             if (resultCode == RESULT_OK && resultData != null && resultData.getStringExtra(AccountManager.KEY_ACCOUNT_NAME) != null) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " back from authentication pick account intent.  result is " + resultCode + " resultData = " + resultData);
                 String accountName = resultData.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                 Authenticator.getInstance().onGotAccount(accountName);
             } else {
                 DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog,int id) {
-                        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": dismissing can't get account dialog");
                     }
                 };
                 ApplicationUtils.showAlert(this,clickListenerOK ,"Unable to obtain Google Account", "A Google Services account is required to add trails to the Trailbook cloud or comment on existing trails.", getString(R.string.OK), null);
@@ -991,16 +957,12 @@ public class TrailBookActivity extends Activity
 
     @Subscribe
     public void onPathSummariesReceivedFromCloudEvent(PathSummariesReceivedFromCloudEvent event) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ":onPathSummariesReceivedFromCloudEvent");
         ArrayList<PathSummary> cloudSummaries = event.getPathSummaries();
         ArrayList<String> outOfDatePaths = new ArrayList<String>();
         for (PathSummary cloudSummary:cloudSummaries) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ":onPathSummariesReceivedFromCloudEvent checking " + cloudSummary.getName());
             if (mPathManager.isStoredLocally(cloudSummary.getId())) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": onPathSummariesReceivedFromCloudEvent " + cloudSummary.getName() + " is local, checking for update.");
                 PathSummary localSummary = mPathManager.getPathSummary(cloudSummary.getId());
                 if (cloudSummary.getLastUpdatedTime() > localSummary.getLastUpdatedTime()) {
-                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + "onPathSummariesReceivedFromCloudEvent " + cloudSummary.getName() + " is out of date.");
                     outOfDatePaths.add(cloudSummary.getId());
                 }
             }
@@ -1021,7 +983,6 @@ public class TrailBookActivity extends Activity
 
     private void refreshFromCloudIfConnectedToNetwork() {
         if (ApplicationUtils.isNetworkConnected(this)) {
-            Log.d(Constants.TRAILBOOK_TAG, getLocalClassName() + ": refreshing from cloud");
             mWorkFragment.startGetPathSummariesRemote(null, 0);
         } else {
             showNoNetworkOnStartup();
@@ -1030,7 +991,6 @@ public class TrailBookActivity extends Activity
 
     private boolean isTimeToRereshFromCloud() {
         long msSinceLastRefresh = ApplicationUtils.getCurrentTimeStamp() -TrailBookState.getLastRefreshedFromCloudTimeStamp();
-        Log.d(Constants.TRAILBOOK_TAG, "Time since last refresh" + msSinceLastRefresh / 1000 / 60 + " min");
         if (msSinceLastRefresh > Constants.CLOUD_REFRESH_DEFAULT_TIME_DELTA) {
             return true;
         } else {
@@ -1041,42 +1001,35 @@ public class TrailBookActivity extends Activity
     private void showNoPathsAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": dismissing no paths dialog");
                 //todo: launch searcher here
             }
         };
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": showing no paths alert");
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.info_no_paths_downloaded_title), getString(R.string.info_no_paths_downloaded_message), getString(R.string.OK), null);
     }
 
     private void showNoPathsWithinViewAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": dismissing no paths dialog");
                 //todo: launch searcher here
             }
         };
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": showing no paths alert");
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.info_no_paths_within_view_title), getString(R.string.no_paths_within_view_message), getString(R.string.OK), null);
     }
 
     private void showExitAlert(String reason) {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": exiting application");
                 TrailBookState.getInstance().stopLocationUpdates();
                 TrailBookState.getInstance().removeAllNotificaions();
                 finish();
             }
         };
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": showing exit confirm alert");
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.confirm_exit_title), reason, getString(R.string.exit_confirm), getString(R.string.cn_cancel));
     }
 
     private void showErrorParsingKMLAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": dismissing kml parse error dialog");
             }
         };
         ApplicationUtils.showAlert(this, clickListenerOK, getString(R.string.parse_error), getString(R.string.parse_error_message), getString(R.string.OK), null);
@@ -1096,7 +1049,6 @@ public class TrailBookActivity extends Activity
     private void showPathExistsAlert(String pathName) {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": dismissing kml parse error dialog");
             }
         };
         String message = String.format(getString(R.string.path_exists_message), pathName);
@@ -1121,7 +1073,6 @@ public class TrailBookActivity extends Activity
     public void deleteFromCloud(final String pathId) {
         DialogInterface.OnClickListener affirmCloudDeleteListener = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": deleting path " + pathId);
                 mWorkFragment.startPathDeleteMongo(pathId);
                 mPathManager.removeCloudCache(pathId);
             }
@@ -1131,20 +1082,17 @@ public class TrailBookActivity extends Activity
 
     public void upload(String pathId) {
         if (ApplicationUtils.isNetworkConnected(this)) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Uploading path:" + pathId);
             //TODO: update path details and confirm
             Action uploadAction = new PathUploaderAction(mWorkFragment, mPathManager.getPathSummary(pathId));
             String userId = TrailBookState.getCurrentUser().userId;
             if (userId == null || userId == "-1") {
                 LoginUtil.authenticateForAction(this, uploadAction);
             } else {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": already has user id " + userId);
                 PathSummary summary = mPathManager.getPathSummary(pathId);
                 summary.setOwnerID(userId);
                 uploadAction.execute();
             }
         } else {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
             ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
         }
     }
@@ -1164,7 +1112,6 @@ public class TrailBookActivity extends Activity
                 mWaitingForLocationDialog = null;
             }
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "Exception closing dialog:", e);
         }
     }
 
@@ -1182,7 +1129,6 @@ public class TrailBookActivity extends Activity
         BusProvider.getInstance().post(new PathCommentAddedEvent(comment));
         if (mPathManager.isPathInCloudCache(comment.getPathId())) {
             if (ApplicationUtils.isNetworkConnected(this)) {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Uploading comment:" + comment);
                 //TODO: show progress dialog
                 Action uploadAction = new CommentUploaderAction(mWorkFragment, comment);
                 String userId = TrailBookState.getCurrentUser().userId;
@@ -1192,12 +1138,10 @@ public class TrailBookActivity extends Activity
                     //we don't actually need to connect.
                     //Authenticator.getInstance().connect();
                 } else {
-                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": already has user id " + userId);
                     uploadAction.execute();
                 }
             } else {
                 //todo: create service to upload when back on line
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
                 ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
             }
         }
@@ -1206,7 +1150,6 @@ public class TrailBookActivity extends Activity
     @Override
     public void onNewAttachedCommentClick(TrailBookComment comment) {
         if (ApplicationUtils.isNetworkConnected(this)) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Uploading comment:" + comment);
             //TODO: show progress dialog
             PointAttachedObject paoComment = attachNoteToCurrentLocation(comment);
             Action uploadAction = new AttachedCommentUploaderAction(mWorkFragment, paoComment);
@@ -1216,11 +1159,9 @@ public class TrailBookActivity extends Activity
                 //we don't actually need to connect.
                 //Authenticator.getInstance().connect();
             } else {
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": already has user id " + userId);
                 uploadAction.execute();
             }
         } else {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " no network connectivity");
             ApplicationUtils.showNoNetworkStatusDialog(this, getString(R.string.no_network_message));
         }
     }
@@ -1249,7 +1190,6 @@ public class TrailBookActivity extends Activity
             public void run() {
                 setProgressBarIndeterminateVisibility(false);
                 mMapFragment.hideMapMessage();
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": download completed for " + pathIds);
             }
         };
 
@@ -1266,10 +1206,8 @@ public class TrailBookActivity extends Activity
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: Recieved intent for " + action);
             if (UploadPathService.BROADCAST_ACTION.equalsIgnoreCase(action)) {
                 int progress = intent.getIntExtra(UploadPathService.EXTENDED_DATA_STATUS_KEY, 0);
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: upload progress is  " + progress);
                 if (progress == UploadPathService.STATUS_FAILURE) {
                     Toast.makeText(TrailBookActivity.this, getString(R.string.upload_failed), Toast.LENGTH_LONG).show();
                     //todo: send failure notification
@@ -1292,9 +1230,7 @@ public class TrailBookActivity extends Activity
                 }
             } else if (DownloadPathService.BROADCAST_ACTION.equalsIgnoreCase(action)) {
                 int progress = intent.getIntExtra(DownloadPathService.EXTENDED_DATA_STATUS_KEY, 0);
-                Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: download progress is  " + progress);
                 if (progress == DownloadPathService.STATUS_COMPLETE) {
-                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: download complete. ");
 /*                    ArrayList<String> pathIds =  intent.getStringArrayListExtra(DownloadPathService.PATH_ID_KEY);
                     Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();*/
                     setProgressBarIndeterminateVisibility(false);
@@ -1310,7 +1246,6 @@ public class TrailBookActivity extends Activity
                     }
                 } else if (progress == DownloadPathService.STATUS_INTERMEDIATE) {
                     String pathId =  intent.getStringExtra(DownloadPathService.PATH_ID_KEY);
-                    Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " onReceive: downloaded path " + pathId);
                     Path path = mPathManager.getPath(pathId);
                     String message = String.format(getString(R.string.download_completed_for_path), path.summary.getName());
                     Toast.makeText(TrailBookActivity.this, message, Toast.LENGTH_LONG).show();
@@ -1325,13 +1260,11 @@ public class TrailBookActivity extends Activity
         if (summary == null)
             return;
 
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": sending upload failed notification for path " + summary.getName());
         NotificationCompat.Builder builder = NotificationUtils.createUploadFailedNotifyBuilder(this, pathId, message);
 
         NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(
                 NotificationUtils.getNotificationId(pathId),
                 builder.build());
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + ": sent upload failed notification for path " + summary.getName());
     }
 }

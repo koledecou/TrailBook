@@ -3,11 +3,9 @@ package com.trailbook.kole.helpers;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.Constants;
 
 import java.text.DecimalFormat;
 
@@ -60,13 +58,9 @@ public class PreferenceUtilities {
                 formatter = "#.#";
             }
         }
-        Log.d(Constants.TRAILBOOK_TAG, "dist, " + dist);
-        Log.d(Constants.TRAILBOOK_TAG, "unitOfDistance, " + unitOfDistance);
-        Log.d(Constants.TRAILBOOK_TAG, "formatter, " + formatter);
         DecimalFormat df = new DecimalFormat(formatter);
         String distString = df.format(dist) + " " + unitOfDistance;
 
-        Log.d(Constants.TRAILBOOK_TAG, "distString, " + distString);
         return distString;
     }
 
@@ -83,10 +77,8 @@ public class PreferenceUtilities {
         if (bearingInDegrees < 0) {
             bearingInDegrees = 360 + bearingInDegrees;
         }
-        Log.d(Constants.TRAILBOOK_TAG, "bearingInDegrees, " + bearingInDegrees);
         //todo: localize
         String directions[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"};
-        Log.d(Constants.TRAILBOOK_TAG, "intBearing, " +  ((double)bearingInDegrees % 360) / 45);
         return directions[ (int)Math.round((  ((double)bearingInDegrees % 360) / 45)) ];
     }
 
@@ -104,7 +96,6 @@ public class PreferenceUtilities {
         if (isUSUnitsPreferred(c)){
             triggerDist = (int) Math.round(feetToMeters(triggerDist));
         }
-        Log.d(Constants.TRAILBOOK_TAG, "PreferenceUtilities: note alert distance: "+ triggerDist);
         return triggerDist;
     }
 
@@ -115,8 +106,6 @@ public class PreferenceUtilities {
         }
         String sTriggerDist = prefs.getString("triggerRadiusClose", "100");
         int triggerDist = Integer.valueOf(sTriggerDist);
-
-        Log.d(Constants.TRAILBOOK_TAG, "PreferenceUtilities: note alert distance: "+ triggerDist);
         return triggerDist;
     }
 

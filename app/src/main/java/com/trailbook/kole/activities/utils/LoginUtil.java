@@ -1,9 +1,7 @@
 package com.trailbook.kole.activities.utils;
 
 import android.app.Activity;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.state_objects.Authenticator;
 
 /**
@@ -16,7 +14,6 @@ public class LoginUtil {
     }
 
     public static void authenticate(Activity activity) {
-        Log.d(Constants.TRAILBOOK_TAG, "LoginUtil: getting account");
         Authenticator.getInstance().initializeAuthentication(activity);
         Authenticator.getInstance().pickUserAccount();
     }

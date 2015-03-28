@@ -9,7 +9,6 @@ import android.database.MergeCursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.util.Log;
 
 import com.trailbook.kole.helpers.ApplicationUtils;
 import com.trailbook.kole.helpers.TrailbookSQLLiteHelper;
@@ -17,7 +16,6 @@ import com.trailbook.kole.state_objects.PathManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class KeyWordDAO {
 
@@ -52,7 +50,6 @@ public class KeyWordDAO {
 
     public long insertUpdateKeyWord(KeyWord keyWord) {
         long existingId = getExistingKeywordId(keyWord);
-        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " existing id " + existingId);
         if (existingId >= 0) {
             return updateKeyWord(existingId, keyWord);
         } else {
@@ -63,7 +60,6 @@ public class KeyWordDAO {
     private long updateKeyWord(long existingId, KeyWord keyWord) {
         ContentValues values = createAllColumnsContentValues(keyWord);
 
-        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " updating " + keyWord.keyWord);
         String selection = TrailbookSQLLiteHelper.COLUMN_ID + " = ?";
         String[] selectionArgs = { String.valueOf(keyWord._id) };
 
@@ -78,7 +74,6 @@ public class KeyWordDAO {
 
     private long insertKeyWord(KeyWord keyWord) {
         ContentValues values = createAllColumnsContentValues(keyWord);
-        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " inserting " + keyWord.keyWord);
         long insertId = database.insert(TrailbookSQLLiteHelper.TABLE_KEY_WORDS, null, values);
 
         return insertId;
@@ -100,7 +95,6 @@ public class KeyWordDAO {
                 null, null, orderBy);
         if (cursor != null && cursor.moveToFirst() ) {
             existingId = cursor.getLong(0);
-            Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " existing Key word found : " + keyWord.keyWord + " path= " + keyWord.pathId + " type= " + keyWord.type);
         }
 
         cursor.close();
@@ -117,7 +111,6 @@ public class KeyWordDAO {
     }
 
     public void deleteKeyWord(int type, String pathId, String keyWord) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " Key word deleted : " + keyWord + " path= " + pathId + " type= " + type);
         database.delete(TrailbookSQLLiteHelper.TABLE_KEY_WORDS, TrailbookSQLLiteHelper.COLUMN_PATH_ID
                 + " = " + pathId +
                 " and " + TrailbookSQLLiteHelper.COLUMN_TYPE + " = " + type +
@@ -155,9 +148,6 @@ public class KeyWordDAO {
     }
 
     public Cursor getSuggestions(String search){
-        //logAllKeywords();
-        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + " getting suggestions for " + search);
-
         Cursor suggestedPathsCursor = getPathNameMatches(search);
         Cursor suggestedClimbsCursor = getSearchMatches(search, KeyWord.CLIMB);
         Cursor suggestedCragsCursor = getSearchMatches(search, KeyWord.CRAG);
@@ -244,7 +234,6 @@ public class KeyWordDAO {
     private Cursor getSearchMatches(String search, int type) {
         String[] args = null;
         String climbsSelection = getLikeClause(type);
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " climbsSelection " + climbsSelection);
 
         if(search!=null){
             search = "%" + search + "%";
@@ -278,15 +267,6 @@ public class KeyWordDAO {
             c.moveToNext();
         }
         return c;
-    }
-
-    private void logAllKeywords() {
-        Log.v(Constants.TRAILBOOK_TAG, CLASS_NAME + "Logging key words ");
-        List<KeyWord> words = getAllKeyWords();
-        for (KeyWord word:words) {
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " word " + word.keyWord);
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " type " + word.type);
-        }
     }
 
     private KeyWord cursorToKeyWord(Cursor cursor) {

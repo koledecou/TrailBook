@@ -3,13 +3,11 @@ package com.trailbook.kole.fragments.path_selector;
 
 import android.app.Fragment;
 import android.content.DialogInterface;
-import android.util.Log;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
 import com.trailbook.kole.activities.R;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.fragments.list_content.PathListContent;
 import com.trailbook.kole.helpers.ApplicationUtils;
@@ -60,11 +58,9 @@ public class PathsOnDeviceSelectorFragment extends PathSelectorFragment {
     private void showNoPathsAlert() {
         DialogInterface.OnClickListener clickListenerOK = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog,int id) {
-                Log.d(Constants.TRAILBOOK_TAG, "dismissing dialog");
                 mListener.executeAction(ApplicationUtils.MENU_CONTEXT_DISMISS_ID, null);
             }
         };
-        Log.d(Constants.TRAILBOOK_TAG, "showing no paths alert");
         ApplicationUtils.showAlert(getActivity(), clickListenerOK, getString(R.string.info_no_paths_downloaded_title), getString(R.string.info_no_paths_downloaded_message), getString(R.string.OK), null);
     }
 

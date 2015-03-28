@@ -4,14 +4,12 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Climb;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PointAttachedObject;
 
 import java.util.ArrayList;
@@ -65,8 +63,6 @@ public class FullClimbView extends ClimbView {
         if (pitchDescriptions != null) {
             int pitchNum=1;
             for (String description:pitchDescriptions) {
-                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " adding description for pitch " + pitchNum + " " + description);
-
                 LinearLayout layout = createPitchDescriptionView(pitchNum, description);
 
                 mPitchDescriptionContainer.addView(layout);

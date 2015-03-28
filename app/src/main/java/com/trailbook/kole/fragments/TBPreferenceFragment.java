@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.util.Log;
 
 import com.squareup.otto.Bus;
 import com.trailbook.kole.activities.R;
@@ -116,9 +115,6 @@ public class TBPreferenceFragment extends PreferenceFragment implements Preferen
         if (user != null) {
             Preference savedUserIdDisplayPreference = (Preference) findPreference("SAVED_USER_ID_DISPLAY");
             savedUserIdDisplayPreference.setOnPreferenceClickListener(this);
-            String userId = user.userId;
-            Log.d(Constants.TRAILBOOK_TAG, "TBPreferenceFragment: setting user " + userId);
-            //savedUserIdDisplayPreference.setIcon(R.drawable.ic_google_plus);
             savedUserIdDisplayPreference.setSummary(
                     getUserNameForDisplay(user) +
                             System.getProperty("line.separator") +

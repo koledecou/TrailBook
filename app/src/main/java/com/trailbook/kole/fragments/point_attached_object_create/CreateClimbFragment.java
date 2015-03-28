@@ -5,7 +5,6 @@ import android.app.FragmentTransaction;
 import android.app.Service;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,6 @@ import android.widget.Spinner;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Attachment;
 import com.trailbook.kole.data.Climb;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Grade;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.state_objects.PathManager;
@@ -113,11 +111,9 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     @Override
     public void onClick(View view) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": view clicked: " + view.getId());
         hideSoftKeyboard();
         if (view.getId() == R.id.cc_b_add_pitch_descriptions) {
             ArrayList<String> newPitchDescriptions = populatePitchDescriptionArray(mPitchDescriptions);
-            Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " new pitch descriptions: " + newPitchDescriptions);
             if (newPitchDescriptions!=null) {
                 showEditPitchDescriptionDialog(newPitchDescriptions);
             }
@@ -129,7 +125,6 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     private ArrayList<String> populatePitchDescriptionArray(ArrayList<String> existingDescriptions) {
         ArrayList<String> newDescriptionArray = new ArrayList<String>();
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + " edit text picth count contents:" + mEditTextPitchCount.getText());
         if (mEditTextPitchCount.getText() != null && mEditTextPitchCount.getText().toString().length()>0) {
             String pitchCount = mEditTextPitchCount.getText().toString();
             int totalPitchCount = Integer.parseInt(pitchCount);
@@ -176,7 +171,6 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     @Override
     public void restoreInstance(Bundle savedInstanceState) {
-        Log.d(Constants.TRAILBOOK_TAG, "restoring climb state");
         super.restoreInstance(savedInstanceState);
         if (savedInstanceState != null) {
             mEditTextGrade.setText(savedInstanceState.getString(GRADE));
@@ -206,7 +200,6 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
             int pitchCount = Integer.parseInt(mEditTextPitchCount.getText().toString());
             newClimb.setPitchCount(pitchCount);
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "exception getting pitch count ", e);
         }
 
         return newClimb;
@@ -226,7 +219,6 @@ public class CreateClimbFragment extends CreatePointAttachedObjectFragment imple
 
     @Override
     public void onAddPitchDescriptions(ArrayList<String> pitchDescriptions) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASSNAME + ": got pitch descriptions:" + pitchDescriptions);
         mPitchDescriptions = pitchDescriptions;
     }
 }

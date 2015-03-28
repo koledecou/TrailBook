@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
@@ -125,7 +124,6 @@ public class TrailbookFileUtilities {
 
     public static File getInternalImageFile(String imageFileName) {
         String fullDirectory = TrailBookState.getInstance().getFilesDir().getAbsolutePath() + File.separator + Constants.notesDir + File.separator  + Constants.imageDir;
-        Log.d(Constants.TRAILBOOK_TAG, "internal image dir:" + fullDirectory);
         return new File(fullDirectory, imageFileName);
     }
 
@@ -185,10 +183,8 @@ public class TrailbookFileUtilities {
         File dir = getInternalImageFileDir();
         File imageFile = new File(dir, fileName);
         try {
-            Log.d(Constants.TRAILBOOK_TAG, "TrailBookUtilities: saving image " +imageFile);
             FileUtils.writeByteArrayToFile(imageFile, TrailbookFileUtilities.getBytes(bitmap));
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "exception in saving image ", e);
             e.printStackTrace();
         }
     }
@@ -204,7 +200,6 @@ public class TrailbookFileUtilities {
         try {
             uploadPicturesURI = new URI(uploadPicturesURL);
         } catch (URISyntaxException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "error getting URI", e);
         }
 
         return uploadPicturesURL;
@@ -221,7 +216,6 @@ public class TrailbookFileUtilities {
                 return null;
             }
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "error getting multipart entity", e);
             return null;
         }
     }
@@ -297,7 +291,6 @@ public class TrailbookFileUtilities {
 
         String tempPathZipFileName = p.summary.getName() + ".tbz";
         String tempPathZipFileFullName =  getExternalMailTempDirectory() + File.separator + tempPathZipFileName;
-        Log.d(Constants.TRAILBOOK_TAG, "zipping to " + tempPathZipFileFullName);
         Zipper zipper = new Zipper(tempPathDirectory, tempPathZipFileFullName);
         zipper.zipIt();
         //zipFileAtPath(tempPathDirectory, tempPathZipFileFullName);
@@ -310,7 +303,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.forceMkdir(new File(targetDir));
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error creating temp dir", e);
         }
 
         copyPathDirectory(pathId, new File(targetDir));
@@ -332,13 +324,10 @@ public class TrailbookFileUtilities {
         if (fileNames != null && fileNames.size()>0) {
             for (String fileName : fileNames) {
                 if (fileName != null && fileName.length() > 0) {
-                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookFileUtilities copying image file: " + fileName);
                     String fullFileName = getInternalImageFileDir() + File.separator + fileName;
-                    Log.d(Constants.TRAILBOOK_TAG, "TrailbookFileUtilities copying image file full name: " + fileName);
                     try {
                         FileUtils.copyFileToDirectory(new File(fullFileName), targetDir);
                     } catch (IOException e) {
-                        Log.e(Constants.TRAILBOOK_TAG, "Error copyiing image file ", e);
                     }
                 }
             }
@@ -350,7 +339,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.copyFileToDirectory(sourceFile, targetDir);
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error copyiing path dir ", e);
         }
     }
 
@@ -366,7 +354,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.copyDirectory(sourceDir, targetDir);
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error copyiing path dir ", e);
         }
     }
 
@@ -375,7 +362,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.copyDirectory(sourceDir, targetDir);
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error copyiing path dir ", e);
         }
     }
 
@@ -400,11 +386,8 @@ public class TrailbookFileUtilities {
         if (segmentDirectories != null && segmentDirectories.size()>0) {
             for (File segmentDirectory:segmentDirectories) {
                 try {
-                    Log.d(Constants.TRAILBOOK_TAG, "copying segment dir " + segmentDirectory.getAbsolutePath() + " to " + getInternalSegmentDirectory());
                     FileUtils.copyDirectoryToDirectory(segmentDirectory, new File(getInternalSegmentDirectory()));
-                    //FileUtils.copyDirectory(segmentDirectory, new File(getInternalSegmentDirectory()));
                 } catch (IOException e) {
-                    Log.e(Constants.TRAILBOOK_TAG, "Error copying segment to dir", e);
                 }
             }
         }
@@ -416,7 +399,6 @@ public class TrailbookFileUtilities {
                 try {
                     FileUtils.copyFileToDirectory(imageFile, getInternalImageFileDir());
                 } catch (IOException e) {
-                    Log.e(Constants.TRAILBOOK_TAG, "Error copying image to dir", e);
                 }
             }
         }
@@ -428,7 +410,6 @@ public class TrailbookFileUtilities {
                 try {
                     FileUtils.copyFileToDirectory(noteFile, new File(getInternalNoteDirectory()));
                 } catch (IOException e) {
-                    Log.e(Constants.TRAILBOOK_TAG, "Error copying note to dir", e);
                 }
             }
         }
@@ -439,7 +420,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.copyFileToDirectory(summaryFile, new File(getInternalPathDirectory(pathId)));
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error copying summary to path dir", e);
         }
     }
 
@@ -447,7 +427,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.copyFileToDirectory(summaryFile, new File(getInternalCacheDirectory()));
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error copying summary to cache dir", e);
         }
     }
 
@@ -456,7 +435,6 @@ public class TrailbookFileUtilities {
         try {
             FileUtils.forceMkdir(new File(pathDir));
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error making path dir ", e);
         }
     }
 

@@ -1,9 +1,5 @@
 package com.trailbook.kole.fragments.list_content;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,13 +51,11 @@ public class PathListContent {
         @Override
         public int compareTo(PathSummaryItem another) {
             int result = this.pathName.compareToIgnoreCase(another.pathName);
-            Log.d(Constants.TRAILBOOK_TAG, " compared " + this.pathName + " to " + another.pathName + ": " + result);
             return result;
         }
     }
 
     public static void sort(){
         Collections.sort(ITEMS);
-        Log.d(Constants.TRAILBOOK_TAG, "Sorted. ");
     }
 }

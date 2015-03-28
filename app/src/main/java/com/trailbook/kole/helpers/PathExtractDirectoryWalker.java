@@ -1,9 +1,5 @@
 package com.trailbook.kole.helpers;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-
 import org.apache.commons.io.DirectoryWalker;
 
 import java.io.File;
@@ -49,17 +45,12 @@ public class PathExtractDirectoryWalker extends DirectoryWalker {
     protected void handleFile(File file, int depth, Collection results) throws IOException {
         String name = file.getName();
         String parent = file.getParentFile().getName();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": file name is " + file.getName());
         if (name != null && name.contains("_summary")) {
             pathId = getPathIdFromSummaryFile(name);
             summaryFile = file;
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": adding summaryFile " + summaryFile);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": adding pathId " + pathId);
         } else if (parent != null && parent.contains("notes")) {
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": adding noteFiles " + name);
             noteFiles.add(file);
         } else if (parent != null && parent.contains("images")) {
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": adding imageFiles " + name);
             imageFiles.add(file);
         }
     }
@@ -79,7 +70,6 @@ public class PathExtractDirectoryWalker extends DirectoryWalker {
         String parent = directory.getParentFile().getName();
         if (parent != null && parent.contains("segments")) {
             segmentDirectories.add(directory);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": adding segment dir " + directory);
         }
         return super.handleDirectory(directory, depth, results);
     }
@@ -91,7 +81,6 @@ public class PathExtractDirectoryWalker extends DirectoryWalker {
             walk(rootPathDir, results);
         }
         catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Problem finding paths!", e);
         }
     }
 }

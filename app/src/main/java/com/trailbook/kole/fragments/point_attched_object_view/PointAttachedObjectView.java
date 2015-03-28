@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -16,7 +15,6 @@ import com.squareup.otto.Subscribe;
 import com.squareup.picasso.Picasso;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Attachment;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.events.LocationChangedEvent;
 import com.trailbook.kole.helpers.PreferenceUtilities;
@@ -77,7 +75,6 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
     }
 
     public void setPaoId(String paoId) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": setPaoId: " + paoId);
         mPaoId = paoId;
         mPaObject = PathManager.getInstance().getPointAttachedObject(paoId);
         if (mPaObject == null)
@@ -90,13 +87,11 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
     public void populateFieldsFromObject(PointAttachedObject pao) {
         Attachment a = pao.getAttachment();
         mImageFileNames = a.getImageFileNames();
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " image file names " + mImageFileNames);
         if (mImageFileNames != null && mImageFileNames.size()>0) {
             mCurrentImageIndex = 0;
             mImageView.setVisibility(VISIBLE);
             loadCurrentImage();
         } else {
-            Log.d(Constants.TRAILBOOK_TAG, "no images");
             mImageView.setVisibility(GONE);
         }
         if (mNextArrowView != null && mPreviousArrowView != null)
@@ -104,13 +99,11 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
     }
 
     private void loadCurrentImage() {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": loading image :" + mImageFileNames.get(mCurrentImageIndex));
         Picasso.with(getContext()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileNames.get(mCurrentImageIndex))).into(mImageView);
     }
 
     @Subscribe
     public void onLocationChangedEvent(LocationChangedEvent event){
-        Log.d(Constants.TRAILBOOK_TAG, "NoteView: location changed event recieved," + event.getLocation());
         mCurrentLocation = event.getLocation();
         setRelativeLocationString();
     }
@@ -144,9 +137,6 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
         }
 
         if (noteLocation != null && mCurrentLocation != null) {
-            Log.d(Constants.TRAILBOOK_TAG, "NoteView: note location:" + noteLocation);
-            Log.d(Constants.TRAILBOOK_TAG, "NoteView: current location: " + mCurrentLocation);
-
             Location.distanceBetween(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), noteLocation.latitude, noteLocation.longitude, results);
             //String relativeLocationMessage = getContext().getResources().getString(R.string.relative_location_message);
             String distAndBearingString  = PreferenceUtilities.getDistanceAndBearingString(getContext(), results[0], results[1]);
@@ -158,7 +148,6 @@ public class PointAttachedObjectView extends LinearLayout implements View.OnClic
     }
 
     private void showOrHideSliderArrows(ArrayList<String> imageFileNames) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": ImageFileNames: " + imageFileNames);
         if (imageFileNames == null || imageFileNames.size() < 2) {
             mNextArrowView.setVisibility(INVISIBLE);
             mPreviousArrowView.setVisibility(INVISIBLE);

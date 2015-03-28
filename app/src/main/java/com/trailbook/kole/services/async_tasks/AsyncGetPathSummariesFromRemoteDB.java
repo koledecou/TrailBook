@@ -1,9 +1,7 @@
 package com.trailbook.kole.services.async_tasks;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.events.PathSummariesReceivedFromCloudEvent;
 import com.trailbook.kole.services.database.TrailbookRemoteDatabase;
@@ -29,7 +27,6 @@ public class AsyncGetPathSummariesFromRemoteDB extends AsyncTask<String, Void, A
             ArrayList<PathSummary> cachedPathsNeedingUpdate = getOutOfDateCachedPaths(pathsInCloudCache);
             allPaths.addAll(cachedPathsNeedingUpdate);
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "AsyncGetPathSummaries: exception getting path summaries.  DB may not be available", e);
         }
         return allPaths;
     }
@@ -50,7 +47,6 @@ public class AsyncGetPathSummariesFromRemoteDB extends AsyncTask<String, Void, A
     @Override
     protected void onPostExecute(ArrayList<PathSummary> paths) {
         if (paths != null) {
-            Log.d(Constants.TRAILBOOK_TAG, "AsyncGetPathSummaries: got " + paths.size() + " summaries.");
             BusProvider.getInstance().post(new PathSummariesReceivedFromCloudEvent(paths));
         }
 

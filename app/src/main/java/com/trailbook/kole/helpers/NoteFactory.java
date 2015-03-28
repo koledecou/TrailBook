@@ -1,13 +1,11 @@
 package com.trailbook.kole.helpers;
 
 import android.app.Fragment;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Attachment;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.fragments.point_attached_object_create.CreateClimbFragment;
 import com.trailbook.kole.fragments.point_attached_object_create.CreateNoteFragment;
@@ -30,7 +28,6 @@ public class NoteFactory {
     private static final String DEFAULT_SHORT_NAME = "Note";
 
     static {
-        Log.d(Constants.TRAILBOOK_TAG, "NoteFactory: initializing claaNameMap");
         classNameMap = new DualHashBidiMap<String, String>();
         classNameMap.put("Note", "com.trailbook.kole.data.Note");
         classNameMap.put("Climb", "com.trailbook.kole.data.Climb");
@@ -69,14 +66,12 @@ public class NoteFactory {
     }
 
     public static PointAttachedObject getPointAttachedObjectFromJSONString(String jsonString) {
-        Log.v(Constants.TRAILBOOK_TAG, "NoteFactory: making pao from " + jsonString);
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(Attachment.class, new InterfaceAdapter<Attachment>());
         gsonBuilder.setPrettyPrinting();
         Gson gson =gsonBuilder.create();
 
         PointAttachedObject pao = gson.fromJson(jsonString,PointAttachedObject.class);
-        Log.v(Constants.TRAILBOOK_TAG, "NoteFactory: pao is " + pao);
         return pao;
     }
 
@@ -101,7 +96,6 @@ public class NoteFactory {
     }
 
     public static PointAttachedObjectView getFullScreenView(PointAttachedObject paObject) {
-        Log.d(Constants.TRAILBOOK_TAG, "NoteFactory: getting full screen view");
         if (paObject.getAttachment().getType().equals(NOTE)) {
             PointAttachedObjectView v = new FullNoteView(TrailBookState.getInstance());
             v.setPaoId(paObject.getId());

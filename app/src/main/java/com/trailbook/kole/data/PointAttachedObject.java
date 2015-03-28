@@ -1,7 +1,6 @@
 package com.trailbook.kole.data;
 
 import android.location.Location;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.data.geo.GeoPoint;
@@ -17,7 +16,6 @@ public class PointAttachedObject {
         this.point.setCoordinates(new double[]{c.longitude, c.latitude});
         this.attachment = attachment;
         this._id = id;
-        Log.d(Constants.TRAILBOOK_TAG, "PAO: Creating attachment with type " +attachment.getType());
     }
 
     public void setAttachment(Attachment a) {

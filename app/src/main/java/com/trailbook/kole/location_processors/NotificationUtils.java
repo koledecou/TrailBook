@@ -4,13 +4,11 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.TrailBookActivity;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PathSummary;
 import com.trailbook.kole.state_objects.PathManager;
 
@@ -48,7 +46,7 @@ public class NotificationUtils {
         notificationRemoteView.setTextViewText(R.id.fn_text_content, content);
 
         return new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.trail_book_logo)
+                .setSmallIcon(R.drawable.notification)
                 .setContent(notificationRemoteView)
                 .setContentIntent(getListeningNotificationPendingIntent(context))
                 .setOngoing(true);
@@ -69,7 +67,7 @@ public class NotificationUtils {
         notificationRemoteView.setTextViewText(R.id.fn_text_content, content);
 
         return new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.trail_book_logo)
+                .setSmallIcon(R.drawable.notification)
                 .setContent(notificationRemoteView)
                 .setContentIntent(getListeningNotificationPendingIntent(context));
     }
@@ -118,15 +116,14 @@ public class NotificationUtils {
         //the last 9 digits should be safe to cast as an int
         try {
             String objectIdTrunc;
-            if (objectID.length() > 9)
+            if (objectID.length() > 9) {
                 objectIdTrunc = objectID.substring(objectID.length() - 9, objectID.length());
-            else
+            } else {
                 objectIdTrunc = objectID.replace('-', '0');
+            }
 
-            Log.d(Constants.TRAILBOOK_TAG, "PathFollowerLocationProcessor: notification id for note " + objectID + ":" + objectIdTrunc);
             id = Integer.parseInt(objectIdTrunc);
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "error getting note id.", e);
             id = 10;
         }
         return id;

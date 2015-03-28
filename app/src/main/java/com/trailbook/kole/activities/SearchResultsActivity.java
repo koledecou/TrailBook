@@ -5,7 +5,6 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -16,7 +15,6 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.KeyWord;
 import com.trailbook.kole.data.KeyWordDAO;
 import com.trailbook.kole.data.PathSummary;
@@ -44,7 +42,6 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + " creating context menu");
         if (v.getId() == R.id.lv_results) {
             AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
             KeyWord keyWord = (KeyWord)mAdapter.getItem(info.position);
@@ -56,28 +53,22 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " clicked on item ");
-
         ContextMenu.ContextMenuInfo menuInfo = item.getMenuInfo();
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         KeyWord keyWord = (KeyWord)mAdapter.getItem(info.position);
         PathSummary summary = PathManager.getInstance().getPathSummary(keyWord.pathId);
 
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " need to launch main activity for action " + summary.getName() + " " + item.getItemId());
         launchMapForPath(summary.getId());
         return true;
     }
 
     private void handleIntent(Intent intent) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " action " + intent.getAction());
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " searching for " + query);
             ArrayList<KeyWord> results = getSearchResults(query);
             displayResults(results);
         } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             String pathId = intent.getStringExtra(SearchManager.EXTRA_DATA_KEY);
-            Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " path id is " + pathId);
             launchMapForPath(pathId);
         }
     }
@@ -122,7 +113,6 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
         try {
             results = keyWordDAO.getKeyWordsMatching(search);
         }catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, CLASS_NAME + " exception getting suggestion", e);
         } finally {
             keyWordDAO.close();
         }
@@ -131,10 +121,8 @@ public class SearchResultsActivity extends Activity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " clicked " + position);
         KeyWord keyWord = (KeyWord)mAdapter.getItem(position);
         PathSummary summary = PathManager.getInstance().getPathSummary(keyWord.pathId);
-        Log.d(Constants.TRAILBOOK_TAG, CLASS_NAME + " need to launch main activity for action " + summary.getName());
         launchMapForPath(summary.getId());
     }
 

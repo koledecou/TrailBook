@@ -2,12 +2,10 @@ package com.trailbook.kole.activities;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.fragments.point_attched_object_view.PointAttachedObjectView;
 import com.trailbook.kole.helpers.NoteFactory;
@@ -23,14 +21,12 @@ public class ApproachingObjectNotificationReceiverActivity extends Activity {
         Bundle extras = getIntent().getExtras();
         if(extras !=null) {
             mId = extras.getString(PathFollowerLocationProcessor.EXTRA_OBJECT_ID);
-            Log.d(Constants.TRAILBOOK_TAG, "NoteNotificationReceiverActivity: NoteId=" + mId);
         }
         PointAttachedObject paObject = PathManager.getInstance().getPointAttachedObject(mId);
 //        setContentView(NoteFactory.getFullScreenFragmentLayoutId(paObject.getAttachment().getType()));
         setContentView(R.layout.fragment_full_pao);
 
         LinearLayout layout = (LinearLayout)findViewById(R.id.full_pao_layout);
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": inflating R.layout.view_note_full");
         PointAttachedObjectView view = NoteFactory.getFullScreenView(paObject);
         //view.setPaoId(mId);
         layout.addView(view);

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -84,21 +83,17 @@ public class BackgroundLocationService extends Service implements
             isPauseCommand = intent.getBooleanExtra(NotificationUtils.EXTRA_PAUSE, false);
         }
 
-        Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: " + (isStopCommand ? "Stop" : "Start") + " Command");
         if (isStopCommand || isPauseCommand) {
             stopSelf();
             return START_NOT_STICKY;
         }
 
         if (!servicesAvailable || mLocationClient.isConnected() || mInProgress) {
-            Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: Already connected.");
             return START_STICKY;
         }
 
         setUpLocationClientIfNeeded();
         if (!mLocationClient.isConnected() || !mLocationClient.isConnecting() && !mInProgress) {
-            Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: Connecting to location client");
-//            appendLog(DateFormat.getDateTimeInstance().format(new Date()) + ": Started", Constants.LOG_FILE);
             mInProgress = true;
             mLocationClient.connect();
         }
@@ -128,8 +123,6 @@ public class BackgroundLocationService extends Service implements
     @Override
     public void onDestroy() {
         disconnectClient();
-
-        Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: Stopped");
         super.onDestroy();
     }
 
@@ -142,7 +135,6 @@ public class BackgroundLocationService extends Service implements
     @Override
     public void onConnected(Bundle bundle) {
         PendingIntent locationIntent = getLocationReceiverPendingIntent();
-        Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: registering th location reciever");
         mLocationClient.requestLocationUpdates(mLocationRequest, locationIntent);
     }
 
@@ -164,14 +156,12 @@ public class BackgroundLocationService extends Service implements
         mInProgress = false;
         if (mLocationClient != null && mLocationClient.isConnected()) {
             PendingIntent locationIntent = getLocationReceiverPendingIntent();
-            Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: removing location updates.");
             mLocationClient.removeLocationUpdates(locationIntent);
         }
 
         if (servicesAvailable && mLocationClient != null) {
             // Destroy the current location client
             if (mLocationClient.isConnected()) {
-                Log.d(Constants.TRAILBOOK_TAG, "BackgroundLocationService: client disconnected.");
                 mLocationClient.disconnect();
             }
 

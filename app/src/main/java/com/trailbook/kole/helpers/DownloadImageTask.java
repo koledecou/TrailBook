@@ -4,10 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-import com.trailbook.kole.helpers.TrailbookFileUtilities;
 
 import org.apache.commons.io.FileUtils;
 
@@ -29,7 +25,6 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
             InputStream in = new java.net.URL(urldisplay).openStream();
             mIcon11 = BitmapFactory.decodeStream(in);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, e.getMessage());
             e.printStackTrace();
         }
         return mIcon11;
@@ -37,11 +32,9 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
 
     protected void onPostExecute(Bitmap bitmap) {
         try {
-            Log.d(Constants.TRAILBOOK_TAG, "Async download saving image: " + mDeviceFile);
             if (bitmap != null)
                 FileUtils.writeByteArrayToFile(mDeviceFile, TrailbookFileUtilities.getBytes(bitmap));
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG,"exception in async download. ", e);
         }
     }
 }

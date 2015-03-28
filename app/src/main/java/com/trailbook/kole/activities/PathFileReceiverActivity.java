@@ -7,9 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 
 import org.apache.commons.io.FileUtils;
@@ -48,9 +46,7 @@ public class PathFileReceiverActivity extends Activity {
         try {
             FileUtils.deleteDirectory(new File(tempDirectory));
             FileUtils.forceMkdir(new File(tempDirectory));
-            Log.d(Constants.TRAILBOOK_TAG, "error deleting temp directory");
         } catch (IOException e) {
-            Log.e(Constants.TRAILBOOK_TAG, "Error creating temp dir", e);
         }
 
     }
@@ -63,22 +59,16 @@ public class PathFileReceiverActivity extends Activity {
             if (scheme.compareTo(ContentResolver.SCHEME_CONTENT) == 0) {
                 Uri uri = intent.getData();
                 String name = getContentName(resolver, uri);
-
-                Log.d(Constants.TRAILBOOK_TAG, "Content intent detected: " + action + " : " + intent.getDataString() + " : " + intent.getType() + " : " + name);
                 try {
                     input = resolver.openInputStream(uri);
                 } catch (FileNotFoundException e) {
-                    Log.e(Constants.TRAILBOOK_TAG, "Error recieving path:", e);
                 }
             } else if (scheme.compareTo(ContentResolver.SCHEME_FILE) == 0) {
                 Uri uri = intent.getData();
                 String name = uri.getLastPathSegment();
-
-                Log.d(Constants.TRAILBOOK_TAG, "File intent detected: " + action + " : " + intent.getDataString() + " : " + intent.getType() + " : " + name);
                 try {
                     input = resolver.openInputStream(uri);
                 } catch (FileNotFoundException e) {
-                    Log.e(Constants.TRAILBOOK_TAG, "Error recieving path:", e);
                 }
             } else if (scheme.compareTo("http") == 0) {
                 // TODO Import from HTTP!
@@ -116,8 +106,6 @@ public class PathFileReceiverActivity extends Activity {
             out.close();
         }
         catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "WriteInputStreamToTempFile exception: " + e.getMessage());
         }
-        Log.d(Constants.TRAILBOOK_TAG, sb.toString());
     }
 }

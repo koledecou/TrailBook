@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -77,27 +76,22 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
         outState.putString(NOTE_ID, mNoteId);
         if (mLastPictureUri != null) {
             outState.putString(TEMP_IMAGE_FILE_URI, mLastPictureUri.toString());
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving uri:" + mLastPictureUri.toString());
         }
         if (mImageFileNames != null) {
             outState.putStringArrayList(IMAGE_FILE_NAME, mImageFileNames);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "saving image file names:" + mImageFileNames);
         }
     }
 
     protected void restoreInstance(Bundle savedInstanceState) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() +"restoring note state");
         if (savedInstanceState != null) {
             mNoteId = savedInstanceState.getString(NOTE_ID);
 
             String tempImageFileUri = savedInstanceState.getString(TEMP_IMAGE_FILE_URI);
             if (tempImageFileUri != null) {
-                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": getting saved Uri:" + tempImageFileUri);
                 mLastPictureUri = Uri.parse(tempImageFileUri);
             }
 
             mImageFileNames = savedInstanceState.getStringArrayList(IMAGE_FILE_NAME);
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got saved image " + mImageFileNames);
             restoreImageView();
         }
     }
@@ -148,7 +142,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
         if (mImageFileNames != null && mImageFileNames.size()>0) {
             File imageFileDir = TrailbookFileUtilities.getInternalImageFileDir();
             Uri imageToDisplay = Uri.parse(imageFileDir + File.separator + mImageFileNames.get(mImageFileNames.size()-1));
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "CreateNoteFragment: image uri is:" + mLastPictureUri);
             mImageView.setImageURI(imageToDisplay);
             showOrHideSliderArrows(mImageFileNames);
             showOrHideImageContainer(mImageFileNames);
@@ -226,7 +219,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String fileName = getTemporaryFilenameFromTimestamp();
         mLastPictureUri = TrailbookFileUtilities.getOutputMediaFileUri(fileName); // create a file to save the image
-        Log.d(Constants.TRAILBOOK_TAG, "picture uri: " + mLastPictureUri);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, mLastPictureUri); // set the image file name
         return cameraIntent;
     }
@@ -234,7 +226,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
     private String getTemporaryFilenameFromTimestamp() {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String fileName = "image_" + timeStamp + ".jpg";
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": temp file name:" + fileName);
         return fileName;
     }
 
@@ -246,14 +237,12 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
         if (requestCode == CAMERA_PIC_REQUEST) {
             if (resultCode == getActivity().RESULT_OK) {
                 try {
-                    Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "picture uri after capture:" + mLastPictureUri);
                     if (mLastPictureUri != null) {
                         imageUri = mLastPictureUri;
                     } else if (data != null) {
                         imageUri = data.getData();
                     }
                 } catch (Exception e) {
-                    Log.e(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "Image capture failed.", e);
                     Toast.makeText(getActivity(), getClass().getSimpleName() + "Image Capture Failed", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -262,7 +251,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
                 try {
                     //todo: refactor
                     String fileNameFullBitmap = imageUri.getPath();
-                    Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": fileNameFullBitmap: "+ fileNameFullBitmap);
                     bitmap = ImageUtil.rotateBitmapFromCamera(fileNameFullBitmap, Constants.IMAGE_CAPTURE_WIDTH);
                     File tempFile = new File(imageUri.getPath());
                     FileUtils.forceDelete(tempFile);
@@ -273,16 +261,13 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
                     mImageView.setImageBitmap(bitmap);
                     mImageView.invalidate();
                 } catch (Exception e) {
-                    Log.e(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + "Image capture failed.", e);
                     Toast.makeText(getActivity(), "Image Capture Failed - can't create bitmap", Toast.LENGTH_LONG).show();
                     return;
                 }
             } else if (resultCode == getActivity().RESULT_CANCELED) {
                 // User cancelled the image capture
-                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": canceled");
             } else {
                 // Image capture failed
-                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": failed");
             }
         } else if (requestCode == GALLERY_PIC_REQUEST) {
             if (resultCode == getActivity().RESULT_OK) {
@@ -297,7 +282,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
                     mImageView.setImageBitmap(bitmap);
                     mImageView.invalidate();
                 } catch (Exception e) {
-                    Log.e(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": exception getting gallery picture", e);
                 }
             }
         }
@@ -333,7 +317,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
 
     private void loadCurrentImage() {
         if (mImageFileNames != null && mImageFileNames.size() > 0) {
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": loading image :" + mImageFileNames.get(mCurrentImageIndex));
             mImageView.setVisibility(View.VISIBLE);
             Picasso.with(getActivity()).load(TrailbookFileUtilities.getInternalImageFile(mImageFileNames.get(mCurrentImageIndex))).into(mImageView);
         } else {
@@ -353,8 +336,6 @@ public abstract class CreatePointAttachedObjectFragment extends Fragment impleme
     }
 
     private void showOrHideSliderArrows(ArrayList<String> imageFileNames) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": ImageFileNames: " + imageFileNames);
-
         if (imageFileNames == null || imageFileNames.size() < 2) {
             mNextArrowView.setVisibility(View.INVISIBLE);
             mPreviousArrowView.setVisibility(View.INVISIBLE);

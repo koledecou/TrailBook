@@ -36,15 +36,6 @@ public class Note implements Attachment {
 
     @Override
     public ArrayList<String> getImageFileNames() {
-        //todo: remove
-/*        if (imageFileName != null) {
-            Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": legacy image file not null.  adding " + imageFileName);
-            if (imageFileNames.size() == 0) {
-                imageFileNames.add(imageFileName);
-            }
-
-        }*/
-
         if (imageFileNames.size()>0)
             return imageFileNames;
         else

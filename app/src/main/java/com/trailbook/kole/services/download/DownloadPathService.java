@@ -4,9 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
@@ -44,19 +42,15 @@ public class DownloadPathService extends IntentService {
         Path pathContainer = null;
         try {
             mPathIds = intent.getStringArrayListExtra(PATH_ID_KEY);
-            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: downloading path " + mPathIds);
             TrailbookRemoteDatabase db = TrailbookRemoteDatabase.getInstance();
             for (String pathId:mPathIds) {
                 pathContainer = db.getPath(pathId);
                 PathManager.getInstance().onPathReceived(pathContainer);
                 getImages(pathContainer);
-                Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: sending completed path broadcast.");
                 sendCompletedPathBroadcast(pathId);
             }
-            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: sending completed broadcast.");
             sendCompletedBroadcast();
         } catch (Exception e) {
-            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: exception getting path summaries.  DB may not be available or there may be a problem with data", e);
             sendFailedBroadcast();
         }
 
@@ -76,11 +70,7 @@ public class DownloadPathService extends IntentService {
 
     private void startGetImage(String imageFileName) {
         File deviceImageFile = TrailbookFileUtilities.getInternalImageFile(imageFileName);
-        Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: downloading to: " + deviceImageFile);
-
         String webServerImageFileName = TrailbookFileUtilities.getWebServerImageDir() + "/" + imageFileName;
-        Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService: webserver image file name: " + webServerImageFileName);
-
         Bitmap bitmap = getBitmapFromUrl(webServerImageFileName);
         if (bitmap != null)
             writeBitmapToFile(bitmap, deviceImageFile);
@@ -95,18 +85,15 @@ public class DownloadPathService extends IntentService {
             InputStream in = new java.net.URL(webServerImageFileName).openStream();
             bitmap = BitmapFactory.decodeStream(in);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, "DownloadPathService: exception getting remote image.", e);
         }
         return bitmap;
     }
 
     private void writeBitmapToFile(Bitmap bitmap, File file) {
         try {
-            Log.d(Constants.TRAILBOOK_TAG, "DownloadPathService saving image: " + file);
             if (bitmap != null)
                 FileUtils.writeByteArrayToFile(file, TrailbookFileUtilities.getBytes(bitmap));
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG,"exception in DownloadPathService. ", e);
         }
     }
 
@@ -117,8 +104,6 @@ public class DownloadPathService extends IntentService {
             InputStream in = new java.net.URL(urldisplay).openStream();
             mIcon11 = BitmapFactory.decodeStream(in);
         } catch (Exception e) {
-            Log.e(Constants.TRAILBOOK_TAG, e.getMessage());
-            e.printStackTrace();
         }
         return mIcon11;
     }

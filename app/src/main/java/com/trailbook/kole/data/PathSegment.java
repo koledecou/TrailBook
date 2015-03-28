@@ -1,7 +1,5 @@
 package com.trailbook.kole.data;
 
-import android.util.Log;
-
 import com.google.android.gms.maps.model.LatLng;
 import com.trailbook.kole.data.geo.GeoLineString;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
@@ -28,9 +26,6 @@ public class PathSegment {
         }else{
             LatLng last = points.getLast();
             float delta = TrailbookPathUtilities.getDistanceInMeters(last, newPoint);
-            if (delta > 200) {
-                Log.d("trailbook", "segmentId: " + _id + " dist: " + String.valueOf(delta) + " index: " + points.size());
-            }
             if (delta>Constants.MIN_DISTANCE_BETWEEN_POINTS && delta < Constants.MAX_DISTANCE_BETWEEN_POINTS)
                 points.add(newPoint);
         }

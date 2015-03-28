@@ -1,9 +1,7 @@
 package com.trailbook.kole.services.async_tasks;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.TrailBookComment;
 import com.trailbook.kole.events.PathCommentsReceivedFromCloudEvent;
 import com.trailbook.kole.services.database.TrailbookRemoteDatabase;
@@ -24,7 +22,6 @@ public class AsyncGetPathCommentsFromRemoteDB extends AsyncTask<String, Void, Ar
                 TrailbookRemoteDatabase db = TrailbookRemoteDatabase.getInstance();
                 comments = db.getCommentsForPath(pathIds[0]);
             } catch (Exception e) {
-                Log.d(Constants.TRAILBOOK_TAG, "AsyncGetPathCommentsFromRemoteDB: exception getting comments.  DB may not be available", e);
             }
         }
         return comments;
@@ -33,7 +30,6 @@ public class AsyncGetPathCommentsFromRemoteDB extends AsyncTask<String, Void, Ar
     @Override
     protected void onPostExecute(ArrayList<TrailBookComment> comments) {
         if (comments != null) {
-            Log.d(Constants.TRAILBOOK_TAG, "AsyncGetPathSummaries: got " + comments.size() + " summaries.");
             BusProvider.getInstance().post(new PathCommentsReceivedFromCloudEvent(comments));
         }
 

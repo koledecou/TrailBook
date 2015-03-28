@@ -1,9 +1,5 @@
 package com.trailbook.kole.helpers;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -52,8 +48,6 @@ public class Unzipper
                 String fileName = ze.getName();
                 File newFile = new File(mOutputFolder + File.separator + fileName);
 
-                Log.d(Constants.TRAILBOOK_TAG, "file unzip : " + newFile.getAbsoluteFile());
-
                 //create all non exists folders
                 //else you will hit FileNotFoundException for compressed folder
                 new File(newFile.getParent()).mkdirs();
@@ -71,9 +65,6 @@ public class Unzipper
 
             zis.closeEntry();
             zis.close();
-
-            Log.d(Constants.TRAILBOOK_TAG, "done unzipping");
-
         }catch(IOException ex){
             ex.printStackTrace();
         }

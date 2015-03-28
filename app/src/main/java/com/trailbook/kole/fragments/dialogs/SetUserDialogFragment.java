@@ -3,7 +3,6 @@ package com.trailbook.kole.fragments.dialogs;
 
 import android.app.DialogFragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,6 @@ import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.activities.utils.LoginUtil;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.User;
 import com.trailbook.kole.events.UserUpdatedEvent;
 import com.trailbook.kole.state_objects.BusProvider;
@@ -110,14 +108,12 @@ public class SetUserDialogFragment extends DialogFragment implements View.OnClic
 
     @Subscribe
     public void onUserUpdatedEvent(UserUpdatedEvent event) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ":got user updated event " + event.getUser().userId);
         mUser = event.getUser();
         setCurrentUserIdDisplay(mUser);
     }
 
     private void setCurrentUserIdDisplay(User user) {
         String userId = user.userId;
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": setting user " + userId);
         if (userId == null || userId.equalsIgnoreCase("-1") || userId.equalsIgnoreCase("")) {
             mTextViewUserId.setText("Please Choose Account");
         }else {

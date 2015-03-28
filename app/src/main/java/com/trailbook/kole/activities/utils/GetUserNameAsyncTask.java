@@ -2,12 +2,10 @@ package com.trailbook.kole.activities.utils;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.trailbook.kole.data.Constants;
 
 import java.io.IOException;
 
@@ -33,7 +31,6 @@ public class GetUserNameAsyncTask extends AsyncTask<Void, Void, Void> {
             if (token != null) {
                 // Insert the good stuff here.
                 // Use the token to access the user's Google data.
-                Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() + ": got token");
             }
         } catch (IOException e) {
             // The fetchToken() method handles Google-specific exceptions,

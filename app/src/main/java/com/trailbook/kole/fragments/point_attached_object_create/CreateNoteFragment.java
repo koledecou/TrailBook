@@ -3,7 +3,6 @@ package com.trailbook.kole.fragments.point_attached_object_create;
 import android.app.Service;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,6 @@ import android.widget.EditText;
 
 import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Attachment;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Note;
 import com.trailbook.kole.data.PointAttachedObject;
 import com.trailbook.kole.state_objects.PathManager;
@@ -70,7 +68,6 @@ public class CreateNoteFragment extends CreatePointAttachedObjectFragment {
 
     @Override
     protected void restoreInstance(Bundle savedInstanceState) {
-        Log.d(Constants.TRAILBOOK_TAG, getClass().getSimpleName() +"restoring note state");
         super.restoreInstance(savedInstanceState);
         if (savedInstanceState != null) {
             String text = savedInstanceState.getString(TEXT);
