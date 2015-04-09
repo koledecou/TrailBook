@@ -195,8 +195,8 @@ public class ApplicationUtils {
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("text/plain");
             i.putExtra(Intent.EXTRA_EMAIL, "");
-            i.putExtra(Intent.EXTRA_SUBJECT,"test: android - email with attachment");
-            i.putExtra(Intent.EXTRA_TEXT,"test: hello from trailbook");
+            i.putExtra(Intent.EXTRA_SUBJECT,"Trailbook Path");
+            i.putExtra(Intent.EXTRA_TEXT,"I have sent you a path to follow.  The attachment can be opened by the Trailbook android app.  For instructions visit http://www.thetrailbook.com");
             i.putExtra(Intent.EXTRA_STREAM, uri);
 
             c.startActivity(Intent.createChooser(i, "Select application"));

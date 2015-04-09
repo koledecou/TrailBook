@@ -1,9 +1,5 @@
 package com.trailbook.kole.services.database;
 
-import android.util.Log;
-
-import com.trailbook.kole.data.Constants;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,7 +34,6 @@ public class DBConstants {
             serverAddress = jsonObject.getString("serverAddress");
             port = jsonObject.getInt("port");
         } catch (JSONException e) {
-            Log.d(Constants.TRAILBOOK_TAG, "error parsing db constants.", e);
         }
     }
 }
