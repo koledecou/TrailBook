@@ -215,7 +215,7 @@ public class TrailbookPathUtilities {
         Document pathXMLDoc = TrailbookPathUtilities.XMLfromString(pathXML);
         pathXMLDoc.getDocumentElement ().normalize ();
 
-        PathSummary summary = new PathSummary(getNewPathId());
+        PathSummary summary = new PathSummary(getNewPathId(), TrailBookState.getInstance().getString(R.string.create_climb_type));
         PathSegment s = new PathSegment((getNewSegmentId()));
         ArrayList<PathSegment> segments = new ArrayList<PathSegment>();
         ArrayList<PointAttachedObject> paoNotes = new ArrayList<PointAttachedObject>();

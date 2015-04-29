@@ -12,7 +12,8 @@
     <FrameLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent"
+        xmlns:ads="http://schemas.android.com/apk/res-auto">
         <com.sothree.slidinguppanel.SlidingUpPanelLayout
             xmlns:sothree="http://schemas.android.com/apk/res-auto"
             android:id="@+id/main_panel"
@@ -24,7 +25,7 @@
             sothree:umanoFadeColor="@android:color/transparent">
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" xmlns:ads="http://schemas.android.com/apk/res-auto">
+                android:layout_height="match_parent">
                 <FrameLayout
                     android:id="@+id/map_container"
                     android:layout_width="match_parent"
@@ -38,20 +39,6 @@
                     android:id="@+id/map_tv_message"
                     android:layout_gravity="top|left"
                     android:layout_marginBottom="20dp" />
-
-
-                <com.google.android.gms.ads.AdView
-                    android:id="@+id/adView"
-                    android:layout_gravity="bottom"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_alignParentBottom="true"
-                    ads:adSize="BANNER"
-                    ads:adUnitId="@string/banner_ad_unit_id"
-                    android:maxWidth="320dp"
-                    android:layout_marginBottom="25dp">
-                </com.google.android.gms.ads.AdView>
 
                 <ImageButton
                     android:layout_width="47dp"
@@ -112,21 +99,7 @@
                         android:layout_margin="5dp" />
                 </LinearLayout>
 
-                <!--                <ProgressBar
-                                    style="?android:attr/progressBarStyleHorizontal"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_alignParentLeft="true"
-                                    android:layout_alignParentTop="true"
-                                    android:layout_marginLeft="23dp"
-                                    android:layout_marginTop="20dp"
-                                    android:indeterminate="false"
-                                    android:max="100"
-                                    android:minHeight="80dp"
-                                    android:minWidth="150dp"
-                                    android:layout_gravity="center_vertical|center_horizontal"
-                                    android:paddingBottom="@dimen/bottom_pad"
-                                    android:id="@+id/progressBar" />-->
+
             </FrameLayout>
             <LinearLayout
                 android:id="@+id/details_panel_container"
@@ -136,7 +109,18 @@
                 android:gravity="center|top"
                 tools:layout="@layout/path_details" />
          </com.sothree.slidinguppanel.SlidingUpPanelLayout>
-
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
+            android:layout_gravity="bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            ads:adSize="BANNER"
+            ads:adUnitId="@string/banner_ad_unit_id"
+            android:maxWidth="320dp"
+            android:layout_marginBottom="25dp">
+        </com.google.android.gms.ads.AdView>
     </FrameLayout>
 
     <!-- android:layout_gravity="start" tells DrawerLayout to treat

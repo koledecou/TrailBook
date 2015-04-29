@@ -196,7 +196,7 @@ public class TrailbookFileUtilities {
 
     public static String getImageUploadUrl() {
         URI uploadPicturesURI = null;
-        String uploadPicturesURL = Constants.BASE_CGIBIN_URL + Constants.uploadImage;
+        String uploadPicturesURL = TrailBookState.getInstance().getCgiBinUrl() + Constants.uploadImage;
         try {
             uploadPicturesURI = new URI(uploadPicturesURL);
         } catch (URISyntaxException e) {
@@ -267,7 +267,7 @@ public class TrailbookFileUtilities {
     }*/
 
     public static String getWebServerImageDir() {
-        return Constants.BASE_WEBSERVERFILE_URL + "/" + Constants.imageDir;
+        return TrailBookState.getInstance().getWebserverFileUrl()+ "/" + Constants.imageDir;
     }
 
 

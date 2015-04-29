@@ -11,7 +11,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.util.JSON;
-import com.trailbook.kole.data.Constants;
 import com.trailbook.kole.data.Path;
 import com.trailbook.kole.data.PathSegment;
 import com.trailbook.kole.data.PathSummary;
@@ -77,7 +76,8 @@ public class TrailbookRemoteDatabase {
 
     private static void populateDBConstantsFromRemoteServer() {
         try {
-            InputStream in = new java.net.URL(Constants.dbConnectConfigUrl).openStream();
+            String dbConnectConfigUrl = TrailBookState.getInstance().getdbConnectConfigUrl();
+            InputStream in = new java.net.URL(dbConnectConfigUrl).openStream();
             String jsonDbConstants = TrailbookFileUtilities.convertStreamToString(in);
             DBConstants.populateFromJsonString(jsonDbConstants);
         } catch (Exception e) {
@@ -142,10 +142,21 @@ public class TrailbookRemoteDatabase {
         return getPathSummaries(null);
     }
 
+    private BasicDBObject appendAppType(BasicDBObject query) {
+        //todo: fork out money for prod db
+        if (TrailBookState.getInstance().isTest()) {
+            query.append("type", TrailBookState.APP_TYPE_TEST);
+        } else {
+            query.append("type", TrailBookState.APP_TYPE_PROD);
+        }
+        return query;
+    }
+
     public ArrayList<PathSummary> getNewPathSummaries(ArrayList<String> pathsInCloudCache) {
         long lastRefreshedTime = TrailBookState.getLastRefreshedFromCloudTimeStamp();
         BasicDBObject query = new BasicDBObject("lastUpdatedTimestamp", new BasicDBObject("$gt", lastRefreshedTime))
                                         .append("_id", new BasicDBObject("$in", pathsInCloudCache));
+        query = appendAppType(query);
 
         ArrayList<PathSummary> summaries = getPathSummaries(query);
         return summaries;
@@ -184,6 +195,7 @@ public class TrailbookRemoteDatabase {
             excludeList = new ArrayList<String>();
 
         BasicDBObject query = new BasicDBObject("_id", new BasicDBObject("$nin", excludeList));
+        query = appendAppType(query);
         ArrayList<PathSummary> summaries = getPathSummaries(query);
         return summaries;
     }

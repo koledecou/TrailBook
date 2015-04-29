@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="app_name">TrailBook</string>
     <string name="title_section1">Section 1</string>
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>
@@ -185,7 +183,6 @@
     <string name="search_title">Search</string>
     <string name="search_hint">climb, crag, region</string>
     <string name="search_acivity_name">Search Results</string>
-    <string name="title_activity_main">TrailBook</string>
     <string name="search_results_header">Search Results</string>
     <string name="keyword_title_climbs">Add Climbs Accessed By This Trail</string>
     <string name="keyword_title_crags">Add Crags Accessed By This Trail</string>
@@ -204,5 +201,4 @@
     <string name="path_results_activity_path">Path:</string>
     <string name="user_name_label">User Name</string>
     <string name="anonymous">Anonymous</string>
-    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
 </resources>

@@ -258,12 +258,6 @@ public class KeyWordDAO {
             KeyWord keyWord = cursorToKeyWord(c);
             String text1 = ApplicationUtils.getLabelForKeywordType(type) + keyWord.keyWord;
             String text2 = "   Path: " + keyWord.pathName;
-            String[] row = new String[] {
-                    Long.toString(keyWord._id),
-                    text1,
-                    text2,
-                    keyWord.pathId
-            };
             c.moveToNext();
         }
         return c;

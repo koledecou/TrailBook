@@ -27,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ import com.squareup.otto.Subscribe;
 import com.trailbook.kole.activities.utils.Action;
 import com.trailbook.kole.activities.utils.AttachedCommentUploaderAction;
 import com.trailbook.kole.activities.utils.CommentUploaderAction;
+import com.trailbook.kole.activities.utils.LaunchNavigateAction;
 import com.trailbook.kole.activities.utils.LoginUtil;
 import com.trailbook.kole.activities.utils.PathUploaderAction;
 import com.trailbook.kole.data.Attachment;
@@ -71,7 +73,6 @@ import com.trailbook.kole.fragments.point_attached_object_create.CreatePointObje
 import com.trailbook.kole.fragments.point_attched_object_view.FullObjectViewFragment;
 import com.trailbook.kole.fragments.upload.PathUploadDetailsFragment;
 import com.trailbook.kole.helpers.ApplicationUtils;
-import com.trailbook.kole.helpers.MapUtilities;
 import com.trailbook.kole.helpers.NoteFactory;
 import com.trailbook.kole.helpers.TrailbookFileUtilities;
 import com.trailbook.kole.helpers.TrailbookPathUtilities;
@@ -98,7 +99,7 @@ public class TrailBookActivity extends Activity
         CreatePointObjectListener,
         PathSelectorFragment.OnPathSelectorFragmentInteractionListener,
         PopupMenu.OnMenuItemClickListener, CreateCommentFragment.CreateCommentDialogListener, PathUploadDetailsFragment.UploadPathDialogListener,
-        UpdatePathFragment.UpdatePathsDialogListener {
+        UpdatePathFragment.UpdatePathsDialogListener, SlidingUpPanelLayout.PanelSlideListener {
 
     private static final String CLASS_NAME = "TrailBookActivity";
 
@@ -128,6 +129,8 @@ public class TrailBookActivity extends Activity
     private ProgressDialog mWaitingForLocationDialog;
     private  String mActionPath = null;
     private WebServiceStateReceiver receiver;
+    private SlidingUpPanelLayout mSlidingPanel;
+    private Action mOnCollapaseAction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,6 +168,15 @@ public class TrailBookActivity extends Activity
             refreshPaths(false);
             requestShowPathDetails(launchedPathId);
         }
+
+        initializeSlidingPanel();
+    }
+
+    private void initializeSlidingPanel() {
+        mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.main_panel);
+        mSlidingPanel.setEnableDragViewTouchEvents(false);
+        mSlidingPanel.setTouchEnabled(false);
+        mSlidingPanel.setPanelSlideListener(this);
     }
 
     private void restoreFragments(Bundle savedInstanceState) {
@@ -241,7 +253,8 @@ public class TrailBookActivity extends Activity
             if (TrailBookState.getMode() == TrailBookState.MODE_LEAD)
                 paoNote = attachNoteToCurrentLocation(newAttachment);
             else if (TrailBookState.getMode() == TrailBookState.MODE_EDIT) {
-                LatLng location = mMapFragment.getSelectedLocation();
+                //LatLng location = mMapFragment.getSelectedLocation();
+                LatLng location = TrailBookState.getSelectedMapLocation();
                 paoNote = attachNoteToLocation(location, newAttachment);
                 mMapFragment.removeSelectedMarker();
             }
@@ -792,16 +805,17 @@ public class TrailBookActivity extends Activity
 
     @Override
     public void onNavigateToStart(String pathId) {
-        collapseSlidingPanel();
-/*        if (TrailBookState.getMode() == TrailBookState.MODE_FOLLOW ||
-                    TrailBookState.getMode() == TrailBookState.MODE_LEAD) {
-            stopLocationUpdates();
-        }*/
-        switchToSearchMode();
-
         LatLng startCoords = mPathManager.getStartCoordsForPath(pathId);
-        if (startCoords != null)
-            MapUtilities.navigateTo(this, String.valueOf(startCoords.latitude) + "," + String.valueOf(startCoords.longitude));
+        if (startCoords != null) {
+            this.setOnCollapseAction(new LaunchNavigateAction(this, startCoords));
+            //MapUtilities.navigateTo(this, String.valueOf(startCoords.latitude) + "," + String.valueOf(startCoords.longitude));
+        }
+        collapseSlidingPanel();
+        switchToSearchMode();
+    }
+
+    private void setOnCollapseAction(Action action) {
+        mOnCollapaseAction = action;
     }
 
     @Override
@@ -819,18 +833,29 @@ public class TrailBookActivity extends Activity
         waitForLocation();
     }
 
-    private void collapseSlidingPanel() {
-        SlidingUpPanelLayout slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.main_panel);
-        if (slidingUpPanel != null)
-            slidingUpPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+    public void collapseSlidingPanel() {
+        if (mSlidingPanel != null) {
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        }
     }
 
-    private boolean isSlidingPanelExpanded() {
-        SlidingUpPanelLayout slidingUpPanel = (SlidingUpPanelLayout) findViewById(R.id.main_panel);
-        if (slidingUpPanel != null && (slidingUpPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED))
+    public boolean isSlidingPanelExpanded() {
+        if (mSlidingPanel != null && (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED))
             return true;
         else
             return false;
+    }
+
+    public void expandSlidingPanel(View v) {
+        mMapFragment.hideBannerAd();
+        mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+        addViewToSlidingUpPanel(v);
+    }
+
+    public void addViewToSlidingUpPanel(View v) {
+        LinearLayout panelContainer = (LinearLayout)findViewById(R.id.details_panel_container);
+        panelContainer.removeAllViews();
+        panelContainer.addView(v);
     }
 
     @Override
@@ -1085,11 +1110,12 @@ public class TrailBookActivity extends Activity
             //TODO: update path details and confirm
             Action uploadAction = new PathUploaderAction(mWorkFragment, mPathManager.getPathSummary(pathId));
             String userId = TrailBookState.getCurrentUser().userId;
-            if (userId == null || userId == "-1") {
+            if (userId == null || userId.equalsIgnoreCase("-1")) {
                 LoginUtil.authenticateForAction(this, uploadAction);
             } else {
                 PathSummary summary = mPathManager.getPathSummary(pathId);
                 summary.setOwnerID(userId);
+                summary.setType(getString(R.string.application_type));
                 uploadAction.execute();
             }
         } else {
@@ -1133,7 +1159,7 @@ public class TrailBookActivity extends Activity
                 Action uploadAction = new CommentUploaderAction(mWorkFragment, comment);
                 String userId = TrailBookState.getCurrentUser().userId;
 
-                if (userId == null || userId == "-1") {
+                if (userId == null || userId.equalsIgnoreCase("-1")) {
                     LoginUtil.authenticateForAction(this, uploadAction);
                     //we don't actually need to connect.
                     //Authenticator.getInstance().connect();
@@ -1154,7 +1180,7 @@ public class TrailBookActivity extends Activity
             PointAttachedObject paoComment = attachNoteToCurrentLocation(comment);
             Action uploadAction = new AttachedCommentUploaderAction(mWorkFragment, paoComment);
             String userId = TrailBookState.getCurrentUser().userId;
-            if (userId == null || userId == "-1") {
+            if (userId == null || userId.equalsIgnoreCase("-1")) {
                 LoginUtil.authenticateForAction(this, uploadAction);
                 //we don't actually need to connect.
                 //Authenticator.getInstance().connect();
@@ -1190,11 +1216,44 @@ public class TrailBookActivity extends Activity
             public void run() {
                 setProgressBarIndeterminateVisibility(false);
                 mMapFragment.hideMapMessage();
+                Toast.makeText(TrailBookActivity.this, getString(R.string.download_completed), Toast.LENGTH_LONG).show();
+                for (String pathId:pathIds) {
+                    Path path = mPathManager.getPath(pathId);
+                    bus.post(new PathReceivedEvent(path));
+                }
             }
         };
 
         PollForCompletedDownload pollForCompletedDownload = new PollForCompletedDownload(pathIds, handler, resultUpdater);
         pollForCompletedDownload.start();
+    }
+
+    @Override
+    public void onPanelSlide(View view, float v) {
+
+    }
+
+    @Override
+    public void onPanelCollapsed(View view) {
+        if (mOnCollapaseAction != null) {
+            mOnCollapaseAction.execute();
+        }
+        mOnCollapaseAction = null;
+    }
+
+    @Override
+    public void onPanelExpanded(View view) {
+
+    }
+
+    @Override
+    public void onPanelAnchored(View view) {
+
+    }
+
+    @Override
+    public void onPanelHidden(View view) {
+
     }
 
     private class WebServiceStateReceiver extends BroadcastReceiver
@@ -1249,7 +1308,6 @@ public class TrailBookActivity extends Activity
                     Path path = mPathManager.getPath(pathId);
                     String message = String.format(getString(R.string.download_completed_for_path), path.summary.getName());
                     Toast.makeText(TrailBookActivity.this, message, Toast.LENGTH_LONG).show();
-                    bus.post(new PathReceivedEvent(path));
                 }
             }
         }

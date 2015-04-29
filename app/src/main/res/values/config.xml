@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="application_type">test</string>
+    <string name="app_name">TrailBook-d</string>
+    <string name="title_activity_main">TrailBook-d</string>
+    <string name="base_cgibin_url">http://www.thetrailbook.com/cgi-bin/trailbook</string>
+    <string name="base_webserverfile_url">http://www.thetrailbook.com/trailbook_files</string>
+    <string name="db_connect_config_url">http://www.thetrailbook.com/trailbook/config/test_dbconfig.txt</string>
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+</resources>
+

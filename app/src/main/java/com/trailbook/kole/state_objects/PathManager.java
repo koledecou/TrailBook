@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import com.trailbook.kole.activities.R;
 import com.trailbook.kole.data.Attachment;
 import com.trailbook.kole.data.ButtonActions;
 import com.trailbook.kole.data.KeyWord;
@@ -51,7 +52,6 @@ public class PathManager {
     private static Hashtable<String,PathSegment> mSegments;
     private static Hashtable<String,TrailBookComment> mPathComments;
     private static Hashtable<String, PathGroup> mGroups;
-    private static ArrayList<String> mOutOfDatePaths;
 
     private static Bus bus;
 
@@ -62,7 +62,6 @@ public class PathManager {
         mSegments = new Hashtable<String, PathSegment>();
         mPathComments = new Hashtable<String, TrailBookComment>();
         mPointAttachedObjects = new Hashtable<String, PointAttachedObject>();
-        mOutOfDatePaths = new ArrayList<String>();
         bus = BusProvider.getInstance();
         bus.register(this);
     }
@@ -600,7 +599,7 @@ public class PathManager {
 
     public String makeNewPath(String pathName, String segmentId, String ownerId) {
         String pathId = TrailbookPathUtilities.getNewPathId();
-        PathSummary summary = new PathSummary(pathId);
+        PathSummary summary = new PathSummary(pathId, TrailBookState.getInstance().getString(R.string.create_climb_type));
         summary.setName(pathName);
         summary.setDescription("");
         summary.addSegment(segmentId);

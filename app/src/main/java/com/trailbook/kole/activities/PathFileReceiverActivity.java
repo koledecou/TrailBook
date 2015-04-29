@@ -18,7 +18,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 public class PathFileReceiverActivity extends Activity {
     String mId;
@@ -91,7 +90,6 @@ public class PathFileReceiverActivity extends Activity {
     }
 
     private void WriteInputStreamToTempFile(InputStream in, String file) {
-        StringBuffer sb = new StringBuffer();
         try {
             OutputStream out = new FileOutputStream(new File(file));
 
@@ -100,7 +98,6 @@ public class PathFileReceiverActivity extends Activity {
 
             while ((size = in.read(buffer)) != -1) {
                 out.write(buffer, 0, size);
-                sb.append(Arrays.toString(buffer));
             }
 
             out.close();

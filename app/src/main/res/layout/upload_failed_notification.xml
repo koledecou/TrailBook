@@ -49,6 +49,7 @@
         android:id="@+id/imageView2"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:src="@drawable/trail_book_logo"
-        android:layout_alignParentTop="true" />
+        android:src="@drawable/notification"
+        android:layout_alignParentTop="true"
+        android:scaleType="fitXY" />
 </RelativeLayout>

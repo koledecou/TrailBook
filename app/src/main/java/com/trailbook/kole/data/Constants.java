@@ -1,24 +1,11 @@
 package com.trailbook.kole.data;
 
-import android.os.Environment;
-
 /**
  * Created by Fistik on 6/30/2014.
  */
 public class Constants {
     public static final String delimiter = "--";
-    public static final String BASE_CGIBIN_URL = "http://www.thetrailbook.com/cgi-bin/trailbook";
-    public static final String BASE_WEBSERVERFILE_URL = "http://www.thetrailbook.com/trailbook_files";
-    public static final String BASE_WEBSERVER_PATH_URL = BASE_WEBSERVERFILE_URL + "/paths";
-    public static final String BASE_WEBSERVER_SEGMENT_URL =BASE_WEBSERVERFILE_URL + "/segments";
-    public static final String pathSummaryScript = "/getPathSummariesFromFile.py";
-    public static final String getSegmentsScript = "/getPathSegmentMapFromFile.py";
-    public static final String getPointsScript = "/getSegmentPointsFromFile.py";
-    public static final String getNotesScript = "/getNotesFromFile.py";
-    public static final String uploadJson = "/uploadJson.py";
     public static final String uploadImage = "/uploadImage.py";
-    public static final String dbConnectConfigUrl = "http://www.thetrailbook.com/trailbook/config/test_dbconfig.txt";
-    public static final String deviceExternalDir = Environment.getExternalStorageDirectory().getPath();
     public static final String tempDir = "temp";
     public static final String pathsRootDir = "paths";
     public static final String cachedPathsRootDir = "temp_cloud_paths";
@@ -40,9 +27,6 @@ public class Constants {
     public static final String FILTER_PREFS_SHOW_MY_PATHS_KEY = "SHOW_MY_PATHS_KEY";
     public static final String FILTER_PREFS_SHOW_OTHER_PATHS_KEY = "FILTER_PREFS_SHOW_OTHER_PATHS_KEY";
     public static final String FILTER_PREFS_GROUPS_TO_SHOW_KEY = "FILTER_PREFS_GROUPS_TO_SHOW_KEY";
-
-    public static int MEDIUM_DETAIL = 500;
-    public static int FULL_DETAIL = -1;
 
     public static final int MIN_DISTANCE_BETWEEN_POINTS=3; //distance in meters
     public static final int MAX_DISTANCE_BETWEEN_POINTS = 1000;

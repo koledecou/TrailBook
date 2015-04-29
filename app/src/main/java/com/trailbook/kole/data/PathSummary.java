@@ -12,6 +12,7 @@ import java.util.Date;
 public class PathSummary implements Comparable<PathSummary> {
     String name;
     String description;
+    String type = "climb_approach";
     long lastUpdatedTimestamp;
     String ownerID;
     int upVotes=0;
@@ -25,8 +26,9 @@ public class PathSummary implements Comparable<PathSummary> {
     GeoPoint startCoords = null;
     GeoPoint endCoords = null;
 
-    public PathSummary(String id) {
+    public PathSummary(String id, String type) {
         this._id=id;
+        this.type = type;
         segmentIds = new ArrayList<String>();
         noteIds = new ArrayList<String>();
         startCoords = new GeoPoint();
@@ -141,5 +143,9 @@ public class PathSummary implements Comparable<PathSummary> {
 
     public long getLastUpdatedTime() {
         return lastUpdatedTimestamp;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

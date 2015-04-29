@@ -34,18 +34,19 @@ import com.trailbook.kole.location_processors.PathLeaderLocationProcessor;
 import com.trailbook.kole.location_processors.TrailBookLocationReceiver;
 
 import org.acra.ACRA;
-import org.acra.ReportingInteractionMode;
-import org.acra.annotation.ReportsCrashes;
 
 import java.lang.reflect.Field;
-
+/*
 
 @ReportsCrashes(formKey = "", // will not be used
         mailTo = "kole.decou@gmail.com",
         mode = ReportingInteractionMode.TOAST,
-        resToastText = R.string.crash_toast_text)
+        resToastText = R.string.crash_toast_text)*/
 
 public class TrailBookState extends Application {
+    public static final String APP_TYPE_TEST = "test";
+    public static final Object APP_TYPE_PROD = "release";
+
     public static final int MODE_SEARCH = 1;
     public static final int MODE_LEAD = 2;
     public static final int MODE_FOLLOW = 3;
@@ -348,7 +349,7 @@ public class TrailBookState extends Application {
 
     private static void restoreUser() {
         mUser = new User();
-        mUser.userId = prefs.getString(SAVED_USER_ID, "-1");
+        mUser.userId = prefs.getString(SAVED_USER_ID, "");
         mUser.userName = prefs.getString(SAVED_USER_NAME, "");
         mUser.profilePhotoUrl = prefs.getString(SAVED_PROFILE_PIC_URL, "");
     }
@@ -502,5 +503,25 @@ public class TrailBookState extends Application {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean(SAVED_GOOD_TO_SAVE_LOCATIONS, gotEnough);
         editor.commit();
+    }
+
+    public String getCgiBinUrl() {
+        return getResources().getString(R.string.base_cgibin_url);
+    }
+
+    public String getWebserverFileUrl() {
+        return getResources().getString(R.string.base_webserverfile_url);
+    }
+
+    public String getdbConnectConfigUrl() {
+        return getResources().getString(R.string.db_connect_config_url);
+    }
+
+    public boolean isTest() {
+        String type = getString(R.string.application_type);
+        if (APP_TYPE_TEST.equalsIgnoreCase(type))
+            return true;
+        else
+            return false;
     }
 }
